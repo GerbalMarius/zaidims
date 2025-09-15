@@ -1,25 +1,24 @@
 package org.game.server;
 
-
-import org.game.Json;
-import org.game.message.JoinMessage;
-import org.game.message.LeaveMessage;
-import org.game.message.MessageType;
-import org.game.message.MoveMessage;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import org.game.json.Json;
+import org.game.json.JsonLabelPair;
+import org.game.message.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.*;
-
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.filtering;
+import static org.game.json.JsonLabelPair.labelPair;
 
 public class Server {
     private static final int PORT = 9000;
@@ -27,6 +26,8 @@ public class Server {
     private ServerSocketChannel serverChannel;
 
     private final Map<SocketChannel, ClientState> clients = new LinkedHashMap<>();
+
+    private final Json json = new Json();
 
 
     public static void main(String[] args) throws IOException {
@@ -67,9 +68,9 @@ public class Server {
     private void accept() throws IOException {
         SocketChannel sc = serverChannel.accept();
         sc.configureBlocking(false);
-
-
         sc.socket().setTcpNoDelay(true);
+
+
         SelectionKey sk = sc.register(selector, SelectionKey.OP_READ);
         ClientState cs = new ClientState();
         sk.attach(cs);
@@ -118,7 +119,7 @@ public class Server {
                 readBuffer.get(msgBytes);
                 String message = new String(msgBytes, StandardCharsets.UTF_8);
 
-                onMessage(sc, JsonParser.parseString(message).getAsJsonObject());
+                onMessage(sc, json.fromJson(message, Message.class));
 
                 state.setReading(false);
                 state.setMessageLength(0);
@@ -129,16 +130,15 @@ public class Server {
         readBuffer.compact();
     }
 
-    private void onMessage(SocketChannel from, JsonObject json) throws IOException {
+    private void onMessage(SocketChannel from, Message message) throws IOException {
         ClientState state = clients.get(from);
-        System.out.println("From " + from.getRemoteAddress() + ": " + json.toString());
+        System.out.println("From " + from.getRemoteAddress() + ": " + message.toString());
 
-        var messageType = MessageType.valueOf(json.get("type").getAsString());
-        switch (messageType) {
-            case JOIN -> {
-                state.setId(json.get("playerId").getAsString());
+        switch (message) {
+            case JoinMessage(String playerId, String playerName, int ignored, int ignored1) -> {
+                state.setId(playerId);
 
-                state.setName(json.get("playerName").getAsString());
+                state.setName(playerName);
 
                 Collection<ClientState> states = clients.values();
 
@@ -152,19 +152,15 @@ public class Server {
 
                 for (ClientState other : states) {
                     if (other.getId() != null && state != other) {
-                        var message = new JoinMessage(MessageType.JOIN, other.getId(), other.getName(), other.getX(), other.getY());
-                        sendTo(from, Json.getInstance().toJson(message));
+                        var join = new JoinMessage(other.getId(), other.getName(), other.getX(), other.getY());
+                        sendTo(from, json.toJson(join, labelPair(Message.JSON_LABEL, "join")));
                     }
                 }
 
-                JoinMessage message = new JoinMessage(MessageType.JOIN, state.getId(), state.getName(), state.getX(), state.getY());
-                broadcast(Json.getInstance().toJson(message));
+                JoinMessage join = new JoinMessage(state.getId(), state.getName(), state.getX(), state.getY());
+                broadcast(json.toJson(join, labelPair(Message.JSON_LABEL, "join")));
             }
-            case MOVE ->  {
-                String id =  json.get("playerId").getAsString();
-                int dx =  json.get("newX").getAsInt();
-                int dy =  json.get("newY").getAsInt();
-
+            case MoveMessage(String id, int dx, int dy) ->  {
                 if (state.getId() == null || !state.getId().equals(id)) {
                     System.out.println("Spoofed MOVE ignored");
                     return;
@@ -174,9 +170,9 @@ public class Server {
 
                 MoveMessage move = new MoveMessage(id, state.getX(), state.getY());
 
-                broadcast(Json.getInstance().toJson(move));
+                broadcast(json.toJson(move, labelPair(Message.JSON_LABEL, "move")));
             }
-            case LEAVE -> broadcast(Json.getInstance().toJson(new LeaveMessage(state.getId())));
+            case LeaveMessage leaveMessage -> broadcast(json.toJson(leaveMessage, labelPair(Message.JSON_LABEL, "leave")));
         }
     }
 
@@ -237,7 +233,7 @@ public class Server {
 
         if (cs != null && cs.getId() != null) {
             LeaveMessage leaveMessage = new LeaveMessage(cs.getId());
-            broadcast(Json.getInstance().toJson(leaveMessage));
+            broadcast(json.toJson(leaveMessage, labelPair(Message.JSON_LABEL, "leave")));
         }
 
         clients.remove(sc);

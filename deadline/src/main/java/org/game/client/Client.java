@@ -1,12 +1,13 @@
 package org.game.client;
 
-import org.game.Json;
-import org.game.message.JoinMessage;
-import org.game.message.MessageType;
-import org.game.message.MoveMessage;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.game.json.Json;
+import org.game.json.JsonLabelPair;
+import org.game.message.JoinMessage;
+import org.game.message.LeaveMessage;
+import org.game.message.Message;
+import org.game.message.MoveMessage;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;
@@ -19,11 +20,11 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-
-
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static org.game.json.JsonLabelPair.labelPair;
 
 public class Client {
     private static final int PORT = 9000;
@@ -36,6 +37,8 @@ public class Client {
 
     private final ByteBuffer readBuffer = ByteBuffer.allocate(1024 * 8);// 8 KB
     private final Queue<ByteBuffer> pendingWrites = new ConcurrentLinkedQueue<>();
+
+    private final Json json = new Json();
 
     private final GameState gameState = new GameState();
     private GamePanel gamePanel;
@@ -72,25 +75,27 @@ public class Client {
                         MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
 
                         optimisticMove(dx, dy);
-                        sendLocalInput(Json.getInstance().toJson(moveMessage));
+                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
                     }
                     case KeyEvent.VK_RIGHT -> {
                         int dx = 5, dy = 0;
                         MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
 
                         optimisticMove(dx, dy);
-                        sendLocalInput(Json.getInstance().toJson(moveMessage));
+
+
+                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
                     }
                     case KeyEvent.VK_UP -> {
                         int dx = 0, dy = -5;
                         MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
 
-                        sendLocalInput(Json.getInstance().toJson(moveMessage));
+                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
                     }
                     case KeyEvent.VK_DOWN -> {
                         int dx = 0, dy = 5;
                         MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
-                        sendLocalInput(Json.getInstance().toJson(moveMessage));
+                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
                     }
                 }
             }
@@ -123,7 +128,6 @@ public class Client {
             socketChannel = SocketChannel.open();
 
             socketChannel.configureBlocking(false);
-
 
             socketChannel.connect(new InetSocketAddress(PORT));
             socketChannel.register(selector, SelectionKey.OP_CONNECT);
@@ -227,38 +231,20 @@ public class Client {
             }
             byte[] messageBytes = new byte[length];
             readBuffer.get(messageBytes);
-            String json = new String(messageBytes, StandardCharsets.UTF_8);
+            String jsonPayload = new String(messageBytes, StandardCharsets.UTF_8);
 
-            JsonObject jsonObject = JsonParser.parseString(json).getAsJsonObject();
-            onServerMessage(jsonObject);
+            onServerMessage(json.fromJson(jsonPayload, Message.class));
         }
         readBuffer.compact();
     }
 
-    private void onServerMessage(final JsonObject json) {
-
+    private void onServerMessage(final Message message) {
         SwingUtilities.invokeLater(() -> {
-            MessageType type = MessageType.valueOf(json.get("type").getAsString());
-            switch (type) {
-                case JOIN -> {
-                    String playerId = json.get("playerId").getAsString();
-                    String playerName = json.get("playerName").getAsString();
-                    int x = json.get("startPosX").getAsInt();
-                    int y = json.get("startPosY").getAsInt();
-                    gameState.addPlayer(playerId, playerName, x, y);
-                }
-                case LEAVE -> {
-                    String playerId = json.get("playerId").getAsString();
-                    gameState.removePlayer(playerId);
-                }
-                case MOVE -> {
-                    String playerId = json.get("playerId").getAsString();
-                    int x = json.get("newX").getAsInt();
-                    int y = json.get("newY").getAsInt();
-                    gameState.setPlayerPosition(playerId, x, y);
-                }
+            switch (message) {
+                case JoinMessage(String playerId, String name, int x, int y) -> gameState.addPlayer(playerId, name, x, y);
+                case LeaveMessage(String playerId)  -> gameState.removePlayer(playerId);
+                case MoveMessage(String playerId, int x, int y) -> gameState.setPlayerPosition(playerId, x, y);
             }
-
             gamePanel.repaint();
         });
 
@@ -276,8 +262,8 @@ public class Client {
             key.interestOps(ops);
 
             // send JOIN
-            JoinMessage message = new JoinMessage(clientId, playerName);
-            sendLocalInput(Json.getInstance().toJson(message));
+            Message message = new JoinMessage(clientId, playerName);
+            sendLocalInput(json.toJson(message, labelPair(Message.JSON_LABEL, "join")));
         } else {
             key.cancel();
         }

@@ -1,7 +1,6 @@
 package org.game.client;
 
 import java.awt.*;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

@@ -1,7 +1,6 @@
 package org.game.server;
 
 import org.game.json.Json;
-import org.game.json.JsonLabelPair;
 import org.game.message.*;
 
 import java.io.IOException;
@@ -21,6 +20,7 @@ import static java.util.stream.Collectors.filtering;
 import static org.game.json.JsonLabelPair.labelPair;
 
 public class Server {
+
     private static final int PORT = 9000;
     private Selector selector;
     private ServerSocketChannel serverChannel;

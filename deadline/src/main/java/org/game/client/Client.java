@@ -1,9 +1,6 @@
 package org.game.client;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.game.json.Json;
-import org.game.json.JsonLabelPair;
 import org.game.message.JoinMessage;
 import org.game.message.LeaveMessage;
 import org.game.message.Message;
@@ -27,6 +24,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import static org.game.json.JsonLabelPair.labelPair;
 
 public class Client {
+
+    private static final String HOST = "localhost";
     private static final int PORT = 9000;
 
     private final String clientId =  UUID.randomUUID().toString();
@@ -129,7 +128,7 @@ public class Client {
 
             socketChannel.configureBlocking(false);
 
-            socketChannel.connect(new InetSocketAddress(PORT));
+            socketChannel.connect(new InetSocketAddress(HOST, PORT));
             socketChannel.register(selector, SelectionKey.OP_CONNECT);
 
             while (!Thread.currentThread().isInterrupted()) {
@@ -161,7 +160,7 @@ public class Client {
             }
 
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Network error in client: " + e.getMessage());
         }
         finally {
             try {

@@ -41,7 +41,7 @@ public class Client {
     private final GameState gameState = new GameState();
     private GamePanel gamePanel;
 
-    public static void main(String[] args) {
+    static void main() {
         new Client().createClientGui();
     }
 

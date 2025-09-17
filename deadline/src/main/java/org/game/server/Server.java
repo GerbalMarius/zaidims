@@ -30,7 +30,7 @@ public class Server {
     private final Json json = new Json();
 
 
-    public static void main(String[] args) throws IOException {
+    static void main() throws IOException {
         new Server().start();
     }
 
@@ -135,7 +135,7 @@ public class Server {
         System.out.println("From " + from.getRemoteAddress() + ": " + message.toString());
 
         switch (message) {
-            case JoinMessage(String playerId, String playerName, int ignored, int ignored1) -> {
+            case JoinMessage(String playerId, String playerName, int _, int _) -> {
                 state.setId(playerId);
 
                 state.setName(playerName);

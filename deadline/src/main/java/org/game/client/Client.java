@@ -25,7 +25,6 @@ import static org.game.json.JsonLabelPair.labelPair;
 
 public class Client {
 
-    private static final String HOST = "localhost";
     private static final int PORT = 9000;
 
     private final String clientId =  UUID.randomUUID().toString();
@@ -128,7 +127,7 @@ public class Client {
 
             socketChannel.configureBlocking(false);
 
-            socketChannel.connect(new InetSocketAddress(HOST, PORT));
+            socketChannel.connect(new InetSocketAddress(PORT));
             socketChannel.register(selector, SelectionKey.OP_CONNECT);
 
             while (!Thread.currentThread().isInterrupted()) {

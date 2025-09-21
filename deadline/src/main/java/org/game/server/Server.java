@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.filtering;
@@ -135,7 +136,7 @@ public class Server {
         System.out.println("From " + from.getRemoteAddress() + ": " + message.toString());
 
         switch (message) {
-            case JoinMessage(String playerId, String playerName, int _, int _) -> {
+            case JoinMessage(UUID playerId, String playerName, int _, int _) -> {
                 state.setId(playerId);
 
                 state.setName(playerName);
@@ -160,7 +161,7 @@ public class Server {
                 JoinMessage join = new JoinMessage(state.getId(), state.getName(), state.getX(), state.getY());
                 broadcast(json.toJson(join, labelPair(Message.JSON_LABEL, "join")));
             }
-            case MoveMessage(String id, int dx, int dy) ->  {
+            case MoveMessage(UUID id, int dx, int dy) ->  {
                 if (state.getId() == null || !state.getId().equals(id)) {
                     System.out.println("Spoofed MOVE ignored");
                     return;
@@ -189,7 +190,6 @@ public class Server {
             }
             cs.pollMessage();
         }
-
 
         if (cs.noMoreMessages()) {
             key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);

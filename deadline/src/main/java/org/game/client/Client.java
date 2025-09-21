@@ -2,13 +2,10 @@ package org.game.client;
 
 import org.game.json.Json;
 import org.game.message.JoinMessage;
-import org.game.message.LeaveMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
 
 import javax.swing.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -27,7 +24,7 @@ public class Client {
 
     private static final int PORT = 9000;
 
-    private final String clientId =  UUID.randomUUID().toString();
+    private final UUID clientId =  UUID.randomUUID();
     private String playerName = "";
 
     private SocketChannel socketChannel;
@@ -40,6 +37,7 @@ public class Client {
 
     private final GameState gameState = new GameState();
     private GamePanel gamePanel;
+    private final KeyboardHandler keyboardHandler =  new KeyboardHandler();
 
     static void main() {
         new Client().createClientGui();
@@ -48,79 +46,44 @@ public class Client {
     private void createClientGui(){
         String name = JOptionPane.showInputDialog(null, "Enter player name:", "Choose name", JOptionPane.PLAIN_MESSAGE);
         if (name != null && !name.trim().isEmpty()) playerName = name.trim();
-        else playerName = "Player " + clientId.substring(0, 10);
+        else playerName = "Player " + clientId.toString().substring(0, 10);
 
-        // UI
+        //-----UI
         JFrame frame = new JFrame("Game");
-        gamePanel = new GamePanel(gameState);
+        gamePanel = new GamePanel(clientId, gameState, keyboardHandler);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(gamePanel);
         frame.setSize(600, 400);
         frame.setLocationByPlatform(true);
         frame.setVisible(true);
 
-        gamePanel.setFocusable(true);
-        gamePanel.requestFocusInWindow();
+        //-------------------
 
-        gamePanel.addKeyListener(new KeyAdapter() {
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-
-                    case KeyEvent.VK_LEFT -> {
-                        int dx = -5, dy = 0;
-                        MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
-
-                        optimisticMove(dx, dy);
-                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
-                    }
-                    case KeyEvent.VK_RIGHT -> {
-                        int dx = 5, dy = 0;
-                        MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
-
-                        optimisticMove(dx, dy);
-
-
-                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
-                    }
-                    case KeyEvent.VK_UP -> {
-                        int dx = 0, dy = -5;
-                        MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
-
-                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
-                    }
-                    case KeyEvent.VK_DOWN -> {
-                        int dx = 0, dy = 5;
-                        MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
-                        sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
-                    }
-                }
-            }
+        gamePanel.setSendMoveCallback((dx, dy) -> {
+            MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
+            sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
         });
 
-        startNetworkConnection();
+        gamePanel.startGameLoop();
+        startNetworkThread();
     }
 
 
-    private void optimisticMove(int dx, int dy) {
-        SwingUtilities.invokeLater(() -> {
-            if (gameState.hasPlayer(clientId)) {
-                gameState.movePlayerBy(clientId, dx, dy);
-                gamePanel.repaint();
-            } else {
-                System.out.println("Optimistic move ignored: player not yet present in gameState");
-            }
-        });
-    }
-    private void startNetworkConnection(){
+    private void startNetworkThread() {
         var threadBuilder = Thread.ofVirtual()
                 .name("ClientThread : " + clientId);
 
-        threadBuilder.start(this::openConnection);
+
+            threadBuilder.start(() -> {
+                try {
+                    connectToServer();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            });
     }
 
-    private void openConnection(){
+    private void connectToServer() throws InterruptedException {
         try {
             selector = Selector.open();
             socketChannel = SocketChannel.open();
@@ -159,7 +122,10 @@ public class Client {
             }
 
         } catch (IOException e) {
-            System.err.println("Network error in client: " + e.getMessage());
+            System.err.println("Failed to connect to server on port : " +  PORT + " " + " connection refused");
+            Thread.sleep(600);
+            //try to connect again
+            connectToServer();
         }
         finally {
             try {
@@ -231,22 +197,12 @@ public class Client {
             readBuffer.get(messageBytes);
             String jsonPayload = new String(messageBytes, StandardCharsets.UTF_8);
 
-            onServerMessage(json.fromJson(jsonPayload, Message.class));
+            gamePanel.processMessage(json.fromJson(jsonPayload, Message.class));
         }
         readBuffer.compact();
     }
 
-    private void onServerMessage(final Message message) {
-        SwingUtilities.invokeLater(() -> {
-            switch (message) {
-                case JoinMessage(String playerId, String name, int x, int y) -> gameState.addPlayer(playerId, name, x, y);
-                case LeaveMessage(String playerId)  -> gameState.removePlayer(playerId);
-                case MoveMessage(String playerId, int x, int y) -> gameState.setPlayerPosition(playerId, x, y);
-            }
-            gamePanel.repaint();
-        });
 
-    }
 
     private void finishConnect(SelectionKey key) throws IOException {
         SocketChannel sc = (SocketChannel) key.channel();
@@ -259,7 +215,7 @@ public class Client {
             }
             key.interestOps(ops);
 
-            // send JOIN
+
             Message message = new JoinMessage(clientId, playerName);
             sendLocalInput(json.toJson(message, labelPair(Message.JSON_LABEL, "join")));
         } else {

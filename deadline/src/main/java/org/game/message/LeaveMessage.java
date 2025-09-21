@@ -1,5 +1,7 @@
 package org.game.message;
 
-public record LeaveMessage(String playerId) implements Message {
+import java.util.UUID;
+
+public record LeaveMessage(UUID playerId) implements Message {
 
 }

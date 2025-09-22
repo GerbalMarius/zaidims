@@ -2,11 +2,14 @@ package org.game.client;
 
 import org.game.client.entity.Player;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class GameState {
 
-    private final Map<UUID, Player> players = new HashMap<>();
+    private final Map<UUID, Player> players = new ConcurrentHashMap<>();
 
     public void addPlayer(UUID id, String name, int startingX, int startingY) {
         players.putIfAbsent(id, new Player(name, startingX, startingY));
@@ -20,7 +23,7 @@ public final class GameState {
         players.remove(id);
     }
 
-    public Set<Map.Entry<UUID, Player>> getPlayerEntries(){
-        return Collections.unmodifiableSet(players.entrySet());
+    public Set<Map.Entry<UUID, Player>> getPlayerEntries()  {
+        return Set.copyOf(players.entrySet());
     }
 }

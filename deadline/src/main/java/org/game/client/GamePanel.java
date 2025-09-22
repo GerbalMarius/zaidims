@@ -1,6 +1,7 @@
 package org.game.client;
 
 import lombok.Setter;
+import org.game.client.entity.MoveCallback;
 import org.game.client.entity.Player;
 import org.game.message.JoinMessage;
 import org.game.message.LeaveMessage;
@@ -10,8 +11,9 @@ import org.game.message.MoveMessage;
 import javax.swing.*;
 import java.awt.*;
 
+import java.util.Queue;
 import java.util.UUID;
-import java.util.function.BiConsumer;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GamePanel extends JPanel implements Runnable {
     private static final int FPS = 60;
@@ -20,7 +22,9 @@ public class GamePanel extends JPanel implements Runnable {
     private final UUID clientId;
 
     @Setter
-    private BiConsumer<Integer, Integer> sendMoveCallback;
+    private MoveCallback moveCallback;
+
+    private final Queue<Message> incomingMessages = new ConcurrentLinkedQueue<>();
 
     private int pendingDx = 0;
     private int pendingDy = 0;
@@ -72,7 +76,7 @@ public class GamePanel extends JPanel implements Runnable {
         if (dx != 0 || dy != 0) {
             pendingDx += dx;
             pendingDy += dy;
-            optimisticMove(dx, dy);
+            localUpdate(dx, dy);
         }
 
 
@@ -85,9 +89,10 @@ public class GamePanel extends JPanel implements Runnable {
             }
             lastSendTime = nowMillis;
         }
+        processNetworkMessages();
     }
 
-    private void optimisticMove(int dx, int dy) {
+    private void localUpdate(int dx, int dy) {
         Player local = state.getPlayer(clientId);
         if (local != null) {
             local.moveBy(dx, dy);
@@ -96,8 +101,8 @@ public class GamePanel extends JPanel implements Runnable {
 
 
     private void sendBatchedMove() {
-        if (sendMoveCallback != null) {
-            sendMoveCallback.accept(pendingDx, pendingDy);
+        if (moveCallback != null) {
+            moveCallback.move(pendingDx, pendingDy);
         }
     }
 
@@ -107,33 +112,49 @@ public class GamePanel extends JPanel implements Runnable {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setColor(Color.BLUE);
         int radius = 10;
+
         for (var entry : state.getPlayerEntries()) {
             Player playerData = entry.getValue();
 
-            int x = playerData.getX();
-            int y = playerData.getY();
-            String name = playerData.getName();
+            int x, y;
+            if (entry.getKey().equals(clientId)) {
+                x = playerData.getX();
+                y = playerData.getY();
+            } else {
+                x = playerData.getRenderX();
+                y = playerData.getRenderY();
+            }
 
+            String name = playerData.getName();
 
             g2d.fillOval(x - radius, y - radius, radius * 2, radius * 2);
             g2d.drawString(name, x + radius + 2, y);
         }
+        g2d.dispose();
     }
 
     public void processMessage(final Message message) {
-        SwingUtilities.invokeLater(() -> {
-            switch (message) {
+        incomingMessages.offer(message);
+    }
+
+    private void processNetworkMessages() {
+        Message msg;
+        int processed = 0;
+        int maxMsgPerTick = 100;
+        while (processed < maxMsgPerTick && (msg = incomingMessages.poll()) != null) {
+            switch (msg) {
                 case JoinMessage(UUID playerId, String name, int x, int y) -> state.addPlayer(playerId, name, x, y);
-                case LeaveMessage(UUID playerId)  -> state.removePlayer(playerId);
+                case LeaveMessage(UUID playerId) -> state.removePlayer(playerId);
                 case MoveMessage(UUID playerId, int x, int y) -> {
-                    Player player = state.getPlayer(playerId);
-                    if (player != null && !playerId.equals(clientId)) {
-                        player.updateFromServer(x, y);
+                    if (!playerId.equals(clientId)) {
+                        Player player = state.getPlayer(playerId);
+                        if (player != null) {
+                            player.updateFromServer(x, y);
+                        }
                     }
                 }
-
             }
-            this.repaint();
-        });
+            processed++;
+        }
     }
 }

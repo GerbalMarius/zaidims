@@ -59,7 +59,7 @@ public class Client {
 
         //-------------------
 
-        gamePanel.setSendMoveCallback((dx, dy) -> {
+        gamePanel.setMoveCallback((dx, dy) -> {
             MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
             sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
         });

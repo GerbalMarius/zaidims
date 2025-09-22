@@ -67,17 +67,9 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     private void updateGame() {
-        int dx = 0, dy = 0;
-        if (keyboardHandler.isLeftPressed()) dx -= 5;
-        if (keyboardHandler.isRightPressed()) dx += 5;
-        if (keyboardHandler.isUpPressed()) dy -= 5;
-        if (keyboardHandler.isDownPressed()) dy += 5;
 
-        if (dx != 0 || dy != 0) {
-            pendingDx += dx;
-            pendingDy += dy;
-            localUpdate(dx, dy);
-        }
+        Player currentPlayer = state.getPlayer(clientId);
+        optimisticMove(currentPlayer);
 
 
         long nowMillis = System.currentTimeMillis();
@@ -92,10 +84,24 @@ public class GamePanel extends JPanel implements Runnable {
         processNetworkMessages();
     }
 
-    private void localUpdate(int dx, int dy) {
-        Player local = state.getPlayer(clientId);
-        if (local != null) {
-            local.moveBy(dx, dy);
+    private void optimisticMove(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        int dx = 0, dy = 0;
+
+        int speed = player.getSpeed();
+
+        if (keyboardHandler.isLeftPressed()) dx -= speed;
+        if (keyboardHandler.isRightPressed()) dx += speed;
+        if (keyboardHandler.isUpPressed()) dy -= speed;
+        if (keyboardHandler.isDownPressed()) dy += speed;
+
+        if (dx != 0 || dy != 0) {
+            pendingDx += dx;
+            pendingDy += dy;
+            player.moveBy(dx, dy);
         }
     }
 

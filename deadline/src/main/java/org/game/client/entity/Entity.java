@@ -6,10 +6,12 @@ import lombok.Data;
 public sealed abstract class Entity permits Player {
 
     private static final long INTERP_MS = 100;
+    private static final int DEFAULT_SPEED = 5;
 
     protected int x, y;
     protected int prevX, prevY;
     protected int targetX, targetY;
+    protected int speed;
 
     protected long lastUpdateTime;
 
@@ -20,6 +22,8 @@ public sealed abstract class Entity permits Player {
         this.targetY = y;
         this.prevX = x;
         this.prevY = y;
+
+        this.speed = DEFAULT_SPEED;
 
         this.lastUpdateTime = System.currentTimeMillis();
     }

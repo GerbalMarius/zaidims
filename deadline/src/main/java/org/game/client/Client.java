@@ -50,7 +50,7 @@ public class Client {
 
         //-----UI
         JFrame frame = new JFrame("Game");
-        gamePanel = new GamePanel(clientId, gameState, keyboardHandler);
+        gamePanel = new GamePanel(clientId, gameState, keyboardHandler, 1000, 1000);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(gamePanel);
         frame.setSize(600, 400);

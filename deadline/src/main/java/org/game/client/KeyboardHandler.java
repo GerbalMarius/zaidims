@@ -43,4 +43,8 @@ public final class KeyboardHandler implements KeyListener {
 
         }
     }
+
+    public boolean anyKeyPressed() {
+        return upPressed || downPressed || leftPressed || rightPressed;
+    }
 }

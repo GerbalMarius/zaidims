@@ -1,7 +1,6 @@
 package org.game.client;
 
 import lombok.Setter;
-import org.game.client.entity.MoveCallback;
 import org.game.client.entity.Player;
 import org.game.message.JoinMessage;
 import org.game.message.LeaveMessage;
@@ -14,15 +13,20 @@ import java.awt.*;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.BiConsumer;
 
 public class GamePanel extends JPanel implements Runnable {
     private static final int FPS = 60;
     private final GameState state;
     private final KeyboardHandler keyboardHandler;
     private final UUID clientId;
+    private final Camera camera;
+
+    private final int worldWidth;
+    private final int worldHeight;
 
     @Setter
-    private MoveCallback moveCallback;
+    private BiConsumer<Integer, Integer> moveCallback;
 
     private final Queue<Message> incomingMessages = new ConcurrentLinkedQueue<>();
 
@@ -31,13 +35,20 @@ public class GamePanel extends JPanel implements Runnable {
     private long lastSendTime = 0;
     private Thread gameThread;
 
-    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler) {
+    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, int worldWidth, int worldHeight) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
+        this.worldWidth = worldWidth;
+        this.worldHeight = worldHeight;
+        this.camera = new Camera(0.12, 80, 50);
+
+
         setBackground(Color.WHITE);
         setFocusable(true);
-        addKeyListener(keyboardHandler);
+        addKeyListener(this.keyboardHandler);
+
+        initialSnap(state.getPlayer(clientId));
     }
 
     public void startGameLoop() {
@@ -73,7 +84,7 @@ public class GamePanel extends JPanel implements Runnable {
 
 
         long nowMillis = System.currentTimeMillis();
-        if (nowMillis - lastSendTime > 100) {
+        if (nowMillis - lastSendTime > 50) {
             if (pendingDx != 0 || pendingDy != 0) {
                 sendBatchedMove();
                 pendingDx = 0;
@@ -82,10 +93,14 @@ public class GamePanel extends JPanel implements Runnable {
             lastSendTime = nowMillis;
         }
         processNetworkMessages();
+
+        if(currentPlayer != null) {
+            currentPlayer.updateCameraPos(this.camera, getWidth(), getHeight(), worldWidth, worldHeight);
+        }
     }
 
     private void optimisticMove(Player player) {
-        if (player == null) {
+        if (player == null || !keyboardHandler.anyKeyPressed()) {
             return;
         }
 
@@ -108,24 +123,31 @@ public class GamePanel extends JPanel implements Runnable {
 
     private void sendBatchedMove() {
         if (moveCallback != null) {
-            moveCallback.move(pendingDx, pendingDy);
+            moveCallback.accept(pendingDx, pendingDy);
         }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g;
+        Graphics2D g2d = (Graphics2D) g.create();
+
+        double camX = camera.getX();
+        double camY = camera.getY();
+        double targetX = getWidth() / 2.0 - camX;
+        double targetY = getHeight() / 2.0 - camY;
+        g2d.translate(targetX, targetY);
+
         g2d.setColor(Color.BLUE);
         int radius = 10;
 
-        for (var entry : state.getPlayerEntries()) {
-            Player playerData = entry.getValue();
+        for (var playerEntry : state.getPlayerEntries()) {
+            Player playerData = playerEntry.getValue();
 
             int x, y;
-            if (entry.getKey().equals(clientId)) {
-                x = playerData.getX();
-                y = playerData.getY();
+            if (playerEntry.getKey().equals(clientId)) {
+                x = playerData.getGlobalX();
+                y = playerData.getGlobalY();
             } else {
                 x = playerData.getRenderX();
                 y = playerData.getRenderY();
@@ -162,5 +184,12 @@ public class GamePanel extends JPanel implements Runnable {
             }
             processed++;
         }
+    }
+
+    private void initialSnap(Player player) {
+        if (player == null) {
+            return;
+        }
+        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getWidth(), getHeight(), worldWidth, worldHeight);
     }
 }

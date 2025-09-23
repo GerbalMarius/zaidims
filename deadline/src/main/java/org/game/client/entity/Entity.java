@@ -8,16 +8,17 @@ public sealed abstract class Entity permits Player {
     private static final long INTERP_MS = 100;
     private static final int DEFAULT_SPEED = 5;
 
-    protected int x, y;
+    protected int globalX, globalY;
     protected int prevX, prevY;
     protected int targetX, targetY;
+
     protected int speed;
 
     protected long lastUpdateTime;
 
     protected Entity(int x, int y) {
-        this.x = x;
-        this.y = y;
+        this.globalX = x;
+        this.globalY = y;
         this.targetX = x;
         this.targetY = y;
         this.prevX = x;
@@ -40,12 +41,12 @@ public sealed abstract class Entity permits Player {
 
 
     public  void moveBy(int dx, int dy) {
-        this.x += dx;
-        this.y += dy;
-        this.prevX = this.x;
-        this.prevY = this.y;
-        this.targetX = this.x;
-        this.targetY = this.y;
+        this.globalX += dx;
+        this.globalY += dy;
+        this.prevX = this.globalX;
+        this.prevY = this.globalY;
+        this.targetX = this.globalX;
+        this.targetY = this.globalY;
         this.lastUpdateTime = System.currentTimeMillis();
     }
 

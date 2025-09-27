@@ -3,6 +3,7 @@ package org.game.client;
 import lombok.Getter;
 import lombok.Setter;
 import org.game.client.entity.ClassType;
+import org.game.client.entity.FramePosition;
 import org.game.client.entity.Player;
 import org.game.client.tiles.TileManager;
 import org.game.message.JoinMessage;
@@ -10,6 +11,7 @@ import org.game.message.LeaveMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
 import org.game.server.WorldSettings;
+import org.game.utils.Drawer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,9 +44,8 @@ public final class GamePanel extends JPanel implements Runnable {
     private long lastSendTime = 0;
     private Thread gameThread;
 
-
-
-    TileManager tileM = new TileManager(this);
+    @Getter
+    private final  TileManager tileManager;
     public CollisionChecker cChecker = new CollisionChecker(this);
 
     public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler) {
@@ -52,11 +53,13 @@ public final class GamePanel extends JPanel implements Runnable {
         this.state = state;
         this.keyboardHandler = keyboardHandler;
         this.camera = new Camera(0.12, 80, 50);
+        this.tileManager = new TileManager();
 
 
         setBackground(Color.WHITE);
         setFocusable(true);
         addKeyListener(this.keyboardHandler);
+
 
         initialSnap(state.getPlayer(clientId));
     }
@@ -125,20 +128,20 @@ public final class GamePanel extends JPanel implements Runnable {
 
 
         if (dx != 0) {
-            player.collisionOn = false;
-            player.setDirection(dx > 0 ? "right" : "left");
+            player.setCollisionOn(false);
+            player.setDirection(dx > 0 ? FramePosition.RIGHT : FramePosition.LEFT);
             cChecker.checkTile(player);
-            if (!player.collisionOn) {
+            if (!player.isCollisionOn()) {
                 player.moveBy(dx, 0);
                 pendingDx += dx;
             }
         }
 
         if (dy != 0) {
-            player.collisionOn = false;
-            player.setDirection(dy > 0 ? "down" : "up");
+            player.setCollisionOn(false);
+            player.setDirection(dy > 0 ? FramePosition.DOWN : FramePosition.UP);
             cChecker.checkTile(player);
-            if (!player.collisionOn) {
+            if (!player.isCollisionOn()) {
                 player.moveBy(0, dy);
                 pendingDy += dy;
             }
@@ -161,7 +164,7 @@ public final class GamePanel extends JPanel implements Runnable {
         double targetY = getHeight() / 2.0 - camera.getY();
         g2d.translate(targetX, targetY);
 
-        tileM.draw(g2d);
+        tileManager.draw(g2d);
         g2d.setColor(Color.RED);
         g2d.setFont(new Font("Cascadia Code", Font.BOLD, 12));
 
@@ -182,7 +185,7 @@ public final class GamePanel extends JPanel implements Runnable {
             String name = playerData.getName();
 
             playerData.draw(g2d, x, y, 48);
-            g2d.drawString(name, x + 12, y + 60);
+            Drawer.drawNameBox(g2d, name, x, y, 48);
         }
 
         g2d.dispose();

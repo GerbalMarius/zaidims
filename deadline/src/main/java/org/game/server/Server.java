@@ -17,8 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.filtering;
 import static org.game.json.JsonLabelPair.labelPair;
 
 public class Server {
@@ -144,7 +142,6 @@ public class Server {
 
                 Collection<ClientState> states = clients.values();
 
-                //setting rndm starting pos
                 state.setX(WorldSettings.tileSize * 23);
                 state.setY(WorldSettings.tileSize * 21);
 

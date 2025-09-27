@@ -2,6 +2,9 @@ package org.game.client.entity;
 
 import lombok.Data;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+
 @Data
 public sealed abstract class Entity permits Player {
 
@@ -13,6 +16,14 @@ public sealed abstract class Entity permits Player {
     protected int targetX, targetY;
 
     protected int speed;
+
+    protected BufferedImage up1, up2, down1, down2, left1, left2, right1, right2;
+    protected String direction = "down"; // default
+    protected int spriteNum = 1;
+    protected int spriteCounter = 0;
+
+    protected Rectangle hitbox;
+    public boolean collisionOn = false;
 
     protected long lastUpdateTime;
 

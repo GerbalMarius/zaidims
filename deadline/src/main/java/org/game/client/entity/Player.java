@@ -15,11 +15,6 @@ public final class Player extends Entity {
 
     private final String name;
 
-    private BufferedImage up1, up2, down1, down2, left1, left2, right1, right2;
-    private String direction = "down"; // default
-    private int spriteNum = 1;
-    private int spriteCounter = 0;
-
     private final ClassType playerClass;
 
     private int lastRenderX;
@@ -35,6 +30,8 @@ public final class Player extends Entity {
 
         this.lastRenderX = getRenderX();
         this.lastRenderY = getRenderY();
+
+        this.hitbox = new Rectangle(8, 16, 32, 32);
     }
 
     private void getPlayerImage() {

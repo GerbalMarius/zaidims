@@ -1,6 +1,7 @@
 package org.game.client.tiles;
 
 import org.game.client.GamePanel;
+import org.game.server.WorldSettings;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -8,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 
 public class TileManager {
     GamePanel gp;
@@ -17,7 +19,7 @@ public class TileManager {
     public TileManager(GamePanel gp) {
         this.gp = gp;
         tile = new Tile[10];
-        mapTileNum = new int[gp.maxWorldCol][gp.maxWorldRow];
+        mapTileNum = new int[WorldSettings.maxWorldCol][WorldSettings.maxWorldRow];
 
         getTileImage();
         loadMap("/maps/world01.txt");
@@ -59,17 +61,17 @@ public class TileManager {
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
             int col = 0;
             int row = 0;
-            while (col < gp.maxWorldCol && row < gp.maxWorldRow) {
+            while (col < WorldSettings.maxWorldCol && row < WorldSettings.maxWorldRow) {
                 String line = br.readLine();
 
-                while(col < gp.maxWorldCol) {
+                while(col < WorldSettings.maxWorldCol) {
                     String[] numbers = line.split(" ");
 
                     int num = Integer.parseInt(numbers[col]);
                     mapTileNum[col][row] = num;
                     col++;
                 }
-                if(col == gp.maxWorldCol) {
+                if(col == WorldSettings.maxWorldCol) {
                     col = 0;
                     row++;
                 }
@@ -86,19 +88,19 @@ public class TileManager {
         int worldRow = 0;
 
 
-        while (worldCol < gp.maxWorldCol && worldRow < gp.maxWorldRow) {
+        while (worldCol < WorldSettings.maxWorldCol && worldRow < WorldSettings.maxWorldRow) {
 
             int tileNum = mapTileNum[worldCol][worldRow];
 
-            int worldX = worldCol * gp.tileSize;
-            int worldY = worldRow * gp.tileSize;
+            int worldX = worldCol * WorldSettings.tileSize;
+            int worldY = worldRow * WorldSettings.tileSize;
 
 
-            g2.drawImage(tile[tileNum].image, worldX, worldY, gp.tileSize, gp.tileSize, null);
+            g2.drawImage(tile[tileNum].image, worldX, worldY, WorldSettings.tileSize, WorldSettings.tileSize, null);
 
             worldCol++;
 
-            if(worldCol == gp.maxWorldCol) {
+            if(worldCol == WorldSettings.maxWorldCol) {
                 worldCol = 0;
                 worldRow++;
             }

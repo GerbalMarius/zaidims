@@ -144,13 +144,9 @@ public class Server {
 
                 Collection<ClientState> states = clients.values();
 
-                int count = states.stream()
-                        .collect(filtering(cs -> cs.getId() != null, counting()))
-                        .intValue();
-
                 //setting rndm starting pos
-                state.setX(100 + (count % 10) * 60);
-                state.setY(100 + (count / 10) * 60);
+                state.setX(WorldSettings.tileSize * 23);
+                state.setY(WorldSettings.tileSize * 21);
 
                 for (ClientState other : states) {
                     if (other.getId() != null && state != other) {

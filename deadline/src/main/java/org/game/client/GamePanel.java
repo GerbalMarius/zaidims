@@ -9,6 +9,7 @@ import org.game.message.JoinMessage;
 import org.game.message.LeaveMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
+import org.game.server.WorldSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BiConsumer;
 
-public class GamePanel extends JPanel implements Runnable {
+public final class GamePanel extends JPanel implements Runnable {
     private static final int FPS = 60;
 
     @Getter
@@ -31,8 +32,6 @@ public class GamePanel extends JPanel implements Runnable {
 
     private final Camera camera;
 
-
-
     @Setter
     private BiConsumer<Integer, Integer> moveCallback;
 
@@ -43,23 +42,10 @@ public class GamePanel extends JPanel implements Runnable {
     private long lastSendTime = 0;
     private Thread gameThread;
 
-    // screen settings
-    final int originalTileSize = 16; // 16x16 tile
-    final int scale = 4;
 
-    public final int tileSize = originalTileSize * scale; // 48x48 tile
-    public final int maxScreenCol = 16;
-    public final int maxScreenRow = 12;
-    public final int screenWidth = tileSize * maxScreenCol; // 768 pixels
-    public final int screenHeight = tileSize * maxScreenRow; // 576 pixels
-
-    // WORLD SETTINGS
-    public final int maxWorldCol = 50;
-    public final int maxWorldRow = 50;
-    public final int worldWidth = tileSize * maxWorldCol;
-    public final int worldHeight = tileSize * maxWorldRow;
 
     TileManager tileM = new TileManager(this);
+    public CollisionChecker cChecker = new CollisionChecker(this);
 
     public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler) {
         this.clientId = clientId;
@@ -119,7 +105,7 @@ public class GamePanel extends JPanel implements Runnable {
         processNetworkMessages();
 
         if(currentPlayer != null) {
-            currentPlayer.updateCameraPos(this.camera, getWidth(), getHeight(), worldWidth, worldHeight);
+            currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.worldWidth, WorldSettings.worldHeight);
         }
     }
 
@@ -137,10 +123,25 @@ public class GamePanel extends JPanel implements Runnable {
         if (keyboardHandler.isUpPressed()) dy -= speed;
         if (keyboardHandler.isDownPressed()) dy += speed;
 
-        if (dx != 0 || dy != 0) {
-            pendingDx += dx;
-            pendingDy += dy;
-            player.moveBy(dx, dy);
+
+        if (dx != 0) {
+            player.collisionOn = false;
+            player.setDirection(dx > 0 ? "right" : "left");
+            cChecker.checkTile(player);
+            if (!player.collisionOn) {
+                player.moveBy(dx, 0);
+                pendingDx += dx;
+            }
+        }
+
+        if (dy != 0) {
+            player.collisionOn = false;
+            player.setDirection(dy > 0 ? "down" : "up");
+            cChecker.checkTile(player);
+            if (!player.collisionOn) {
+                player.moveBy(0, dy);
+                pendingDy += dy;
+            }
         }
     }
 
@@ -161,6 +162,8 @@ public class GamePanel extends JPanel implements Runnable {
         g2d.translate(targetX, targetY);
 
         tileM.draw(g2d);
+        g2d.setColor(Color.RED);
+        g2d.setFont(new Font("Cascadia Code", Font.BOLD, 12));
 
         for (var playerEntry : state.getPlayerEntries()) {
             Player playerData = playerEntry.getValue();
@@ -214,6 +217,6 @@ public class GamePanel extends JPanel implements Runnable {
         if (player == null) {
             return;
         }
-        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getWidth(), getHeight(), worldWidth, worldHeight);
+        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getHeight(), getWidth(), WorldSettings.worldWidth, WorldSettings.worldHeight);
     }
 }

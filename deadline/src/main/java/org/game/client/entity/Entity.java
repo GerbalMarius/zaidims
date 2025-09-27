@@ -3,7 +3,6 @@ package org.game.client.entity;
 import lombok.Data;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 @Data
 public sealed abstract class Entity permits Player {
@@ -17,13 +16,13 @@ public sealed abstract class Entity permits Player {
 
     protected int speed;
 
-    protected BufferedImage up1, up2, down1, down2, left1, left2, right1, right2;
-    protected String direction = "down"; // default
-    protected int spriteNum = 1;
-    protected int spriteCounter = 0;
+    protected ImageSprite[] movementFrames;
+    protected FramePosition direction;
+    protected int spriteNum;
+    protected int spriteCounter;
 
     protected Rectangle hitbox;
-    public boolean collisionOn = false;
+    protected boolean collisionOn = false;
 
     protected long lastUpdateTime;
 
@@ -36,8 +35,12 @@ public sealed abstract class Entity permits Player {
         this.prevY = y;
 
         this.speed = DEFAULT_SPEED;
+        this.direction = FramePosition.DOWN;
+        this.spriteNum = 1;
+        this.spriteCounter = 0;
 
         this.lastUpdateTime = System.currentTimeMillis();
+
     }
 
     public synchronized void updateFromServer(int newX, int newY) {
@@ -79,5 +82,14 @@ public sealed abstract class Entity permits Player {
         long now = System.currentTimeMillis();
         long dt  = now - this.lastUpdateTime;
         return Math.min(1.0, (double)dt / INTERP_MS);
+    }
+
+    protected void copyFrames4d(ImageSprite[] frames) {
+        int arraySize = 4;
+        this.movementFrames = new ImageSprite[arraySize];
+        if (frames.length != arraySize){
+            throw new IllegalArgumentException("frames must contain 4 images");
+        }
+        System.arraycopy(frames, 0, this.movementFrames, 0, arraySize);
     }
 }

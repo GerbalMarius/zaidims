@@ -3,11 +3,13 @@ package org.game.client.entity;
 import lombok.Getter;
 import org.game.client.Camera;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Objects;
+
+import static org.game.client.entity.ImageSprite.*;
+import static org.game.utils.ByteFiles.loadImage;
 
 
 @Getter
@@ -26,7 +28,7 @@ public final class Player extends Entity {
         this.name = name;
         this.playerClass = type;
 
-        getPlayerImage();
+        loadPlayerSprite();
 
         this.lastRenderX = getRenderX();
         this.lastRenderY = getRenderY();
@@ -34,21 +36,21 @@ public final class Player extends Entity {
         this.hitbox = new Rectangle(8, 16, 32, 32);
     }
 
-    private void getPlayerImage() {
-        try {
-            String prefix = playerClass.getClassPrefix();
+    private void loadPlayerSprite() {
+        String prefix = playerClass.getClassPrefix();
 
-            up1 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_up_1.png"));
-            up2 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_up_2.png"));
-            down1 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_down_1.png"));
-            down2 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_down_2.png"));
-            left1 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_left_1.png"));
-            left2 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_left_2.png"));
-            right1 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_right_1.png"));
-            right2 = ImageIO.read(getClass().getResourceAsStream("/player/" + prefix + "_right_2.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        ImageSprite[] movementFrames = {
+                upSprite(loadPlayerImage(prefix, "up", 1), loadPlayerImage(prefix, "up", 2)),
+                leftSprite(loadPlayerImage(prefix, "left", 1), loadPlayerImage(prefix, "left", 2)),
+                downSprite(loadPlayerImage(prefix, "down", 1), loadPlayerImage(prefix, "down", 2)),
+                rightSprite(loadPlayerImage(prefix, "right", 1), loadPlayerImage(prefix, "right", 2))
+        };
+        super.copyFrames4d(movementFrames);
+
+    }
+
+    private BufferedImage loadPlayerImage(String prefix, String direction, int frame) {
+        return loadImage(MessageFormat.format("res/player/{0}_{1}_{2}.png", prefix, direction, frame));
     }
 
     public void updateCameraPos(Camera camera, int screenWidth, int screenHeight, int worldWidth, int worldHeight) {
@@ -57,20 +59,25 @@ public final class Player extends Entity {
 
         camera.update(targetX, targetY);
 
-        camera.clamp(screenWidth,  screenHeight,  worldWidth,  worldHeight);
+        camera.clamp(screenWidth, screenHeight, worldWidth, worldHeight);
     }
 
     public void draw(Graphics2D g2, int x, int y, int tileSize) {
-        BufferedImage image = null;
-
-        switch (direction) {
-            case "up" -> image = (spriteNum == 1) ? up1 : up2;
-            case "down" -> image = (spriteNum == 1) ? down1 : down2;
-            case "left" -> image = (spriteNum == 1) ? left1 : left2;
-            case "right" -> image = (spriteNum == 1) ? right1 : right2;
-        }
+        BufferedImage image = switch (direction) {
+            case UP -> getImageSprite(FramePosition.UP);
+            case LEFT -> getImageSprite(FramePosition.LEFT);
+            case DOWN -> getImageSprite(FramePosition.DOWN);
+            case RIGHT -> getImageSprite(FramePosition.RIGHT);
+        };
 
         g2.drawImage(image, x, y, tileSize, tileSize, null);
+    }
+
+    private BufferedImage getImageSprite(FramePosition framePosition) {
+        if (spriteNum % 2 != 0) {
+            return movementFrames[framePosition.ordinal()].firstFrame();
+        }
+        return movementFrames[framePosition.ordinal()].secondFrame();
     }
 
     public void updateDirectionByRender() {
@@ -78,20 +85,35 @@ public final class Player extends Entity {
         int dy = getRenderY() - lastRenderY;
 
         if (dx != 0 || dy != 0) {
-            if (dx < 0) direction = "left";
-            else if (dx > 0) direction = "right";
-            else if (dy < 0) direction = "up";
-            else direction = "down";
-
+            changeDirection(dx, dy);
             spriteCounter++;
-            if (spriteCounter > 12) {
-                spriteNum = (spriteNum == 1) ? 2 : 1;
-                spriteCounter = 0;
-            }
+            updateSprite();
         }
 
         lastRenderX = getRenderX();
         lastRenderY = getRenderY();
+    }
+
+    private void changeDirection(int dx, int dy) {
+        if (dx < 0) {
+            direction = FramePosition.LEFT;
+        }
+        else if (dx > 0) {
+            direction = FramePosition.RIGHT;
+        }
+        else if (dy < 0) {
+            direction = FramePosition.UP;
+        }
+        else {
+            direction = FramePosition.DOWN;
+        }
+    }
+
+    private void updateSprite() {
+        if (spriteCounter > 10) {
+            spriteNum = (spriteNum + 1) % 2;
+            spriteCounter = 0;
+        }
     }
 
 }

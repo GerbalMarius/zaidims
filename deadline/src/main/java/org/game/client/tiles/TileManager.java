@@ -1,85 +1,64 @@
 package org.game.client.tiles;
 
-import org.game.client.GamePanel;
+import lombok.Getter;
 import org.game.server.WorldSettings;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
+import static org.game.utils.ByteFiles.loadImage;
 
+// int[y][x] , y - row , x - col
+@Getter
 public class TileManager {
-    GamePanel gp;
-    public Tile[] tile;
+    private List<Tile> tiles;
     public int[][] mapTileNum;
 
-    public TileManager(GamePanel gp) {
-        this.gp = gp;
-        tile = new Tile[10];
-        mapTileNum = new int[WorldSettings.maxWorldCol][WorldSettings.maxWorldRow];
+    public TileManager() {
+        mapTileNum = new int[WorldSettings.maxWorldRow][WorldSettings.maxWorldCol];
 
-        getTileImage();
-        loadMap("/maps/world01.txt");
+        loadAllTiles("res/tiles");
+        loadMap("res/maps/world01.txt");
     }
 
-    public void getTileImage() {
-        try {
-
-            tile[0] = new Tile();
-            tile[0].image = ImageIO.read(getClass().getResourceAsStream("/tiles/grass.png"));
-
-            tile[1] = new Tile();
-            tile[1].image = ImageIO.read(getClass().getResourceAsStream("/tiles/wall.png"));
-            tile[1].collision = true;
-
-            tile[2] = new Tile();
-            tile[2].image = ImageIO.read(getClass().getResourceAsStream("/tiles/water.png"));
-            tile[2].collision = true;
-
-            tile[3] = new Tile();
-            tile[3].image = ImageIO.read(getClass().getResourceAsStream("/tiles/earth.png"));
-
-            tile[4] = new Tile();
-            tile[4].image = ImageIO.read(getClass().getResourceAsStream("/tiles/tree.png"));
-            tile[4].collision = true;
-
-            tile[5] = new Tile();
-            tile[5].image = ImageIO.read(getClass().getResourceAsStream("/tiles/sand.png"));
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void loadAllTiles(String root) {
+        this.tiles = List.of(
+                new Tile(loadImage(root +"/grass.png"), false),
+                new Tile(loadImage(root+"/wall.png"), true),
+                new Tile(loadImage(root+"/water.png"), true),
+                new Tile(loadImage(root+"/earth.png"), false),
+                new Tile(loadImage(root+"/tree.png"), true),
+                new Tile(loadImage(root+"/sand.png"), false)
+        );
     }
+
 
     public void loadMap(String filePath) {
-        try {
-
-            InputStream is = getClass().getResourceAsStream(filePath);
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            int col = 0;
+        try (var reader = Files.newBufferedReader(Paths.get(filePath))) {
             int row = 0;
-            while (col < WorldSettings.maxWorldCol && row < WorldSettings.maxWorldRow) {
-                String line = br.readLine();
+            int col = 0;
+            int maxRows = WorldSettings.maxWorldRow;
+            int maxCols = WorldSettings.maxWorldCol;
 
-                while(col < WorldSettings.maxWorldCol) {
-                    String[] numbers = line.split(" ");
-
-                    int num = Integer.parseInt(numbers[col]);
-                    mapTileNum[col][row] = num;
-                    col++;
+            for (int ch; (ch = reader.read()) != -1 && row < maxRows; ) {
+                char c = (char) ch;
+                if (!Character.isDigit(c)) {
+                    continue;
                 }
-                if(col == WorldSettings.maxWorldCol) {
+                int num = c - '0';
+                mapTileNum[row][col] = num;
+
+                col++;
+                if (col >= maxCols) {
                     col = 0;
                     row++;
                 }
             }
-            br.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        }catch (IOException e){
+            throw new RuntimeException(e);
         }
     }
 
@@ -87,20 +66,17 @@ public class TileManager {
         int worldCol = 0;
         int worldRow = 0;
 
-
         while (worldCol < WorldSettings.maxWorldCol && worldRow < WorldSettings.maxWorldRow) {
 
-            int tileNum = mapTileNum[worldCol][worldRow];
+            int tileNum = mapTileNum[worldRow][worldCol];
 
             int worldX = worldCol * WorldSettings.tileSize;
             int worldY = worldRow * WorldSettings.tileSize;
 
-
-            g2.drawImage(tile[tileNum].image, worldX, worldY, WorldSettings.tileSize, WorldSettings.tileSize, null);
-
+            g2.drawImage(tiles.get(tileNum).image(), worldX, worldY, WorldSettings.tileSize, WorldSettings.tileSize, null);
             worldCol++;
 
-            if(worldCol == WorldSettings.maxWorldCol) {
+            if (worldCol == WorldSettings.maxWorldCol) {
                 worldCol = 0;
                 worldRow++;
             }

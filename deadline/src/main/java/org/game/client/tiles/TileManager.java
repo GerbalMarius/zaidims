@@ -18,7 +18,7 @@ public class TileManager {
     public int[][] mapTileNum;
 
     public TileManager() {
-        mapTileNum = new int[WorldSettings.maxWorldRow][WorldSettings.maxWorldCol];
+        mapTileNum = new int[WorldSettings.MAX_WORLD_ROW][WorldSettings.MAX_WORLD_COL];
 
         loadAllTiles("res/tiles");
         loadMap("res/maps/world01.txt");
@@ -40,8 +40,8 @@ public class TileManager {
         try (var reader = Files.newBufferedReader(Paths.get(filePath))) {
             int row = 0;
             int col = 0;
-            int maxRows = WorldSettings.maxWorldRow;
-            int maxCols = WorldSettings.maxWorldCol;
+            int maxRows = WorldSettings.MAX_WORLD_ROW;
+            int maxCols = WorldSettings.MAX_WORLD_COL;
 
             for (int ch; (ch = reader.read()) != -1 && row < maxRows; ) {
                 char c = (char) ch;
@@ -62,21 +62,21 @@ public class TileManager {
         }
     }
 
-    public void draw(Graphics g2) {
+    public void draw(Graphics2D g2d) {
         int worldCol = 0;
         int worldRow = 0;
 
-        while (worldCol < WorldSettings.maxWorldCol && worldRow < WorldSettings.maxWorldRow) {
+        while (worldCol < WorldSettings.MAX_WORLD_COL && worldRow < WorldSettings.MAX_WORLD_ROW) {
 
             int tileNum = mapTileNum[worldRow][worldCol];
 
-            int worldX = worldCol * WorldSettings.tileSize;
-            int worldY = worldRow * WorldSettings.tileSize;
+            int worldX = worldCol * WorldSettings.TILE_SIZE;
+            int worldY = worldRow * WorldSettings.TILE_SIZE;
 
-            g2.drawImage(tiles.get(tileNum).image(), worldX, worldY, WorldSettings.tileSize, WorldSettings.tileSize, null);
+            g2d.drawImage(tiles.get(tileNum).image(), worldX, worldY, WorldSettings.TILE_SIZE, WorldSettings.TILE_SIZE, null);
             worldCol++;
 
-            if (worldCol == WorldSettings.maxWorldCol) {
+            if (worldCol == WorldSettings.MAX_WORLD_COL) {
                 worldCol = 0;
                 worldRow++;
             }

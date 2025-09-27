@@ -20,8 +20,8 @@ public final class Camera {
         this.deadzoneHalfW = deadzoneHalfW;
         this.deadzoneHalfH = deadzoneHalfH;
 
-        this.x = WorldSettings.tileSize * 23;
-        this.y = WorldSettings.tileSize * 21;
+        this.x = WorldSettings.TILE_SIZE * 23;
+        this.y = WorldSettings.TILE_SIZE * 21;
     }
 
     public void update(double targetX, double targetY) {

@@ -13,7 +13,7 @@ public final class GameState {
     private final Map<UUID, Player> players = new ConcurrentHashMap<>();
 
     public void addPlayer(UUID id, ClassType type, String name, int startingX, int startingY) {
-        players.putIfAbsent(id, new Player(type,name, startingX, startingY));
+        players.putIfAbsent(id, new Player(type, name, startingX, startingY));
     }
 
     public Player getPlayer(UUID id) {

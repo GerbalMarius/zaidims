@@ -108,7 +108,7 @@ public final class GamePanel extends JPanel implements Runnable {
         processNetworkMessages();
 
         if(currentPlayer != null) {
-            currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.worldWidth, WorldSettings.worldHeight);
+            currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
         }
     }
 
@@ -165,8 +165,6 @@ public final class GamePanel extends JPanel implements Runnable {
         g2d.translate(targetX, targetY);
 
         tileManager.draw(g2d);
-        g2d.setColor(Color.RED);
-        g2d.setFont(new Font("Cascadia Code", Font.BOLD, 12));
 
         for (var playerEntry : state.getPlayerEntries()) {
             Player playerData = playerEntry.getValue();
@@ -220,6 +218,6 @@ public final class GamePanel extends JPanel implements Runnable {
         if (player == null) {
             return;
         }
-        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getHeight(), getWidth(), WorldSettings.worldWidth, WorldSettings.worldHeight);
+        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getHeight(), getWidth(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
     }
 }

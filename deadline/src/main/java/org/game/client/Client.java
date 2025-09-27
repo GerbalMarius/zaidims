@@ -68,21 +68,16 @@ public class Client {
             chosenClass = selectedClass;
 
 
-            // čia galima paduoti į JoinMessage arba GameState
+            // cia galima paduoti i JoinMessage arba GameState
             System.out.println("Player name: " + playerName + ", Class: " + selectedClass);
         } else {
-            // jei paspaudė Cancel
+            // jei paspaude Cancel
             playerName = "Player " + clientId.toString().substring(0, 10);
         }
 
-
-//        String name = JOptionPane.showInputDialog(null, "Enter player name:", "Choose name", JOptionPane.PLAIN_MESSAGE);
-//        if (name != null && !name.trim().isEmpty()) playerName = name.trim();
-//        else playerName = "Player " + clientId.toString().substring(0, 10);
-
         //-----UI
         JFrame frame = new JFrame("Game");
-        gamePanel = new GamePanel(clientId, gameState, keyboardHandler, 1000, 1000);
+        gamePanel = new GamePanel(clientId, gameState, keyboardHandler);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(gamePanel);
         frame.setSize(600, 400);

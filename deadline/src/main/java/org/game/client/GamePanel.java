@@ -1,8 +1,10 @@
 package org.game.client;
 
+import lombok.Getter;
 import lombok.Setter;
 import org.game.client.entity.ClassType;
 import org.game.client.entity.Player;
+import org.game.client.tiles.TileManager;
 import org.game.message.JoinMessage;
 import org.game.message.LeaveMessage;
 import org.game.message.Message;
@@ -18,13 +20,18 @@ import java.util.function.BiConsumer;
 
 public class GamePanel extends JPanel implements Runnable {
     private static final int FPS = 60;
+
+    @Getter
     private final GameState state;
+
     private final KeyboardHandler keyboardHandler;
+
+    @Getter
     private final UUID clientId;
+
     private final Camera camera;
 
-    private final int worldWidth;
-    private final int worldHeight;
+
 
     @Setter
     private BiConsumer<Integer, Integer> moveCallback;
@@ -36,12 +43,28 @@ public class GamePanel extends JPanel implements Runnable {
     private long lastSendTime = 0;
     private Thread gameThread;
 
-    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, int worldWidth, int worldHeight) {
+    // screen settings
+    final int originalTileSize = 16; // 16x16 tile
+    final int scale = 4;
+
+    public final int tileSize = originalTileSize * scale; // 48x48 tile
+    public final int maxScreenCol = 16;
+    public final int maxScreenRow = 12;
+    public final int screenWidth = tileSize * maxScreenCol; // 768 pixels
+    public final int screenHeight = tileSize * maxScreenRow; // 576 pixels
+
+    // WORLD SETTINGS
+    public final int maxWorldCol = 50;
+    public final int maxWorldRow = 50;
+    public final int worldWidth = tileSize * maxWorldCol;
+    public final int worldHeight = tileSize * maxWorldRow;
+
+    TileManager tileM = new TileManager(this);
+
+    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
-        this.worldWidth = worldWidth;
-        this.worldHeight = worldHeight;
         this.camera = new Camera(0.12, 80, 50);
 
 
@@ -137,6 +160,8 @@ public class GamePanel extends JPanel implements Runnable {
         double targetY = getHeight() / 2.0 - camera.getY();
         g2d.translate(targetX, targetY);
 
+        tileM.draw(g2d);
+
         for (var playerEntry : state.getPlayerEntries()) {
             Player playerData = playerEntry.getValue();
 
@@ -156,6 +181,7 @@ public class GamePanel extends JPanel implements Runnable {
             playerData.draw(g2d, x, y, 48);
             g2d.drawString(name, x + 12, y + 60);
         }
+
         g2d.dispose();
     }
 

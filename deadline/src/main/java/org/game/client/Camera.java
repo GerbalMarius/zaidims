@@ -64,7 +64,7 @@ public final class Camera {
         double halfW = viewportW / 2.0;
         double halfH = viewportH / 2.0;
 
-        if (worldWidth <= viewportH){
+        if (worldWidth <= viewportW){
             x = worldWidth / 2.0;
         } else {
             x = Math.min(Math.max(x, halfW), worldWidth - halfW);

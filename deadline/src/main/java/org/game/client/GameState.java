@@ -1,5 +1,6 @@
 package org.game.client;
 
+import org.game.client.entity.ClassType;
 import org.game.client.entity.Player;
 
 import java.util.Map;
@@ -11,8 +12,8 @@ public final class GameState {
 
     private final Map<UUID, Player> players = new ConcurrentHashMap<>();
 
-    public void addPlayer(UUID id, String name, int startingX, int startingY) {
-        players.putIfAbsent(id, new Player(name, startingX, startingY));
+    public void addPlayer(UUID id, ClassType type, String name, int startingX, int startingY) {
+        players.putIfAbsent(id, new Player(type,name, startingX, startingY));
     }
 
     public Player getPlayer(UUID id) {

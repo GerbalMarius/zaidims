@@ -1,5 +1,6 @@
 package org.game.server;
 
+import org.game.client.entity.ClassType;
 import org.game.json.Json;
 import org.game.message.*;
 
@@ -136,9 +137,9 @@ public class Server {
         System.out.println("From " + from.getRemoteAddress() + ": " + message.toString());
 
         switch (message) {
-            case JoinMessage(UUID playerId, String playerName, int _, int _) -> {
+            case JoinMessage(UUID playerId, ClassType playerClass, String playerName, int _, int _) -> {
                 state.setId(playerId);
-
+                state.setPlayerClass(playerClass);
                 state.setName(playerName);
 
                 Collection<ClientState> states = clients.values();
@@ -153,12 +154,12 @@ public class Server {
 
                 for (ClientState other : states) {
                     if (other.getId() != null && state != other) {
-                        var join = new JoinMessage(other.getId(), other.getName(), other.getX(), other.getY());
+                        var join = new JoinMessage(other.getId(), other.getPlayerClass(), other.getName(), other.getX(), other.getY());
                         sendTo(from, json.toJson(join, labelPair(Message.JSON_LABEL, "join")));
                     }
                 }
 
-                JoinMessage join = new JoinMessage(state.getId(), state.getName(), state.getX(), state.getY());
+                JoinMessage join = new JoinMessage(state.getId(), state.getPlayerClass(), state.getName(), state.getX(), state.getY());
                 broadcast(json.toJson(join, labelPair(Message.JSON_LABEL, "join")));
             }
             case MoveMessage(UUID id, int dx, int dy) ->  {

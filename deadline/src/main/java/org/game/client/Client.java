@@ -1,5 +1,7 @@
 package org.game.client;
 
+import org.game.client.entity.ClassType;
+import org.game.client.entity.Player;
 import org.game.json.Json;
 import org.game.message.JoinMessage;
 import org.game.message.Message;
@@ -26,6 +28,7 @@ public class Client {
 
     private final UUID clientId =  UUID.randomUUID();
     private String playerName = "";
+    private ClassType chosenClass;
 
     private SocketChannel socketChannel;
     private Selector selector;
@@ -44,9 +47,38 @@ public class Client {
     }
 
     private void createClientGui(){
-        String name = JOptionPane.showInputDialog(null, "Enter player name:", "Choose name", JOptionPane.PLAIN_MESSAGE);
-        if (name != null && !name.trim().isEmpty()) playerName = name.trim();
-        else playerName = "Player " + clientId.toString().substring(0, 10);
+        ClassType[] classes = ClassType.values();
+        JComboBox<ClassType> classCombo = new JComboBox<>(classes);
+
+        JTextField nameField = new JTextField();
+        Object[] message = {
+                "Enter player name:", nameField,
+                "Select class:", classCombo
+        };
+
+        int option = JOptionPane.showConfirmDialog(null, message, "Choose name & class",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (option == JOptionPane.OK_OPTION) {
+            String name = nameField.getText();
+            if (name != null && !name.trim().isEmpty()) playerName = name.trim();
+            else playerName = "Player " + clientId.toString().substring(0, 10);
+
+            ClassType selectedClass = (ClassType) classCombo.getSelectedItem();
+            chosenClass = selectedClass;
+
+
+            // čia galima paduoti į JoinMessage arba GameState
+            System.out.println("Player name: " + playerName + ", Class: " + selectedClass);
+        } else {
+            // jei paspaudė Cancel
+            playerName = "Player " + clientId.toString().substring(0, 10);
+        }
+
+
+//        String name = JOptionPane.showInputDialog(null, "Enter player name:", "Choose name", JOptionPane.PLAIN_MESSAGE);
+//        if (name != null && !name.trim().isEmpty()) playerName = name.trim();
+//        else playerName = "Player " + clientId.toString().substring(0, 10);
 
         //-----UI
         JFrame frame = new JFrame("Game");
@@ -216,7 +248,7 @@ public class Client {
             key.interestOps(ops);
 
 
-            Message message = new JoinMessage(clientId, playerName);
+            Message message = new JoinMessage(clientId, chosenClass, playerName);
             sendLocalInput(json.toJson(message, labelPair(Message.JSON_LABEL, "join")));
         } else {
             key.cancel();

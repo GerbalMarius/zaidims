@@ -1,15 +1,15 @@
 package org.game.message;
 
-import org.game.json.Json;
+import org.game.client.entity.ClassType;
 
 import java.util.UUID;
 
-public record JoinMessage(UUID playerId, String playerName,
+public record JoinMessage(UUID playerId, ClassType playerClass, String playerName,
                           int startPosX, int startPosY) implements Message{
 
 
-    public JoinMessage(UUID playerId, String playerName) {
-        this(playerId, playerName, -1, -1);
+    public JoinMessage(UUID playerId, ClassType playerClass ,String playerName) {
+        this(playerId, playerClass, playerName, -1, -1);
     }
 
 }

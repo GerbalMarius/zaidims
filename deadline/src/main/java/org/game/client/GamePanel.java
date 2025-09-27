@@ -1,6 +1,7 @@
 package org.game.client;
 
 import lombok.Setter;
+import org.game.client.entity.ClassType;
 import org.game.client.entity.Player;
 import org.game.message.JoinMessage;
 import org.game.message.LeaveMessage;
@@ -132,17 +133,14 @@ public class GamePanel extends JPanel implements Runnable {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
 
-        double camX = camera.getX();
-        double camY = camera.getY();
-        double targetX = getWidth() / 2.0 - camX;
-        double targetY = getHeight() / 2.0 - camY;
+        double targetX = getWidth() / 2.0 - camera.getX();
+        double targetY = getHeight() / 2.0 - camera.getY();
         g2d.translate(targetX, targetY);
-
-        g2d.setColor(Color.BLUE);
-        int radius = 10;
 
         for (var playerEntry : state.getPlayerEntries()) {
             Player playerData = playerEntry.getValue();
+
+            playerData.updateDirectionByRender();
 
             int x, y;
             if (playerEntry.getKey().equals(clientId)) {
@@ -155,8 +153,8 @@ public class GamePanel extends JPanel implements Runnable {
 
             String name = playerData.getName();
 
-            g2d.fillOval(x - radius, y - radius, radius * 2, radius * 2);
-            g2d.drawString(name, x + radius + 2, y);
+            playerData.draw(g2d, x, y, 48);
+            g2d.drawString(name, x + 12, y + 60);
         }
         g2d.dispose();
     }
@@ -171,7 +169,7 @@ public class GamePanel extends JPanel implements Runnable {
         int maxMsgPerTick = 100;
         while (processed < maxMsgPerTick && (msg = incomingMessages.poll()) != null) {
             switch (msg) {
-                case JoinMessage(UUID playerId, String name, int x, int y) -> state.addPlayer(playerId, name, x, y);
+                case JoinMessage(UUID playerId, ClassType playerClass, String name, int x, int y) -> state.addPlayer(playerId, playerClass, name, x, y);
                 case LeaveMessage(UUID playerId) -> state.removePlayer(playerId);
                 case MoveMessage(UUID playerId, int x, int y) -> {
                     if (!playerId.equals(clientId)) {

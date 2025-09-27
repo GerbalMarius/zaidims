@@ -2,6 +2,7 @@ package org.game.server;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.game.client.entity.ClassType;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -19,6 +20,7 @@ final class ClientState {
 
     private UUID id;
     private String name;
+    private ClassType playerClass;
     private int x = 0;// server-owned position
     private  int y = 0;
 

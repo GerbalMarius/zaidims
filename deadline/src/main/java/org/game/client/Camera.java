@@ -1,6 +1,7 @@
 package org.game.client;
 
 import lombok.Getter;
+import org.game.server.WorldSettings;
 
 public final class Camera {
 
@@ -18,6 +19,9 @@ public final class Camera {
         this.lerpFactor = lerpFactor;
         this.deadzoneHalfW = deadzoneHalfW;
         this.deadzoneHalfH = deadzoneHalfH;
+
+        this.x = WorldSettings.tileSize * 23;
+        this.y = WorldSettings.tileSize * 21;
     }
 
     public void update(double targetX, double targetY) {
@@ -54,7 +58,7 @@ public final class Camera {
         }
     }
 
-    public void snapTo(double cx, double cy, int viewportH,  int viewportW, int worldWidth, int worldHeight) {
+    public void snapTo(double cx, double cy, int viewportW, int viewportH, int worldWidth, int worldHeight) {
         this.x = cx;
         this.y = cy;
         clamp(viewportW, viewportH, worldWidth, worldHeight);

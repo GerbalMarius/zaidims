@@ -164,7 +164,8 @@ public final class GamePanel extends JPanel implements Runnable {
         double targetY = getHeight() / 2.0 - camera.getY();
         g2d.translate(targetX, targetY);
 
-        tileManager.draw(g2d);
+        tileManager.draw(g2d, this.camera, getWidth(), getHeight());
+
 
         for (var playerEntry : state.getPlayerEntries()) {
             Player playerData = playerEntry.getValue();

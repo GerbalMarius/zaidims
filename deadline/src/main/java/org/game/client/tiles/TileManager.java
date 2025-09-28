@@ -1,6 +1,7 @@
 package org.game.client.tiles;
 
 import lombok.Getter;
+import org.game.client.Camera;
 import org.game.server.WorldSettings;
 
 import java.awt.*;
@@ -62,23 +63,40 @@ public class TileManager {
         }
     }
 
-    public void draw(Graphics2D g2d) {
-        int worldCol = 0;
-        int worldRow = 0;
+    public void draw(Graphics2D g2d, Camera camera, int viewportW, int viewportH) {
+        final int tileSize = WorldSettings.TILE_SIZE;
 
-        while (worldCol < WorldSettings.MAX_WORLD_COL && worldRow < WorldSettings.MAX_WORLD_ROW) {
 
-            int tileNum = mapTileNum[worldRow][worldCol];
+        double viewLeft = camera.getX() - viewportW / 2.0;
+        double viewTop =  camera.getY() - viewportH / 2.0;
+        double viewRight = camera.getX() + viewportW / 2.0;
+        double viewBottom = camera.getY() + viewportH / 2.0;
 
-            int worldX = worldCol * WorldSettings.TILE_SIZE;
-            int worldY = worldRow * WorldSettings.TILE_SIZE;
 
-            g2d.drawImage(tiles.get(tileNum).image(), worldX, worldY, WorldSettings.TILE_SIZE, WorldSettings.TILE_SIZE, null);
-            worldCol++;
+        int startCol = (int) Math.floor(viewLeft / tileSize);
+        int endCol   = (int) Math.floor(viewRight / tileSize);
+        int startRow = (int) Math.floor(viewTop / tileSize);
+        int endRow   = (int) Math.floor(viewBottom / tileSize);
 
-            if (worldCol == WorldSettings.MAX_WORLD_COL) {
-                worldCol = 0;
-                worldRow++;
+
+        startCol = Math.max(0, startCol - 1);
+        startRow = Math.max(0, startRow - 1);
+        endCol   = Math.min(WorldSettings.MAX_WORLD_COL - 1, endCol + 1);
+        endRow   = Math.min(WorldSettings.MAX_WORLD_ROW - 1, endRow + 1);
+
+
+        if (startCol > endCol || startRow > endRow) {
+            return;
+        }
+
+        // draw only the visible tiles
+        for (int row = startRow; row <= endRow; row++) {
+            int worldY = row * tileSize;
+            for (int col = startCol; col <= endCol; col++) {
+                int tileNum = mapTileNum[row][col];
+                int worldX = col * tileSize;
+
+                g2d.drawImage(tiles.get(tileNum).image(), worldX, worldY, tileSize, tileSize, null);
             }
         }
     }

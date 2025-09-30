@@ -11,7 +11,7 @@ import org.game.message.LeaveMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
 import org.game.server.WorldSettings;
-import org.game.utils.Drawer;
+import org.game.utils.GUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -184,7 +184,7 @@ public final class GamePanel extends JPanel implements Runnable {
             String name = playerData.getName();
 
             playerData.draw(g2d, x, y, 48);
-            Drawer.drawNameBox(g2d, name, x, y, 48);
+            GUI.drawNameBox(g2d, name, x, y, 48);
         }
 
         g2d.dispose();

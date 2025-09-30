@@ -5,8 +5,10 @@ import org.game.json.Json;
 import org.game.message.JoinMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
+import org.game.utils.GUI;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -15,8 +17,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.game.json.JsonLabelPair.labelPair;
@@ -46,7 +47,7 @@ public final class Client {
     }
 
     private void createClientGui() {
-        if (dialogCanceled()) return;
+        if (showCharacterWindow()) return;
 
         //-----UI
         JFrame frame = new JFrame("Game");
@@ -68,31 +69,41 @@ public final class Client {
         startNetworkThread();
     }
 
-    private boolean dialogCanceled() {
-        ClassType[] classes = ClassType.values();
-        JComboBox<ClassType> classCombo = new JComboBox<>(classes);
+    private boolean showCharacterWindow() {
+
+        JPanel classPanelWrapper = new JPanel(new BorderLayout());
+        classPanelWrapper.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        final ClassType[] selectedClass = {null};
+
+        JPanel panel = GUI.drawClassPanel(ct -> selectedClass[0] = ct);
+
+
+        classPanelWrapper.add(panel, BorderLayout.CENTER);
 
         JTextField nameField = new JTextField();
+        GUI.allowOnlyLetterOrDigit(nameField, 30);
+
         Object[] message = {
                 "Enter player name:", nameField,
-                "Select class:", classCombo
+                "Select class (click or press Enter/Space):", classPanelWrapper
         };
 
-        int option = JOptionPane.showConfirmDialog(null, message, "Choose name & class",
+        int option = JOptionPane.showConfirmDialog(
+                null, message, "Choose name & class",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (option == JOptionPane.OK_OPTION) {
             String name = nameField.getText();
-            if (name != null && !name.trim().isEmpty()) playerName = name.trim();
-            else playerName = "Player " + clientId.toString().substring(0, 10);
-
-            ClassType selectedClass = (ClassType) classCombo.getSelectedItem();
-            chosenClass = selectedClass;
-
-
-            IO.println("Player name: " + playerName + ", Class: " + selectedClass);
+            if (name != null && !name.isEmpty()) {
+                playerName = name.trim();
+            } else {
+                playerName = "Player " + clientId.toString().substring(0, 10);
+            }
+            chosenClass = selectedClass[0];
+            IO.println("Player name: " + playerName + ", Class: " + chosenClass);
         } else {
-            return true;
+            return true; // canceled
         }
         return false;
     }
@@ -181,7 +192,7 @@ public final class Client {
     private void doWrite(SelectionKey key) throws IOException {
         SocketChannel sc = (SocketChannel) key.channel();
         try {
-            for (;;) {
+            for (; ; ) {
                 ByteBuffer writeBuffer = pendingWrites.peek();
                 if (writeBuffer == null) break;
 
@@ -212,7 +223,7 @@ public final class Client {
             return;
         }
         readBuffer.flip();
-        for (;;) {
+        for (; ; ) {
             if (readBuffer.remaining() < 4) break;
             readBuffer.mark();
             int length = readBuffer.getInt();

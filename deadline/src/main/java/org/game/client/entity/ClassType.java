@@ -1,5 +1,8 @@
 package org.game.client.entity;
 
+import javax.swing.*;
+import java.awt.*;
+
 public enum ClassType {
     WARRIOR, WIZARD, ROGUE;
 
@@ -9,5 +12,25 @@ public enum ClassType {
             case ROGUE -> "rog";
             case WARRIOR -> "war";
         };
+    }
+
+    public ImageIcon getIcon() {
+       return switch (this) {
+            case WARRIOR -> scaleIcon(new ImageIcon("res/player/war_down_1.png"));
+            case ROGUE -> scaleIcon(new ImageIcon("res/player/rog_down_1.png"));
+            case WIZARD ->  scaleIcon(new ImageIcon("res/player/wiz_down_1.png"));
+        };
+    }
+
+    @Override
+    public String toString() {
+        String name = this.name();
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1).toLowerCase();
+    }
+
+    private ImageIcon scaleIcon(ImageIcon icon) {
+        Image img = icon.getImage();
+        Image scaled = img.getScaledInstance(60, 60, Image.SCALE_SMOOTH);
+        return new ImageIcon(scaled);
     }
 }

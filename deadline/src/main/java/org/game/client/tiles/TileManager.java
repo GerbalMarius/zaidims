@@ -21,7 +21,7 @@ public class TileManager {
         mapTileNum = new int[WorldSettings.maxWorldRow][WorldSettings.maxWorldCol];
 
         loadAllTiles("res/tiles");
-        loadMap("res/maps/world01.txt");
+        loadMap("res/maps/world02.txt");
     }
 
     public void loadAllTiles(String root) {

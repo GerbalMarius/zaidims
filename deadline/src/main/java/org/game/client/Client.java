@@ -1,13 +1,14 @@
 package org.game.client;
 
 import org.game.client.entity.ClassType;
-import org.game.client.entity.Player;
 import org.game.json.Json;
 import org.game.message.JoinMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
+import org.game.utils.GUI;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -16,17 +17,16 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.game.json.JsonLabelPair.labelPair;
 
-public class Client {
+public final class Client {
 
     private static final int PORT = 9000;
 
-    private final UUID clientId =  UUID.randomUUID();
+    private final UUID clientId = UUID.randomUUID();
     private String playerName = "";
     private ClassType chosenClass;
 
@@ -40,40 +40,14 @@ public class Client {
 
     private final GameState gameState = new GameState();
     private GamePanel gamePanel;
-    private final KeyboardHandler keyboardHandler =  new KeyboardHandler();
+    private final KeyboardHandler keyboardHandler = new KeyboardHandler();
 
     static void main() {
         new Client().createClientGui();
     }
 
-    private void createClientGui(){
-        ClassType[] classes = ClassType.values();
-        JComboBox<ClassType> classCombo = new JComboBox<>(classes);
-
-        JTextField nameField = new JTextField();
-        Object[] message = {
-                "Enter player name:", nameField,
-                "Select class:", classCombo
-        };
-
-        int option = JOptionPane.showConfirmDialog(null, message, "Choose name & class",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-        if (option == JOptionPane.OK_OPTION) {
-            String name = nameField.getText();
-            if (name != null && !name.trim().isEmpty()) playerName = name.trim();
-            else playerName = "Player " + clientId.toString().substring(0, 10);
-
-            ClassType selectedClass = (ClassType) classCombo.getSelectedItem();
-            chosenClass = selectedClass;
-
-
-            // cia galima paduoti i JoinMessage arba GameState
-            System.out.println("Player name: " + playerName + ", Class: " + selectedClass);
-        } else {
-            // jei paspaude Cancel
-            playerName = "Player " + clientId.toString().substring(0, 10);
-        }
+    private void createClientGui() {
+        if (showCharacterWindow()) return;
 
         //-----UI
         JFrame frame = new JFrame("Game");
@@ -95,19 +69,58 @@ public class Client {
         startNetworkThread();
     }
 
+    private boolean showCharacterWindow() {
+
+        JPanel classPanelWrapper = new JPanel(new BorderLayout());
+        classPanelWrapper.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        final ClassType[] selectedClass = {null};
+
+        JPanel panel = GUI.drawClassPanel(ct -> selectedClass[0] = ct);
+
+
+        classPanelWrapper.add(panel, BorderLayout.CENTER);
+
+        JTextField nameField = new JTextField();
+        GUI.allowOnlyLetterOrDigit(nameField, 30);
+
+        Object[] message = {
+                "Enter player name:", nameField,
+                "Select class (click or press Enter/Space):", classPanelWrapper
+        };
+
+        int option = JOptionPane.showConfirmDialog(
+                null, message, "Choose name & class",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (option == JOptionPane.OK_OPTION) {
+            String name = nameField.getText();
+            if (name != null && !name.isEmpty()) {
+                playerName = name.trim();
+            } else {
+                playerName = "Player " + clientId.toString().substring(0, 10);
+            }
+            chosenClass = selectedClass[0];
+            IO.println("Player name: " + playerName + ", Class: " + chosenClass);
+        } else {
+            return true; // canceled
+        }
+        return false;
+    }
+
 
     private void startNetworkThread() {
         var threadBuilder = Thread.ofVirtual()
                 .name("ClientThread : " + clientId);
 
 
-            threadBuilder.start(() -> {
-                try {
-                    connectToServer();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+        threadBuilder.start(() -> {
+            try {
+                connectToServer();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void connectToServer() throws InterruptedException {
@@ -123,7 +136,7 @@ public class Client {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     selector.select(500);
-                } catch (ClosedSelectorException cse){
+                } catch (ClosedSelectorException cse) {
                     break;
                 }
                 var selectedKeys = selector.selectedKeys().iterator();
@@ -134,11 +147,9 @@ public class Client {
 
                     if (key.isConnectable()) {
                         finishConnect(key);
-                    }
-                   else if (key.isReadable()) {
+                    } else if (key.isReadable()) {
                         doRead(key);
-                    }
-                   else if (key.isWritable()) {
+                    } else if (key.isWritable()) {
                         doWrite(key);
                     }
                 }
@@ -149,12 +160,11 @@ public class Client {
             }
 
         } catch (IOException e) {
-            System.err.println("Failed to connect to server on port : " +  PORT + " " + " connection refused");
+            System.err.println("Failed to connect to server on port : " + PORT + " " + " connection refused");
             Thread.sleep(600);
             //try to connect again
             connectToServer();
-        }
-        finally {
+        } finally {
             try {
                 if (socketChannel != null) socketChannel.close();
                 if (selector != null) selector.close();
@@ -182,7 +192,7 @@ public class Client {
     private void doWrite(SelectionKey key) throws IOException {
         SocketChannel sc = (SocketChannel) key.channel();
         try {
-            for (;;) {
+            for (; ; ) {
                 ByteBuffer writeBuffer = pendingWrites.peek();
                 if (writeBuffer == null) break;
 
@@ -203,6 +213,7 @@ public class Client {
             key.interestOps(ops);
         }
     }
+
     private void doRead(SelectionKey key) throws IOException {
         SocketChannel sc = (SocketChannel) key.channel();
         int read = sc.read(readBuffer);
@@ -212,7 +223,7 @@ public class Client {
             return;
         }
         readBuffer.flip();
-        for(;;) {
+        for (; ; ) {
             if (readBuffer.remaining() < 4) break;
             readBuffer.mark();
             int length = readBuffer.getInt();
@@ -230,11 +241,10 @@ public class Client {
     }
 
 
-
     private void finishConnect(SelectionKey key) throws IOException {
         SocketChannel sc = (SocketChannel) key.channel();
         if (sc.finishConnect()) {
-            System.out.println("Connected to server");
+            IO.println("Connected to server");
 
             int ops = SelectionKey.OP_READ;
             if (!pendingWrites.isEmpty()) {

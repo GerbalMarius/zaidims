@@ -11,7 +11,7 @@ import org.game.message.LeaveMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
 import org.game.server.WorldSettings;
-import org.game.utils.Drawer;
+import org.game.utils.GUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,7 +108,7 @@ public final class GamePanel extends JPanel implements Runnable {
         processNetworkMessages();
 
         if(currentPlayer != null) {
-            currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.worldWidth, WorldSettings.worldHeight);
+            currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
         }
     }
 
@@ -164,9 +164,8 @@ public final class GamePanel extends JPanel implements Runnable {
         double targetY = getHeight() / 2.0 - camera.getY();
         g2d.translate(targetX, targetY);
 
-        tileManager.draw(g2d);
-        g2d.setColor(Color.RED);
-        g2d.setFont(new Font("Cascadia Code", Font.BOLD, 12));
+        tileManager.draw(g2d, this.camera, getWidth(), getHeight());
+
 
         for (var playerEntry : state.getPlayerEntries()) {
             Player playerData = playerEntry.getValue();
@@ -185,7 +184,7 @@ public final class GamePanel extends JPanel implements Runnable {
             String name = playerData.getName();
 
             playerData.draw(g2d, x, y, 48);
-            Drawer.drawNameBox(g2d, name, x, y, 48);
+            GUI.drawNameBox(g2d, name, x, y, 48);
         }
 
         g2d.dispose();
@@ -220,6 +219,6 @@ public final class GamePanel extends JPanel implements Runnable {
         if (player == null) {
             return;
         }
-        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getHeight(), getWidth(), WorldSettings.worldWidth, WorldSettings.worldHeight);
+        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getHeight(), getWidth(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
     }
 }

@@ -22,7 +22,7 @@ public final class CollisionChecker {
         int entityTopWorldY = e.getGlobalY() + e.getHitbox().y;
         int entityBottomWorldY = e.getGlobalY() + e.getHitbox().y + e.getHitbox().height;
 
-        int tileSize = WorldSettings.tileSize;
+        int tileSize = WorldSettings.TILE_SIZE;
 
         int entityLeftCol = entityLeftWorldX / tileSize;
         int entityRightCol = entityRightWorldX / tileSize;

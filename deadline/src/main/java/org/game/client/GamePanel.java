@@ -164,18 +164,18 @@ public final class GamePanel extends JPanel implements Runnable {
         Map<Long, Enemy> enemies = state.getEnemies();
 
         redrawPlayers(players, g2d);
-        redrawEnemies(g2d);
+        redrawEnemies(players, enemies, g2d);
 
         g2d.dispose();
     }
 
-    private void redrawEnemies(Graphics2D g2d) {
+    private void redrawEnemies(Map<UUID, Player> players, Map<Long, Enemy> enemies, Graphics2D g2d) {
         final  int tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
         for (var enemyEntry : state.getEnemiesEntries()) {
             Enemy enemy = enemyEntry.getValue();
             int enemyX = enemy.getRenderX();
             int enemyY = enemy.getRenderY();
-
+            enemy.updateAI(players.values(), enemies, cChecker);
             enemy.updateDirectionByRender();
             enemy.draw(g2d, enemyX, enemyY, tileSize * enemy.getScale());
         }

@@ -1,19 +1,19 @@
-package org.game.client;
+package org.game.server;
 
 import org.game.entity.Entity;
 import org.game.tiles.Tile;
 import org.game.tiles.TileManager;
-import org.game.server.WorldSettings;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
-public final class CollisionChecker {
+public final class CollisionCheckerServer {
 
-    private final GamePanel gp;
+    private final TileManager tileManager;
 
-    public CollisionChecker(GamePanel gp) {
-        this.gp = gp;
+    public CollisionCheckerServer(TileManager tileManager) {
+        this.tileManager = tileManager;
     }
 
     public void checkTile(Entity e) {
@@ -27,9 +27,8 @@ public final class CollisionChecker {
 
         int entityLeftCol = entityLeftWorldX / tileSize;
         int entityRightCol = entityRightWorldX / tileSize;
-        int entityTopRow =  entityTopWorldY / tileSize;
+        int entityTopRow = entityTopWorldY / tileSize;
         int entityBottomRow = entityBottomWorldY / tileSize;
-
 
         switch (e.getDirection()) {
             case UP ->  {
@@ -42,7 +41,7 @@ public final class CollisionChecker {
             }
             case DOWN ->  {
                 entityBottomRow = (entityBottomWorldY + e.getSpeed()) / tileSize;
-                checkCollision(e, entityBottomRow, entityLeftCol, entityBottomRow, entityLeftCol);
+                checkCollision(e, entityBottomRow, entityLeftCol, entityBottomRow, entityRightCol);
             }
             case RIGHT -> {
                 entityRightCol = (entityRightWorldX + e.getSpeed()) / tileSize;
@@ -52,19 +51,38 @@ public final class CollisionChecker {
     }
 
     private void checkCollision(Entity e, int row1, int col1, int row2, int col2) {
-        final TileManager tileManager = gp.getTileManager();
         final List<Tile> tiles = tileManager.getTiles();
 
-        int tileNum1, tileNum2;
-        tileNum1 =  tileManager.mapTileNum[row1][col1];
-        tileNum2 = tileManager.mapTileNum[row2][col2];
+        int tileNum1 = tileManager.mapTileNum[row1][col1];
+        int tileNum2 = tileManager.mapTileNum[row2][col2];
 
-        if (tiles.get(tileNum1).hasCollision() || tiles.get(tileNum2).hasCollision()) {
-            e.setCollisionOn(true);
-        }
+        e.setCollisionOn(tiles.get(tileNum1).hasCollision() || tiles.get(tileNum2).hasCollision());
     }
 
+    public void checkEntity(Entity e, Collection<? extends Entity> others) {
+        Rectangle futureHitbox = new Rectangle(
+                e.getGlobalX() + e.getHitbox().x,
+                e.getGlobalY() + e.getHitbox().y,
+                e.getHitbox().width,
+                e.getHitbox().height
+        );
+
+        for (Entity other : others) {
+            if (other == e) continue;
+
+            Rectangle otherHitbox = new Rectangle(
+                    other.getGlobalX() + other.getHitbox().x,
+                    other.getGlobalY() + other.getHitbox().y,
+                    other.getHitbox().width,
+                    other.getHitbox().height
+            );
+
+            if (futureHitbox.intersects(otherHitbox)) {
+                e.setCollisionOn(true);
+                return;
+            }
+        }
+
+        e.setCollisionOn(false);
+    }
 }
-
-
-

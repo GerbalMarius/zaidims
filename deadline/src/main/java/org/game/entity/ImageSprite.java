@@ -1,4 +1,4 @@
-package org.game.client.entity;
+package org.game.entity;
 
 import java.awt.image.BufferedImage;
 

@@ -2,7 +2,7 @@ package org.game.utils;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.game.client.entity.ClassType;
+import org.game.entity.ClassType;
 
 import javax.swing.*;
 import javax.swing.border.Border;

@@ -1,11 +1,11 @@
-package org.game.client.entity;
+package org.game.entity;
 
 import lombok.Data;
 
 import java.awt.*;
 
 @Data
-public sealed abstract class Entity permits Player {
+public sealed abstract class Entity permits Player, Enemy {
 
     private static final long INTERP_MS = 100;
     private static final int DEFAULT_SPEED = 5;
@@ -14,7 +14,11 @@ public sealed abstract class Entity permits Player {
     protected int prevX, prevY;
     protected int targetX, targetY;
 
+    protected int scale;
+
     protected int speed;
+    protected int hitPoints;
+    protected int attack;
 
     protected ImageSprite[] movementFrames;
     protected FramePosition direction;

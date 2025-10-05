@@ -1,8 +1,8 @@
 package org.game.client;
 
-import org.game.client.entity.Entity;
-import org.game.client.tiles.Tile;
-import org.game.client.tiles.TileManager;
+import org.game.entity.Entity;
+import org.game.tiles.Tile;
+import org.game.tiles.TileManager;
 import org.game.server.WorldSettings;
 
 import java.util.List;

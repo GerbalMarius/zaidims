@@ -1,4 +1,4 @@
-package org.game.client.entity;
+package org.game.entity;
 
 import lombok.Getter;
 import org.game.client.Camera;
@@ -8,7 +8,7 @@ import java.awt.image.BufferedImage;
 import java.text.MessageFormat;
 import java.util.Objects;
 
-import static org.game.client.entity.ImageSprite.*;
+import static org.game.entity.ImageSprite.*;
 import static org.game.utils.ByteFiles.loadImage;
 
 
@@ -33,7 +33,8 @@ public final class Player extends Entity {
         this.lastRenderX = getRenderX();
         this.lastRenderY = getRenderY();
 
-        this.hitbox = new Rectangle(8, 16, 32, 32);
+        this.scale = 3;
+        this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
     }
 
     private void loadPlayerSprite() {

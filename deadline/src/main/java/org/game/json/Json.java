@@ -5,10 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import org.game.message.JoinMessage;
-import org.game.message.LeaveMessage;
-import org.game.message.Message;
-import org.game.message.MoveMessage;
+import org.game.message.*;
 
 public final class Json {
     private final Gson gson;
@@ -27,8 +24,13 @@ public final class Json {
         return RuntimeTypeAdapterFactory.of(Message.class, Message.JSON_LABEL)
                 .registerSubtype(JoinMessage.class, "join")
                 .registerSubtype(LeaveMessage.class, "leave")
-                .registerSubtype(MoveMessage.class, "move");
+                .registerSubtype(MoveMessage.class, "move")
+                .registerSubtype(EnemyMoveMessage.class, "enemyMove")
+                .registerSubtype(EnemySpawnMessage.class, "enemySpawn")
+                .registerSubtype(EnemyRemoveMessage.class, "enemyRemove");
+
     }
+
 
     public <T, V> String toJson(T item, JsonLabelPair<V> prop1) {
         JsonObject jsonObj = gson.toJsonTree(item).getAsJsonObject();

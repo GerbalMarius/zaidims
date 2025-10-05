@@ -1,4 +1,4 @@
-package org.game.client.tiles;
+package org.game.tiles;
 
 import java.awt.image.BufferedImage;
 

@@ -1,6 +1,6 @@
 package org.game.message;
 
-import org.game.client.entity.ClassType;
+import org.game.entity.ClassType;
 
 import java.util.UUID;
 

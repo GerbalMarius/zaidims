@@ -1,8 +1,14 @@
 package org.game.entity;
 
 import lombok.Data;
+import org.game.utils.ByteFiles;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.text.MessageFormat;
+
+import static org.game.entity.ImageSprite.*;
+import static org.game.entity.ImageSprite.rightSprite;
 
 @Data
 public sealed abstract class Entity permits Player, Enemy {
@@ -13,6 +19,7 @@ public sealed abstract class Entity permits Player, Enemy {
     protected int globalX, globalY;
     protected int prevX, prevY;
     protected int targetX, targetY;
+    protected int lastRenderX,  lastRenderY;
 
     protected int scale;
 
@@ -88,6 +95,81 @@ public sealed abstract class Entity permits Player, Enemy {
         return Math.min(1.0, (double)dt / INTERP_MS);
     }
 
+    protected void loadSprite(String prefix, String source) {
+
+        ImageSprite[] movementFrames = {
+
+                upSprite(loadImage(source, prefix, "up", 1), loadImage(source, prefix, "up", 2)),
+
+                leftSprite(loadImage(source, prefix, "left", 1), loadImage(source, prefix, "left", 2)),
+
+                downSprite(loadImage(source, prefix, "down", 1), loadImage(source, prefix, "down", 2)),
+
+                rightSprite(loadImage(source, prefix, "right", 1), loadImage(source, prefix, "right", 2))
+        };
+
+        copyFrames4d(movementFrames);
+
+    }
+
+    private BufferedImage loadImage(String source, String prefix, String direction, int frame) {
+        return ByteFiles.loadImage(MessageFormat.format("res/{0}/{1}_{2}_{3}.png", source, prefix, direction, frame));
+    }
+
+    public void draw(Graphics2D g2, int x, int y, int tileSize) {
+        BufferedImage image = switch (direction) {
+            case UP -> getImageSprite(FramePosition.UP);
+            case LEFT -> getImageSprite(FramePosition.LEFT);
+            case DOWN -> getImageSprite(FramePosition.DOWN);
+            case RIGHT -> getImageSprite(FramePosition.RIGHT);
+        };
+
+        g2.drawImage(image, x, y, tileSize, tileSize, null);
+    }
+
+    private BufferedImage getImageSprite(FramePosition framePosition) {
+        if (spriteNum % 2 != 0) {
+            return movementFrames[framePosition.ordinal()].firstFrame();
+        }
+        return movementFrames[framePosition.ordinal()].secondFrame();
+    }
+
+    public void updateDirectionByRender() {
+        int dx = getRenderX() - lastRenderX;
+        int dy = getRenderY() - lastRenderY;
+
+        if (dx != 0 || dy != 0) {
+            changeDirection(dx, dy);
+            spriteCounter++;
+            updateSprite();
+        }
+
+        lastRenderX = getRenderX();
+        lastRenderY = getRenderY();
+    }
+
+    private void changeDirection(int dx, int dy) {
+        if (dx < 0) {
+            direction = FramePosition.LEFT;
+        }
+        else if (dx > 0) {
+            direction = FramePosition.RIGHT;
+        }
+        else if (dy < 0) {
+            direction = FramePosition.UP;
+        }
+        else {
+            direction = FramePosition.DOWN;
+        }
+    }
+
+    private void updateSprite() {
+        if (spriteCounter > 10) {
+            spriteNum = (spriteNum + 1) % 2;
+            spriteCounter = 0;
+        }
+    }
+
     protected void copyFrames4d(ImageSprite[] frames) {
         int arraySize = 4;
         this.movementFrames = new ImageSprite[arraySize];
@@ -96,4 +178,6 @@ public sealed abstract class Entity permits Player, Enemy {
         }
         System.arraycopy(frames, 0, this.movementFrames, 0, arraySize);
     }
+
+
 }

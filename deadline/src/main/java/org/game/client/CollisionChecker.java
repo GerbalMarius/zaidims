@@ -5,6 +5,8 @@ import org.game.tiles.Tile;
 import org.game.tiles.TileManager;
 import org.game.server.WorldSettings;
 
+import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 public final class CollisionChecker {
@@ -49,6 +51,7 @@ public final class CollisionChecker {
             }
         }
     }
+
     private void checkCollision(Entity e, int row1, int col1, int row2, int col2) {
         final TileManager tileManager = gp.getTileManager();
         final List<Tile> tiles = tileManager.getTiles();
@@ -61,7 +64,35 @@ public final class CollisionChecker {
             e.setCollisionOn(true);
         }
     }
+
+    public void checkEntity(Entity e, Collection<? extends Entity> others) {
+        Rectangle futureHitbox = new Rectangle(
+                e.getGlobalX() + e.getHitbox().x,
+                e.getGlobalY() + e.getHitbox().y,
+                e.getHitbox().width,
+                e.getHitbox().height
+        );
+
+        for (Entity other : others) {
+            if (other == e) continue;
+
+            Rectangle otherHitbox = new Rectangle(
+                    other.getGlobalX() + other.getHitbox().x,
+                    other.getGlobalY() + other.getHitbox().y,
+                    other.getHitbox().width,
+                    other.getHitbox().height
+            );
+
+            if (futureHitbox.intersects(otherHitbox)) {
+                e.setCollisionOn(true);
+                return;
+            }
+        }
+
+        e.setCollisionOn(false);
     }
+
+}
 
 
 

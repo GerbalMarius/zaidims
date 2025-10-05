@@ -1,4 +1,4 @@
 package org.game.message;
 
-public record EnemyMoveMessage(int enemyId, int newX, int newY) implements Message {
+public record EnemyMoveMessage(long enemyId, int newX, int newY) implements Message {
 }

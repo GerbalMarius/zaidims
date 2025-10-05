@@ -5,7 +5,7 @@ public enum EnemyType {
     SKELETON,
     GOBLIN;
 
-    public String getClassPrefix() {
+    public String getTypePrefix() {
         return switch (this) {
             case ZOMBIE -> "zom";
             case SKELETON -> "ske";

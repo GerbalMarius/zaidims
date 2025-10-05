@@ -31,7 +31,7 @@ public final class CollisionCheckerServer {
         int entityBottomRow = entityBottomWorldY / tileSize;
 
         switch (e.getDirection()) {
-            case UP ->  {
+            case UP -> {
                 entityTopRow = (entityTopWorldY - e.getSpeed()) / tileSize;
                 checkCollision(e, entityTopRow, entityLeftCol, entityTopRow, entityRightCol);
             }
@@ -39,7 +39,7 @@ public final class CollisionCheckerServer {
                 entityLeftCol = (entityLeftWorldX - e.getSpeed()) / tileSize;
                 checkCollision(e, entityTopRow, entityLeftCol, entityBottomRow, entityLeftCol);
             }
-            case DOWN ->  {
+            case DOWN -> {
                 entityBottomRow = (entityBottomWorldY + e.getSpeed()) / tileSize;
                 checkCollision(e, entityBottomRow, entityLeftCol, entityBottomRow, entityRightCol);
             }
@@ -85,4 +85,5 @@ public final class CollisionCheckerServer {
 
         e.setCollisionOn(false);
     }
+}
 

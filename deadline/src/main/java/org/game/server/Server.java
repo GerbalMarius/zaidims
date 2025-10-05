@@ -26,7 +26,9 @@ public final class Server {
     private Selector selector;
     private ServerSocketChannel serverChannel;
 
+
     private final Map<SocketChannel, ClientState> clients = new LinkedHashMap<>();
+
     private final Map<Long, Enemy> enemies = new HashMap<>();
 
      static long enemyId = 0;

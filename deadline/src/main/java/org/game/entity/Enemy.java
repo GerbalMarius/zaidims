@@ -5,16 +5,10 @@ import lombok.Setter;
 import org.game.client.CollisionChecker;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static org.game.entity.ImageSprite.*;
-import static org.game.entity.ImageSprite.rightSprite;
-import static org.game.utils.ByteFiles.loadImage;
 
 @Getter
 @Setter
@@ -33,7 +27,7 @@ public final class Enemy extends Entity {
         this.type = type;
         this.size = size;
 
-        loadEnemySprite();
+        loadSprite(type.getTypePrefix(), "enemy");
         configureStats();
 
         this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
@@ -65,40 +59,7 @@ public final class Enemy extends Entity {
         }
     }
 
-    private void loadEnemySprite() {
-        String prefix = type.getClassPrefix();
 
-        ImageSprite[] movementFrames = {
-                upSprite(loadEnemyImage(prefix, "up", 1), loadEnemyImage(prefix, "up", 2)),
-                leftSprite(loadEnemyImage(prefix, "left", 1), loadEnemyImage(prefix, "left", 2)),
-                downSprite(loadEnemyImage(prefix, "down", 1), loadEnemyImage(prefix, "down", 2)),
-                rightSprite(loadEnemyImage(prefix, "right", 1), loadEnemyImage(prefix, "right", 2))
-        };
-        super.copyFrames4d(movementFrames);
-
-    }
-
-    private BufferedImage loadEnemyImage(String prefix, String direction, int frame) {
-        return loadImage(MessageFormat.format("res/enemy/{0}_{1}_{2}.png", prefix, direction, frame));
-    }
-
-    public void draw(Graphics2D g2, int x, int y, int tileSize) {
-        BufferedImage image = switch (direction) {
-            case UP -> getImageSprite(FramePosition.UP);
-            case LEFT -> getImageSprite(FramePosition.LEFT);
-            case DOWN -> getImageSprite(FramePosition.DOWN);
-            case RIGHT -> getImageSprite(FramePosition.RIGHT);
-        };
-
-        g2.drawImage(image, x, y, tileSize, tileSize, null);
-    }
-
-    private BufferedImage getImageSprite(FramePosition framePosition) {
-        if (spriteNum % 2 != 0) {
-            return movementFrames[framePosition.ordinal()].firstFrame();
-        }
-        return movementFrames[framePosition.ordinal()].secondFrame();
-    }
 
     public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
         Player target = getClosestPlayer(players);
@@ -166,42 +127,6 @@ public final class Enemy extends Entity {
         }
 
         return closest;
-    }
-
-    public void updateDirectionAndSprite() {
-        int dx = getRenderX() - lastRenderX;
-        int dy = getRenderY() - lastRenderY;
-
-        if (dx != 0 || dy != 0) {
-            changeDirection(dx, dy);
-            spriteCounter++;
-            updateSprite();
-        }
-
-        lastRenderX = getRenderX();
-        lastRenderY = getRenderY();
-    }
-
-    private void changeDirection(int dx, int dy) {
-        if (dx < 0) {
-            direction = FramePosition.LEFT;
-        }
-        else if (dx > 0) {
-            direction = FramePosition.RIGHT;
-        }
-        else if (dy < 0) {
-            direction = FramePosition.UP;
-        }
-        else {
-            direction = FramePosition.DOWN;
-        }
-    }
-
-    private void updateSprite() {
-        if (spriteCounter > 10) {
-            spriteNum = (spriteNum + 1) % 2;
-            spriteCounter = 0;
-        }
     }
 
 }

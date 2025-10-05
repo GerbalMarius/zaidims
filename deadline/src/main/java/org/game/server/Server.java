@@ -332,11 +332,11 @@ public final class Server {
             long nextId = enemyId++;
 
             EnemySpawnMessage spawnMessage = new EnemySpawnMessage(
-                        nextId,
-                        enemy.getType(),
-                        enemy.getSize(),
-                        startX,
-                        startY
+                    nextId,
+                    enemy.getType(),
+                    enemy.getSize(),
+                    startX,
+                    startY
             );
             server.enemies.put(nextId, enemy);
 

@@ -61,7 +61,7 @@ public final class Enemy extends Entity {
 
 
 
-    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
+    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionCheckerServer checker) {
         Player target = getClosestPlayer(players);
         if (target == null) return;
 
@@ -89,7 +89,7 @@ public final class Enemy extends Entity {
     }
 
 
-    private void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionChecker checker) {
+    private void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionCheckerServer checker) {
         // store original position
         int origX = this.getGlobalX();
         int origY = this.getGlobalY();

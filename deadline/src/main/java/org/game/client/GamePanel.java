@@ -167,6 +167,10 @@ public final class GamePanel extends JPanel implements Runnable {
         redrawEnemies(players, enemies, g2d);
 
         g2d.dispose();
+
+        Graphics2D uiGraphics = (Graphics2D) g.create();
+        GlobalUI.getInstance().drawCounter(uiGraphics, getWidth());
+        uiGraphics.dispose();
     }
 
     private void redrawEnemies(Map<UUID, Player> players, Map<Long, Enemy> enemies, Graphics2D g2d) {

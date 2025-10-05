@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Getter
 @Setter
-final class ClientState {
+public final class ClientState {
 
     private  final ByteBuffer readBuffer = ByteBuffer.allocate(8 * 1024);
     private boolean isReading = false;

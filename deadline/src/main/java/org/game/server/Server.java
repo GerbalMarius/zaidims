@@ -1,10 +1,13 @@
 package org.game.server;
 
+import lombok.Getter;
 import org.game.entity.ClassType;
 import org.game.entity.Enemy;
 import org.game.json.Json;
 import org.game.message.*;
 import org.game.server.spawner.EnemySpawnManager;
+import org.game.server.spawner.EnemyUpdateManager;
+import org.game.tiles.TileManager;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,6 +18,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.game.json.JsonLabelPair.labelPair;
@@ -27,14 +31,20 @@ public final class Server {
     private ServerSocketChannel serverChannel;
 
 
+    @Getter
     private final Map<SocketChannel, ClientState> clients = new LinkedHashMap<>();
 
-    private final Map<Long, Enemy> enemies = new HashMap<>();
+    @Getter
+    private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
 
-     static long enemyId = 0;
-     static boolean firstPlayer = true;
+    static long enemyId = 0;
+    static boolean firstPlayer = true;
 
-     private  final  EnemySpawnManager spawnManager = new EnemySpawnManager(this);
+    private  final  EnemySpawnManager spawnManager = new EnemySpawnManager(this);
+    private final EnemyUpdateManager updateManager = new EnemyUpdateManager(this);
+
+    @Getter
+    private final CollisionCheckerServer enemyChecker = new CollisionCheckerServer(new TileManager());
 
 
     private final Json json = new Json();
@@ -56,7 +66,7 @@ public final class Server {
 
         for (; ; ) {
 
-            if (selector.select() == 0) {
+            if (selector.select(250) == 0) {
                 continue;
             }
             var keys = selector.selectedKeys().iterator();
@@ -89,9 +99,11 @@ public final class Server {
 
         if (firstPlayer) {
             spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
+            updateManager.startUpdating();
             firstPlayer = false;
             return;
         }
+
 
         for (var enemieEntry : enemies.entrySet()) {
             long id = enemieEntry.getKey();
@@ -214,6 +226,7 @@ public final class Server {
         if (key != null && key.isValid()) {
             key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
         }
+        selector.wakeup();
     }
 
     private void closeKey(SelectionKey key) {
@@ -264,6 +277,9 @@ public final class Server {
                 key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
             }
         }
+
+        selector.wakeup();
+
     }
 
     public final static class ServerActions {
@@ -327,5 +343,12 @@ public final class Server {
             server.broadcast(server.json.toJson(spawnMessage, labelPair(Message.JSON_LABEL, "enemySpawn")));
 
         }
+
+
+        public static void broadcastEnemyMove(long enemyId, int x, int y, Server server) {
+            EnemyMoveMessage moveMsg = new EnemyMoveMessage(enemyId, x, y);
+            server.broadcast(server.json.toJson(moveMsg, labelPair(Message.JSON_LABEL, "enemyMove")));
+        }
+
     }
 }

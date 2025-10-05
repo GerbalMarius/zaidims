@@ -2,7 +2,7 @@ package org.game.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.game.client.CollisionChecker;
+import org.game.server.CollisionCheckerServer;
 
 import java.awt.*;
 import java.util.Collection;

@@ -2,14 +2,9 @@ package org.game.client;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.game.client.entity.ClassType;
-import org.game.client.entity.FramePosition;
-import org.game.client.entity.Player;
-import org.game.client.tiles.TileManager;
-import org.game.message.JoinMessage;
-import org.game.message.LeaveMessage;
-import org.game.message.Message;
-import org.game.message.MoveMessage;
+import org.game.entity.*;
+import org.game.tiles.TileManager;
+import org.game.message.*;
 import org.game.server.WorldSettings;
 import org.game.utils.GUI;
 
@@ -55,11 +50,9 @@ public final class GamePanel extends JPanel implements Runnable {
         this.camera = new Camera(0.12, 80, 50);
         this.tileManager = new TileManager();
 
-
         setBackground(Color.WHITE);
         setFocusable(true);
         addKeyListener(this.keyboardHandler);
-
 
         initialSnap(state.getPlayer(clientId));
     }
@@ -183,9 +176,21 @@ public final class GamePanel extends JPanel implements Runnable {
 
             String name = playerData.getName();
 
-            playerData.draw(g2d, x, y, 48);
-            GUI.drawNameBox(g2d, name, x, y, 48);
+            final int tileSize = 16;
+            playerData.draw(g2d, x, y, tileSize * playerData.getScale());
+            GUI.drawNameBox(g2d, name, x, y, tileSize * playerData.getScale());
+
+            for (var enemyEntry : state.getEnemiesEntries()) {
+                Enemy enemy = enemyEntry.getValue();
+                int enemyX = enemy.getRenderX();
+                int enemyY = enemy.getRenderY();
+                enemy.updateAI(playerData, cChecker);
+                enemy.updateDirectionAndSprite();
+                enemy.draw(g2d, enemyX, enemyY, tileSize * enemy.getScale());
+            }
         }
+
+
 
         g2d.dispose();
     }
@@ -209,6 +214,15 @@ public final class GamePanel extends JPanel implements Runnable {
                             player.updateFromServer(x, y);
                         }
                     }
+                }
+                case EnemySpawnMessage(int enemyId, EnemyType type, EnemySize size, int newX, int newY)  -> {
+                    state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
+                }
+                case EnemyRemoveMessage(int enemyId)  -> {
+                    state.removeEnemy(enemyId);
+                }
+                case EnemyMoveMessage(int enemyId, int newX, int newY)  -> {
+                    state.updateEnemyPosition(enemyId,  newX, newY);
                 }
             }
             processed++;

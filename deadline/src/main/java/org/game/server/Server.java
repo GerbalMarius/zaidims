@@ -1,8 +1,11 @@
 package org.game.server;
 
-import org.game.client.entity.ClassType;
+import org.game.entity.ClassType;
+import org.game.entity.Enemy;
 import org.game.json.Json;
 import org.game.message.*;
+import org.game.server.spawner.EnemySpawnManager;
+import org.game.server.spawner.EnemySpawner;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -12,10 +15,10 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.game.json.JsonLabelPair.labelPair;
 import static org.game.server.Server.ServerActions.*;
@@ -27,6 +30,12 @@ public final class Server {
     private ServerSocketChannel serverChannel;
 
     private final Map<SocketChannel, ClientState> clients = new LinkedHashMap<>();
+
+     static int enemyId = 0;
+     static int spawnCount = 0;
+
+     private  final  EnemySpawnManager spawnManager = new EnemySpawnManager(this);
+
 
     private final Json json = new Json();
 
@@ -77,7 +86,11 @@ public final class Server {
         sk.attach(cs);
         clients.put(sc, cs);
         IO.println("Accepted  from : " + sc.getRemoteAddress());
-        IO.println(sc.hashCode());
+
+        if (spawnCount == 0) {
+            spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
+        }
+        spawnCount++;
     }
 
     private void read(SelectionKey key) throws IOException {
@@ -140,6 +153,13 @@ public final class Server {
                     createPlayer(from, this, playerId, playerClass, playerName, state);
             case MoveMessage(UUID id, int dx, int dy) -> movePlayer(id, this, dx, dy, state);
             case LeaveMessage leaveMessage -> broadcast(json.toJson(leaveMessage, labelPair(Message.JSON_LABEL, "leave")));
+            case EnemyMoveMessage enemyMoveMessage -> {
+
+            }
+            case EnemyRemoveMessage enemyRemoveMessage -> {
+            }
+            case EnemySpawnMessage enemySpawnMessage -> {
+            }
         }
     }
 
@@ -235,7 +255,7 @@ public final class Server {
         }
     }
 
-    final static class ServerActions {
+    public final static class ServerActions {
 
         private ServerActions() {
         }
@@ -279,6 +299,21 @@ public final class Server {
             MoveMessage move = new MoveMessage(id, state.getX(), state.getY());
 
             server.broadcast(server.json.toJson(move, labelPair(Message.JSON_LABEL, "move")));
+        }
+
+        public static void spawnEnemy(Server server, Enemy enemy, int startX, int startY) {
+
+
+            EnemySpawnMessage spawnMessage = new EnemySpawnMessage(
+                        enemyId++,
+                        enemy.getType(),
+                        enemy.getSize(),
+                        startX,
+                        startY
+            );
+
+            server.broadcast(server.json.toJson(spawnMessage, labelPair(Message.JSON_LABEL, "enemySpawn")));
+
         }
     }
 }

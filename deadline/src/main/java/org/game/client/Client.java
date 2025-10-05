@@ -1,6 +1,6 @@
 package org.game.client;
 
-import org.game.client.entity.ClassType;
+import org.game.entity.ClassType;
 import org.game.json.Json;
 import org.game.message.JoinMessage;
 import org.game.message.Message;

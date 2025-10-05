@@ -2,7 +2,7 @@ package org.game.server;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.game.client.entity.ClassType;
+import org.game.entity.ClassType;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;

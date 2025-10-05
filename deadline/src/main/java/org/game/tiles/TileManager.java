@@ -1,4 +1,4 @@
-package org.game.client.tiles;
+package org.game.tiles;
 
 import lombok.Getter;
 import org.game.client.Camera;

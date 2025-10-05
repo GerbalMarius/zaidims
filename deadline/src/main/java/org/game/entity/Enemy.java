@@ -7,6 +7,9 @@ import org.game.client.CollisionChecker;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static org.game.entity.ImageSprite.*;
@@ -97,29 +100,72 @@ public final class Enemy extends Entity {
         return movementFrames[framePosition.ordinal()].secondFrame();
     }
 
-    public void updateAI(Player player, CollisionChecker checker) {
-        int dx = Integer.compare(player.getGlobalX(), this.getGlobalX());
-        int dy = Integer.compare(player.getGlobalY(), this.getGlobalY());
+    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
+        Player target = getClosestPlayer(players);
+        if (target == null) return;
 
-        // X
+        int dx = Integer.compare(target.getGlobalX(), this.getGlobalX());
+        int dy = Integer.compare(target.getGlobalY(), this.getGlobalY());
+
+
+        List<Enemy> otherEnemies = allEnemies.values()
+                .stream()
+                .filter( e -> e != this)
+                .toList();
+
+        // try move X
         if (dx != 0) {
             this.setDirection(dx > 0 ? FramePosition.RIGHT : FramePosition.LEFT);
-            checker.checkTile(this);
-            if (!this.isCollisionOn()) {
-                this.moveBy(dx * speed, 0);
-            }
-            this.setCollisionOn(false); // reset for next move
+            tryMove(dx * speed, 0, otherEnemies, checker);
+
         }
 
-        // Y
+
         if (dy != 0) {
             this.setDirection(dy > 0 ? FramePosition.DOWN : FramePosition.UP);
-            checker.checkTile(this);
-            if (!this.isCollisionOn()) {
-                this.moveBy(0, dy * speed);
-            }
+             tryMove(0, dy * speed, otherEnemies, checker);
+        }
+    }
+
+
+    private void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionChecker checker) {
+        // store original position
+        int origX = this.getGlobalX();
+        int origY = this.getGlobalY();
+
+        this.setCollisionOn(false);
+
+        this.moveBy(mx, my);
+
+        checker.checkEntity(this, otherEnemies);
+        checker.checkTile(this);
+
+        if (this.isCollisionOn()) {
+
+            this.setGlobalX(origX);
+            this.setGlobalY(origY);
             this.setCollisionOn(false);
         }
+
+    }
+
+
+    public Player getClosestPlayer(Collection<Player> players) {
+        Player closest = null;
+        double minDistanceSq = Double.MAX_VALUE;
+
+        for (Player p : players) {
+            double dx = p.getGlobalX() - this.getGlobalX();
+            double dy = p.getGlobalY() - this.getGlobalY();
+            double distSq = dx * dx + dy * dy;
+
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
+                closest = p;
+            }
+        }
+
+        return closest;
     }
 
     public void updateDirectionAndSprite() {

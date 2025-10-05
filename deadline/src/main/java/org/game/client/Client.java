@@ -38,7 +38,7 @@ public final class Client {
 
     private final Json json = new Json();
 
-    private final GameState gameState = new GameState();
+    private final GameState gameState =  new GameState();
     private GamePanel gamePanel;
     private final KeyboardHandler keyboardHandler = new KeyboardHandler();
 
@@ -51,6 +51,8 @@ public final class Client {
 
         //-----UI
         JFrame frame = new JFrame("Game");
+
+
         gamePanel = new GamePanel(clientId, gameState, keyboardHandler);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(gamePanel);

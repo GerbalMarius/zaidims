@@ -11,6 +11,7 @@ import org.game.utils.GUI;
 import javax.swing.*;
 import java.awt.*;
 
+import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -159,8 +160,30 @@ public final class GamePanel extends JPanel implements Runnable {
 
         tileManager.draw(g2d, this.camera, getWidth(), getHeight());
 
+        Map<UUID, Player> players = state.getPlayers();
+        Map<Long, Enemy> enemies = state.getEnemies();
 
-        for (var playerEntry : state.getPlayerEntries()) {
+        redrawPlayers(players, g2d);
+        redrawEnemies(players, enemies, g2d);
+
+        g2d.dispose();
+    }
+
+    private void redrawEnemies(Map<UUID, Player> players, Map<Long, Enemy> enemies, Graphics2D g2d) {
+        final  int tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
+        for (var enemyEntry : state.getEnemiesEntries()) {
+            Enemy enemy = enemyEntry.getValue();
+            int enemyX = enemy.getRenderX();
+            int enemyY = enemy.getRenderY();
+            enemy.updateAI(players.values(), enemies, cChecker);
+            enemy.updateDirectionAndSprite();
+            enemy.draw(g2d, enemyX, enemyY, tileSize * enemy.getScale());
+        }
+    }
+
+    private void redrawPlayers(Map<UUID, Player> players, Graphics2D g2d) {
+        final int tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
+        for (var playerEntry : players.entrySet()) {
             Player playerData = playerEntry.getValue();
 
             playerData.updateDirectionByRender();
@@ -176,23 +199,9 @@ public final class GamePanel extends JPanel implements Runnable {
 
             String name = playerData.getName();
 
-            final int tileSize = 16;
             playerData.draw(g2d, x, y, tileSize * playerData.getScale());
             GUI.drawNameBox(g2d, name, x, y, tileSize * playerData.getScale());
-
-            for (var enemyEntry : state.getEnemiesEntries()) {
-                Enemy enemy = enemyEntry.getValue();
-                int enemyX = enemy.getRenderX();
-                int enemyY = enemy.getRenderY();
-                enemy.updateAI(playerData, cChecker);
-                enemy.updateDirectionAndSprite();
-                enemy.draw(g2d, enemyX, enemyY, tileSize * enemy.getScale());
-            }
         }
-
-
-
-        g2d.dispose();
     }
 
     public void processMessage(final Message message) {
@@ -215,15 +224,9 @@ public final class GamePanel extends JPanel implements Runnable {
                         }
                     }
                 }
-                case EnemySpawnMessage(int enemyId, EnemyType type, EnemySize size, int newX, int newY)  -> {
-                    state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
-                }
-                case EnemyRemoveMessage(int enemyId)  -> {
-                    state.removeEnemy(enemyId);
-                }
-                case EnemyMoveMessage(int enemyId, int newX, int newY)  -> {
-                    state.updateEnemyPosition(enemyId,  newX, newY);
-                }
+                case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) -> state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
+                case EnemyRemoveMessage(var enemyId)  -> state.removeEnemy(enemyId);
+                case EnemyMoveMessage(var enemyId, int newX, int newY)  -> state.updateEnemyPosition(enemyId,  newX, newY);
             }
             processed++;
         }

@@ -175,7 +175,7 @@ public final class GamePanel extends JPanel implements Runnable {
             Enemy enemy = enemyEntry.getValue();
             int enemyX = enemy.getRenderX();
             int enemyY = enemy.getRenderY();
-            enemy.updateAI(players.values(), enemies, cChecker);
+
             enemy.updateDirectionByRender();
             enemy.draw(g2d, enemyX, enemyY, tileSize * enemy.getScale());
         }

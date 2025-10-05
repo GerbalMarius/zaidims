@@ -36,7 +36,7 @@ public final class ClientState {
     }
 
     public ByteBuffer peekMessage() {
-      return  writeQueue.peek();
+        return  writeQueue.peek();
     }
 
 }

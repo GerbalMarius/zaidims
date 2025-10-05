@@ -85,4 +85,4 @@ public final class CollisionCheckerServer {
 
         e.setCollisionOn(false);
     }
-}
+

@@ -2,6 +2,9 @@ package org.game.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.game.entity.strategy.ChaseStrategy;
+import org.game.entity.strategy.EnemyStrategy;
+import org.game.entity.strategy.WanderStrategy;
 import org.game.server.CollisionCheckerServer;
 
 import java.awt.*;
@@ -16,6 +19,8 @@ public final class Enemy extends Entity {
 
     private  EnemyType  type;
     private  EnemySize  size;
+
+    private EnemyStrategy strategy;
 
     private int lastRenderX;
     private int lastRenderY;
@@ -65,31 +70,40 @@ public final class Enemy extends Entity {
         Player target = getClosestPlayer(players);
         if (target == null) return;
 
-        int dx = Integer.compare(target.getGlobalX(), this.getGlobalX());
-        int dy = Integer.compare(target.getGlobalY(), this.getGlobalY());
+        double dx = target.getGlobalX() - this.getGlobalX();
+        double dy = target.getGlobalY() - this.getGlobalY();
+        double distance = Math.sqrt(dx * dx + dy * dy);
 
+        double visionRange = 500.0;
+        double loseSightRange = 350.0;
 
-        List<Enemy> otherEnemies = allEnemies.values()
-                .stream()
-                .filter( e -> e != this)
-                .toList();
+        if (strategy == null) {
+            strategy = new WanderStrategy();
+        }
 
-        // try move X
-        if (dx != 0) {
-            this.setDirection(dx > 0 ? FramePosition.RIGHT : FramePosition.LEFT);
-            tryMove(dx * speed, 0, otherEnemies, checker);
-
+        if (strategy instanceof WanderStrategy && distance <= visionRange) {
+            strategy = new ChaseStrategy();
+        } else if (strategy instanceof ChaseStrategy && distance > loseSightRange) {
+            strategy = new WanderStrategy();
         }
 
 
-        if (dy != 0) {
-            this.setDirection(dy > 0 ? FramePosition.DOWN : FramePosition.UP);
-             tryMove(0, dy * speed, otherEnemies, checker);
-        }
+
+//        if (distance <= visionRange) {
+//            if (!(strategy instanceof ChaseStrategy)) {
+//                strategy = new ChaseStrategy();
+//            }
+//        } else {
+//            if (!(strategy instanceof WanderStrategy)) {
+//                strategy = new WanderStrategy();
+//            }
+//        }
+
+        strategy.execute(this, players, allEnemies, checker);
+
     }
 
-
-    private void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionCheckerServer checker) {
+    public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionCheckerServer checker) {
         // store original position
         int origX = this.getGlobalX();
         int origY = this.getGlobalY();

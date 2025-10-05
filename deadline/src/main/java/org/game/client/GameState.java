@@ -34,6 +34,7 @@ public final class GameState {
     // -- enemy
     public void spawnEnemyFromServer(long id, EnemyType type, EnemySize size, int x, int y) {
         enemies.putIfAbsent(id, new Enemy(type, size, x, y));
+        GlobalUI.getInstance().incrementCounter();
     }
 
     public void updateEnemyPosition(long id, int newX, int newY) {
@@ -44,7 +45,9 @@ public final class GameState {
     }
 
     public void removeEnemy(long id) {
-        enemies.remove(id);
+        if(enemies.remove(id) != null){
+            GlobalUI.getInstance().decrementCounter();
+        }
     }
 
     public Set<Map.Entry<Long, Enemy>> getEnemiesEntries() {

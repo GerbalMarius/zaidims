@@ -70,6 +70,8 @@ public final class GameState {
     public Set<Map.Entry<Long, Item>> getItemEntries() {
         return Set.copyOf(items.entrySet());
     }
+    private final Map<Long, Item> activeItems = new ConcurrentHashMap<>();
+
 
     public Map<Long, Enemy> getEnemies()  {
         return Map.copyOf(enemies);

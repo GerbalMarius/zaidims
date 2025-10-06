@@ -128,6 +128,17 @@ public final class Server {
             );
             sendTo(sc, json.toJson(enemySpawnMessage, labelPair(Message.JSON_LABEL, "enemySpawn")));
         }
+        for (var itemEntry : items.entrySet()) {
+            long itemId = itemEntry.getKey();
+            Item item = itemEntry.getValue();
+            ItemSpawnMessage itemSpawnMessage = new ItemSpawnMessage(
+                    itemId,
+                    item.getType(),
+                    item.getGlobalX(),
+                    item.getGlobalY()
+            );
+            sendTo(sc, json.toJson(itemSpawnMessage, labelPair(Message.JSON_LABEL, "itemSpawn")));
+        }
 
     }
 

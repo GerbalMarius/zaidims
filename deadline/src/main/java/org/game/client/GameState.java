@@ -12,6 +12,8 @@ public final class GameState {
 
     private final Map<UUID, Player> players = new ConcurrentHashMap<>();
     private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
+    private final Map<Long, Item> items = new ConcurrentHashMap<>();
+
 
     // -- player
     public void addPlayer(UUID id, ClassType type, String name, int startingX, int startingY) {
@@ -50,8 +52,23 @@ public final class GameState {
         }
     }
 
+    public void spawnItemFromServer(long id, ItemType type, int x, int y) {
+        items.putIfAbsent(id, new Item(type, x, y));
+        System.out.println("[CLIENT] Spawned item " + type + " at (" + x + ", " + y + ") with id=" + id);
+
+    }
+
+
+    public void removeItem(long id) {
+        items.remove(id);
+    }
+
     public Set<Map.Entry<Long, Enemy>> getEnemiesEntries() {
         return Set.copyOf(enemies.entrySet());
+    }
+
+    public Set<Map.Entry<Long, Item>> getItemEntries() {
+        return Set.copyOf(items.entrySet());
     }
 
     public Map<Long, Enemy> getEnemies()  {

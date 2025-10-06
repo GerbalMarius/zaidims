@@ -165,6 +165,8 @@ public final class GamePanel extends JPanel implements Runnable {
 
         redrawPlayers(players, g2d);
         redrawEnemies(players, enemies, g2d);
+        redrawItems(g2d);
+
 
         g2d.dispose();
 
@@ -172,6 +174,7 @@ public final class GamePanel extends JPanel implements Runnable {
         GlobalUI.getInstance().drawCounter(uiGraphics, getWidth());
         uiGraphics.dispose();
     }
+
 
     private void redrawEnemies(Map<UUID, Player> players, Map<Long, Enemy> enemies, Graphics2D g2d) {
         final  int tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
@@ -182,6 +185,17 @@ public final class GamePanel extends JPanel implements Runnable {
 
             enemy.updateDirectionByRender();
             enemy.draw(g2d, enemyX, enemyY, tileSize * enemy.getScale());
+        }
+    }
+
+    private void redrawItems(Graphics2D g2d) {
+        final int tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
+
+        for (var entry : state.getItemEntries()) {
+            Item item = entry.getValue();
+            if (!item.isCollected()) {
+                item.draw(g2d, tileSize);
+            }
         }
     }
 
@@ -218,8 +232,10 @@ public final class GamePanel extends JPanel implements Runnable {
         int maxMsgPerTick = 100;
         while (processed < maxMsgPerTick && (msg = incomingMessages.poll()) != null) {
             switch (msg) {
-                case JoinMessage(UUID playerId, ClassType playerClass, String name, int x, int y) -> state.addPlayer(playerId, playerClass, name, x, y);
-                case LeaveMessage(UUID playerId) -> state.removePlayer(playerId);
+                case JoinMessage(UUID playerId, ClassType playerClass, String name, int x, int y) ->
+                        state.addPlayer(playerId, playerClass, name, x, y);
+                case LeaveMessage(UUID playerId) ->
+                        state.removePlayer(playerId);
                 case MoveMessage(UUID playerId, int x, int y) -> {
                     if (!playerId.equals(clientId)) {
                         Player player = state.getPlayer(playerId);
@@ -228,13 +244,23 @@ public final class GamePanel extends JPanel implements Runnable {
                         }
                     }
                 }
-                case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) -> state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
-                case EnemyRemoveMessage(var enemyId)  -> state.removeEnemy(enemyId);
-                case EnemyMoveMessage(var enemyId, int newX, int newY)  -> state.updateEnemyPosition(enemyId,  newX, newY);
+                case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) ->
+                        state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
+                case EnemyRemoveMessage(var enemyId) ->
+                        state.removeEnemy(enemyId);
+                case EnemyMoveMessage(var enemyId, int newX, int newY) ->
+                        state.updateEnemyPosition(enemyId, newX, newY);
+
+                case ItemSpawnMessage(long itemId, ItemType itemType, int x, int y) -> {
+                    state.spawnItemFromServer(itemId, itemType, x, y);
+                }
+                case ItemCollectMessage(long itemId) ->
+                        state.removeItem(itemId);
             }
             processed++;
         }
     }
+
 
     private void initialSnap(Player player) {
         if (player == null) {

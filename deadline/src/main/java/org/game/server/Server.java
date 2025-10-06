@@ -3,10 +3,13 @@ package org.game.server;
 import lombok.Getter;
 import org.game.entity.ClassType;
 import org.game.entity.Enemy;
+import org.game.entity.Item;
+import org.game.entity.ItemType;
 import org.game.json.Json;
 import org.game.message.*;
 import org.game.server.spawner.EnemySpawnManager;
 import org.game.server.spawner.EnemyUpdateManager;
+import org.game.server.spawner.ItemSpawnManager;
 import org.game.tiles.TileManager;
 
 import java.io.IOException;
@@ -37,6 +40,10 @@ public final class Server {
     @Getter
     private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
 
+    @Getter
+    private final Map<Long, Item> items = new ConcurrentHashMap<>();
+
+    static long itemId = 0;
     static long enemyId = 0;
     static boolean firstPlayer = true;
 
@@ -48,6 +55,9 @@ public final class Server {
 
 
     private final Json json = new Json();
+
+    private final ItemSpawnManager itemSpawnManager = new ItemSpawnManager(this);
+
 
 
     static void main() throws IOException {
@@ -63,6 +73,7 @@ public final class Server {
         serverChannel.bind(new InetSocketAddress(PORT));
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
         IO.println("Server started on port: " + PORT);
+
 
         for (; ; ) {
 
@@ -98,10 +109,10 @@ public final class Server {
         IO.println("Accepted  from : " + sc.getRemoteAddress());
 
         if (firstPlayer) {
-            spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
-            updateManager.startUpdating();
+            spawnManager.startSpawning(0, 5, TimeUnit.SECONDS); // enemy spawner
+            updateManager.startUpdating();                       // enemy updater
+            itemSpawnManager.startSpawning(0,5, TimeUnit.SECONDS); // item spawner
             firstPlayer = false;
-            return;
         }
 
 
@@ -182,6 +193,20 @@ public final class Server {
             case LeaveMessage leaveMessage -> broadcast(json.toJson(leaveMessage, labelPair(Message.JSON_LABEL, "leave")));
             case EnemyMoveMessage _, EnemyRemoveMessage _, EnemySpawnMessage _  -> {
 
+            }
+            case ItemSpawnMessage(long itemId, ItemType type, int x, int y) -> {
+                // Optionally log or sync back to other clients (if client-initiated)
+                IO.println("ItemSpawnMessage received (ignored by server)");
+            }
+            case ItemCollectMessage(long itemId) -> {
+                // Example: remove item from server state and broadcast to clients
+                if (items.remove(itemId) != null) {
+                    IO.println("Item " + itemId + " collected");
+                    broadcast(json.toJson(
+                            new ItemCollectMessage(itemId),
+                            labelPair(Message.JSON_LABEL, "itemCollect")
+                    ));
+                }
             }
         }
     }
@@ -342,6 +367,22 @@ public final class Server {
 
             server.broadcast(server.json.toJson(spawnMessage, labelPair(Message.JSON_LABEL, "enemySpawn")));
 
+        }
+        public static void spawnItem(Server server, Item item, int x, int y) {
+            long nextId = itemId++;
+
+            ItemSpawnMessage spawnMessage = new ItemSpawnMessage(
+                    nextId,
+                    item.getType(),
+                    x,
+                    y
+            );
+
+            server.getItems().put(nextId, item);
+            server.broadcast(server.json.toJson(
+                    spawnMessage,
+                    labelPair(Message.JSON_LABEL, "itemSpawn")
+            ));
         }
 
 

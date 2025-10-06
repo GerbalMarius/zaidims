@@ -27,9 +27,11 @@ public final class Json {
                 .registerSubtype(MoveMessage.class, "move")
                 .registerSubtype(EnemyMoveMessage.class, "enemyMove")
                 .registerSubtype(EnemySpawnMessage.class, "enemySpawn")
-                .registerSubtype(EnemyRemoveMessage.class, "enemyRemove");
-
+                .registerSubtype(EnemyRemoveMessage.class, "enemyRemove")
+                .registerSubtype(ItemSpawnMessage.class, "itemSpawn")
+                .registerSubtype(ItemCollectMessage.class, "itemCollect");
     }
+
 
 
     public <T, V> String toJson(T item, JsonLabelPair<V> prop1) {

@@ -1,6 +1,14 @@
 package org.game.client;
 
 import org.game.entity.*;
+import org.game.entity.enemy.goblin.BigGoblin;
+import org.game.entity.enemy.goblin.MediumGoblin;
+import org.game.entity.enemy.goblin.SmallGoblin;
+import org.game.entity.enemy.skeleton.MediumSkeleton;
+import org.game.entity.enemy.skeleton.SmallSkeleton;
+import org.game.entity.enemy.zombie.BigZombie;
+import org.game.entity.enemy.zombie.MediumZombie;
+import org.game.entity.enemy.zombie.SmallZombie;
 
 import java.util.Map;
 import java.util.Set;
@@ -33,8 +41,31 @@ public final class GameState {
 
     // -- enemy
     public void spawnEnemyFromServer(long id, EnemyType type, EnemySize size, int x, int y) {
-        enemies.putIfAbsent(id, new Enemy(type, size, x, y));
+        enemies.putIfAbsent(id,  createFromMessage(type, size, x, y));
         GlobalUI.getInstance().incrementCounter();
+    }
+
+    private Enemy createFromMessage(EnemyType type, EnemySize size, int x, int y) {
+
+        Enemy enemy = switch (type) {
+            case ZOMBIE -> switch (size) {
+                case SMALL -> new SmallZombie(x, y);
+                case MEDIUM -> new MediumZombie(x, y);
+                case BIG -> new BigZombie(x, y);
+            };
+            case SKELETON -> switch (size) {
+                case SMALL -> new SmallSkeleton(x, y);
+                case MEDIUM -> new MediumSkeleton(x, y);
+                case BIG -> new BigZombie(x, y);
+            };
+            case GOBLIN -> switch (size) {
+                case SMALL -> new SmallGoblin(x, y);
+                case MEDIUM -> new MediumGoblin(x, y);
+                case BIG -> new BigGoblin(x, y);
+            };
+        };
+
+        return enemy;
     }
 
     public void updateEnemyPosition(long id, int newX, int newY) {

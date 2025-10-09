@@ -3,6 +3,7 @@ package org.game.client;
 import lombok.Getter;
 import lombok.Setter;
 import org.game.entity.*;
+import org.game.server.CollisionChecker;
 import org.game.tiles.TileManager;
 import org.game.message.*;
 import org.game.server.WorldSettings;
@@ -42,7 +43,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
     @Getter
     private final  TileManager tileManager;
-    public CollisionChecker cChecker = new CollisionChecker(this);
+    public CollisionChecker cChecker;
 
     public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler) {
         this.clientId = clientId;
@@ -50,6 +51,7 @@ public final class GamePanel extends JPanel implements Runnable {
         this.keyboardHandler = keyboardHandler;
         this.camera = new Camera(0.12, 80, 50);
         this.tileManager = new TileManager();
+        cChecker = new CollisionChecker(tileManager);
 
         setBackground(Color.WHITE);
         setFocusable(true);

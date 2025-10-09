@@ -3,7 +3,7 @@ package org.game.entity.strategy;
 import org.game.entity.Enemy;
 import org.game.entity.FramePosition;
 import org.game.entity.Player;
-import org.game.server.CollisionCheckerServer;
+import org.game.server.CollisionChecker;
 
 import java.util.Collection;
 import java.util.List;
@@ -17,11 +17,11 @@ public class WanderStrategy implements EnemyStrategy {
     private FramePosition randomDir = FramePosition.DOWN;
 
     @Override
-    public void execute(Enemy enemy, Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionCheckerServer checker) {
+    public void execute(Enemy enemy, Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
         if (wanderTimer <= 0) {
             FramePosition[] dirs = FramePosition.values();
             randomDir = dirs[random.nextInt(dirs.length)];
-            wanderTimer = 40 + random.nextInt(60); // keičia kryptį kas ~1s
+            wanderTimer = 40 + random.nextInt(60);
         } else {
             wanderTimer--;
         }

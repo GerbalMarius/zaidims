@@ -3,7 +3,7 @@ package org.game.entity.strategy;
 import org.game.entity.Enemy;
 import org.game.entity.FramePosition;
 import org.game.entity.Player;
-import org.game.server.CollisionCheckerServer;
+import org.game.server.CollisionChecker;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,7 +13,7 @@ public class ChaseStrategy implements EnemyStrategy {
 
 
     @Override
-    public void execute(Enemy enemy, Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionCheckerServer checker) {
+    public void execute(Enemy enemy, Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
         Player target = enemy.getClosestPlayer(players);
         if (target == null) return;
 

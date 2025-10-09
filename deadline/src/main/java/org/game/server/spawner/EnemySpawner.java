@@ -7,4 +7,5 @@ public interface EnemySpawner {
     Enemy spawnSmall(int x, int y);
     Enemy spawnMedium(int x, int y);
     Enemy spawnLarge(int x, int y);
+
 }

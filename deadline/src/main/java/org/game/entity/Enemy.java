@@ -5,66 +5,36 @@ import lombok.Setter;
 import org.game.entity.strategy.ChaseStrategy;
 import org.game.entity.strategy.EnemyStrategy;
 import org.game.entity.strategy.WanderStrategy;
-import org.game.server.CollisionCheckerServer;
+import org.game.server.CollisionChecker;
 
 import java.awt.*;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Getter
 @Setter
-public final class Enemy extends Entity {
+public abstract non-sealed class Enemy extends Entity {
 
-    private  EnemyType  type;
-    private  EnemySize  size;
+    protected EnemyType  type;
+    protected EnemySize  size;
 
-    private EnemyStrategy strategy;
+    protected EnemyStrategy strategy;
 
-    private int lastRenderX;
-    private int lastRenderY;
 
-    public Enemy(EnemyType type, EnemySize size, int x, int y) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(size);
+    protected Enemy(int x, int y) {
         super(x, y);
-        this.type = type;
-        this.size = size;
-
-        loadSprite(type.getTypePrefix(), "enemy");
         configureStats();
 
+    }
+
+
+    protected abstract void configureStats();
+
+    protected  void createHitbox() {
         this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
     }
 
-    private void configureStats() {
-        switch(type) {
-            case ZOMBIE -> {
-                switch(size) {
-                    case SMALL -> { hitPoints = 30; attack = 5; scale = 3; speed = 3; }
-                    case MEDIUM -> { hitPoints = 60; attack = 10; scale = 4; speed = 2; }
-                    case BIG -> { hitPoints = 120; attack = 25; scale = 5; speed = 1; }
-                }
-            }
-            case SKELETON ->  {
-                switch(size) {
-                    case SMALL -> { hitPoints = 20; attack = 7; scale = 3; speed = 4; }
-                    case MEDIUM -> { hitPoints = 40; attack = 12; scale = 4; speed = 3; }
-                    case BIG -> { hitPoints = 90; attack = 25; scale = 5; speed = 2; }
-                }
-            }
-            case GOBLIN -> {
-                switch(size) {
-                    case SMALL -> { hitPoints = 25; attack = 8; scale = 3; speed = 5; }
-                    case MEDIUM -> { hitPoints = 50; attack = 15; scale = 4; speed = 4; }
-                    case BIG -> { hitPoints = 80; attack = 22; scale = 5; speed = 3;}
-                }
-            }
-        }
-    }
-
-    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionCheckerServer checker) {
+    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
         Player target = getClosestPlayer(players);
         if (target == null) return;
 
@@ -89,7 +59,7 @@ public final class Enemy extends Entity {
 
     }
 
-    public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionCheckerServer checker) {
+    public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionChecker checker) {
         int steps = Math.max(Math.abs(mx), Math.abs(my));
         if (steps == 0) return;
 

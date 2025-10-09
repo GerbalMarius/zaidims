@@ -3,23 +3,24 @@ package org.game.server.spawner;
 import org.game.entity.Enemy;
 import org.game.entity.EnemySize;
 import org.game.entity.EnemyType;
+import org.game.entity.enemy.zombie.BigZombie;
+import org.game.entity.enemy.zombie.MediumZombie;
+import org.game.entity.enemy.zombie.SmallZombie;
 
 public class ZombieSpawner implements EnemySpawner{
 
-    private static final EnemyType ZOMBIE = EnemyType.ZOMBIE;
-
     @Override
     public Enemy spawnSmall(int x, int y) {
-        return new Enemy(ZOMBIE, EnemySize.SMALL, x, y);
+        return new SmallZombie(x, y);
     }
 
     @Override
     public Enemy spawnMedium(int x, int y) {
-        return new Enemy(ZOMBIE, EnemySize.MEDIUM, x, y);
+        return new MediumZombie(x, y);
     }
 
     @Override
     public Enemy spawnLarge(int x, int y) {
-        return new Enemy(ZOMBIE, EnemySize.BIG, x, y);
+        return new BigZombie(x, y);
     }
 }

@@ -64,6 +64,7 @@ public final class EnemySpawnManager {
             System.out.println("unable to spawn");
         }
 
+
         Enemy enemy = switch (size) {
             case SMALL -> spawner.spawnSmall(x, y);
             case MEDIUM -> spawner.spawnMedium(x, y);
@@ -71,6 +72,7 @@ public final class EnemySpawnManager {
         };
 
         Server.ServerActions.spawnEnemy(server, enemy, x, y);
+
     }
 
     private boolean isWalkableTile(int x, int y) {

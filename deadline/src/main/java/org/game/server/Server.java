@@ -1,9 +1,7 @@
 package org.game.server;
 
 import lombok.Getter;
-import org.game.entity.ClassType;
-import org.game.entity.Enemy;
-import org.game.entity.Player;
+import org.game.entity.*;
 import org.game.json.Json;
 import org.game.message.*;
 import org.game.server.spawner.EnemySpawnManager;
@@ -45,7 +43,7 @@ public final class Server {
     private final EnemyUpdateManager updateManager = new EnemyUpdateManager(this);
 
     @Getter
-    private final CollisionCheckerServer enemyChecker = new CollisionCheckerServer(new TileManager());
+    private final CollisionChecker enemyChecker = new CollisionChecker(new TileManager());
 
 
     private final Json json = new Json();

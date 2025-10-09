@@ -3,6 +3,7 @@ package org.game.server;
 import lombok.Getter;
 import org.game.entity.ClassType;
 import org.game.entity.Enemy;
+import org.game.entity.Player;
 import org.game.json.Json;
 import org.game.message.*;
 import org.game.server.spawner.EnemySpawnManager;

@@ -59,31 +59,30 @@ public final class CollisionCheckerServer {
         e.setCollisionOn(tiles.get(tileNum1).hasCollision() || tiles.get(tileNum2).hasCollision());
     }
 
-    public void checkEntity(Entity e, Collection<? extends Entity> others) {
-        Rectangle futureHitbox = new Rectangle(
+    public void checkEntityCollision(Entity e, Collection<? extends Entity> others) {
+        Rectangle eHitbox = new Rectangle(
                 e.getGlobalX() + e.getHitbox().x,
                 e.getGlobalY() + e.getHitbox().y,
                 e.getHitbox().width,
                 e.getHitbox().height
         );
 
-        for (Entity other : others) {
-            if (other == e) continue;
+        boolean collided = others.stream()
+                .filter(o -> o != e)
+                .anyMatch(o -> eHitbox.intersects(
+                        new Rectangle(
+                                o.getGlobalX() + o.getHitbox().x,
+                                o.getGlobalY() + o.getHitbox().y,
+                                o.getHitbox().width,
+                                o.getHitbox().height
+                        )
+                ));
 
-            Rectangle otherHitbox = new Rectangle(
-                    other.getGlobalX() + other.getHitbox().x,
-                    other.getGlobalY() + other.getHitbox().y,
-                    other.getHitbox().width,
-                    other.getHitbox().height
-            );
+        if (collided) e.setCollisionOn(true);
+    }
 
-            if (futureHitbox.intersects(otherHitbox)) {
-                e.setCollisionOn(true);
-                return;
-            }
-        }
-
-        e.setCollisionOn(false);
+    public TileManager getTileManager() {
+        return tileManager;
     }
 }
 

@@ -21,7 +21,7 @@ public class WanderStrategy implements EnemyStrategy {
         if (wanderTimer <= 0) {
             FramePosition[] dirs = FramePosition.values();
             randomDir = dirs[random.nextInt(dirs.length)];
-            wanderTimer = 40 + random.nextInt(60); // keičia kryptį kas ~1s
+            wanderTimer = 40 + random.nextInt(60);
         } else {
             wanderTimer--;
         }

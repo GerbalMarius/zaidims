@@ -64,8 +64,6 @@ public final class Enemy extends Entity {
         }
     }
 
-
-
     public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionCheckerServer checker) {
         Player target = getClosestPlayer(players);
         if (target == null) return;
@@ -87,43 +85,38 @@ public final class Enemy extends Entity {
             strategy = new WanderStrategy();
         }
 
-
-
-//        if (distance <= visionRange) {
-//            if (!(strategy instanceof ChaseStrategy)) {
-//                strategy = new ChaseStrategy();
-//            }
-//        } else {
-//            if (!(strategy instanceof WanderStrategy)) {
-//                strategy = new WanderStrategy();
-//            }
-//        }
-
         strategy.execute(this, players, allEnemies, checker);
 
     }
 
     public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionCheckerServer checker) {
-        // store original position
-        int origX = this.getGlobalX();
-        int origY = this.getGlobalY();
+        int steps = Math.max(Math.abs(mx), Math.abs(my));
+        if (steps == 0) return;
 
-        this.setCollisionOn(false);
+        int stepX = mx / steps;
+        int stepY = my / steps;
 
-        this.moveBy(mx, my);
+        for (int i = 0; i < steps; i++) {
+            setGlobalX(getGlobalX() + stepX);
+            setGlobalY(getGlobalY() + stepY);
+            setCollisionOn(false);
 
-        checker.checkEntity(this, otherEnemies);
-        checker.checkTile(this);
+            // tikriname plyteles
+            checker.checkTile(this);
 
-        if (this.isCollisionOn()) {
+            // tikriname kitus priees
+            checker.checkEntityCollision(this, otherEnemies);
+            //checker.checkEntityCollision(this, players);
 
-            this.setGlobalX(origX);
-            this.setGlobalY(origY);
-            this.setCollisionOn(false);
+            if (isCollisionOn()) {
+                setGlobalX(getGlobalX() - stepX);
+                setGlobalY(getGlobalY() - stepY);
+                return;
+            }
+
+            moveBy(stepX, stepY);
         }
-
     }
-
 
     public Player getClosestPlayer(Collection<Player> players) {
         Player closest = null;

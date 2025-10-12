@@ -1,6 +1,5 @@
 package org.game.server;
 
-import org.game.entity.Enemy;
 import org.game.entity.Entity;
 import org.game.tiles.Tile;
 import org.game.tiles.TileManager;

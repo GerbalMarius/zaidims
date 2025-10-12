@@ -7,6 +7,7 @@ import org.game.server.CollisionChecker;
 import java.util.Collection;
 import java.util.Map;
 
+@FunctionalInterface
 public interface EnemyStrategy {
 
     void execute(Enemy enemy, Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker);

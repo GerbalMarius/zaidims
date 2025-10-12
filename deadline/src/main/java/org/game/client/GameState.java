@@ -1,5 +1,6 @@
 package org.game.client;
 
+import lombok.Getter;
 import org.game.entity.*;
 import org.game.entity.enemy.goblin.BigGoblin;
 import org.game.entity.enemy.goblin.MediumGoblin;
@@ -9,6 +10,7 @@ import org.game.entity.enemy.skeleton.SmallSkeleton;
 import org.game.entity.enemy.zombie.BigZombie;
 import org.game.entity.enemy.zombie.MediumZombie;
 import org.game.entity.enemy.zombie.SmallZombie;
+import org.game.message.EnemyCopy;
 
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class GameState {
 
     private final Map<UUID, Player> players = new ConcurrentHashMap<>();
-    private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
+    @Getter
+    private  Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
+    @Getter
     private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
 
     // -- player
@@ -42,12 +46,29 @@ public final class GameState {
 
     // -- enemy
     public void spawnEnemyFromServer(long id, EnemyType type, EnemySize size, int x, int y) {
-        enemies.putIfAbsent(id,  createFromMessage(type, size, x, y));
+        Enemy enemy = createFromMessage(type, size, x, y);
+        enemy.setId(id);
+        enemies.putIfAbsent(id, enemy);
         GlobalUI.getInstance().incrementCounter();
     }
 
-    private Enemy createFromMessage(EnemyType type, EnemySize size, int x, int y) {
+    public synchronized void copyAllEnemies(Map<Long, EnemyCopy> enemies) {
 
+        this.enemies = new ConcurrentHashMap<>(enemies.size());
+
+        for (var copy : enemies.entrySet()) {
+            long id = copy.getKey();
+            EnemyCopy enData = copy.getValue();
+            final Enemy fromMessage = createFromMessage(enData.enemyType(), enData.enemySize(), enData.initialX(), enData.initialY());
+            fromMessage.setId(id);
+            fromMessage.setHitPoints(enData.hpPoints());
+            this.enemies.put(copy.getKey(), fromMessage);
+            GlobalUI.getInstance().incrementCounter();
+
+        }
+    }
+
+    private Enemy createFromMessage(EnemyType type, EnemySize size, int x, int y) {
         return switch (type) {
             case ZOMBIE -> switch (size) {
                 case SMALL -> new SmallZombie(x, y);
@@ -84,28 +105,14 @@ public final class GameState {
         return Set.copyOf(enemies.entrySet());
     }
 
-    public Map<Long, Enemy> getEnemies()  {
-        return Map.copyOf(enemies);
-    }
-
     // projectiles
     public void spawnProjectile(UUID projectileId, int x, int y, FramePosition dir) {
         Projectile p = new Projectile(x, y, dir, 8, 10);
         projectiles.put(projectileId, p);
     }
 
-    public void updateProjectiles() {
-        for (Projectile p : projectiles.values()) {
-            p.update();
-        }
-    }
-
     public void removeProjectile(UUID projectileId) {
         projectiles.remove(projectileId);
-    }
-
-    public Map<UUID, Projectile> getProjectiles() {
-        return Map.copyOf(projectiles);
     }
 
 }

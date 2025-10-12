@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.game.json.JsonLabelPair.labelPair;
 import static org.game.server.Server.ServerActions.*;
@@ -36,10 +37,10 @@ public final class Server {
     @Getter
     private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("unused")
     private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
 
-    static long enemyId = 0;
-    static boolean firstPlayer = true;
+    private static boolean firstPlayer = true;
 
     private  final  EnemySpawnManager spawnManager = new EnemySpawnManager(this);
     private final EnemyUpdateManager updateManager = new EnemyUpdateManager(this);
@@ -104,20 +105,16 @@ public final class Server {
             firstPlayer = false;
             return;
         }
+        Map<Long, EnemyCopy> enemyCopies = enemies.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, endData -> {
+                             Enemy value = endData.getValue();
+                           return new EnemyCopy(
+                                   endData.getKey(), value.getType(),
+                                   value.getSize(), value.getGlobalX(),
+                                   value.getGlobalY(), value.getHitPoints());
+                        }));
 
-
-        for (var enemieEntry : enemies.entrySet()) {
-            long id = enemieEntry.getKey();
-            Enemy enData = enemieEntry.getValue();
-            var enemySpawnMessage  = new EnemySpawnMessage(
-                    id,
-                    enData.getType(),
-                    enData.getSize(),
-                    enData.getGlobalX(),
-                    enData.getGlobalY()
-            );
-            sendTo(sc, json.toJson(enemySpawnMessage, labelPair(Message.JSON_LABEL, "enemySpawn")));
-        }
+        sendTo(sc, json.toJson(new EnemyBulkCopyMessage(enemyCopies), labelPair(Message.JSON_LABEL, "enemyCopy")));
 
     }
 
@@ -181,10 +178,24 @@ public final class Server {
                     createPlayer(from, this, playerId, playerClass, playerName, state);
             case MoveMessage(UUID id, int dx, int dy) -> movePlayer(id, this, dx, dy, state);
             case LeaveMessage leaveMessage -> broadcast(json.toJson(leaveMessage, labelPair(Message.JSON_LABEL, "leave")));
-            case EnemyMoveMessage _, EnemyRemoveMessage _, EnemySpawnMessage _  -> {
+            case EnemyMoveMessage _, EnemyRemoveMessage _, EnemySpawnMessage _, EnemyBulkCopyMessage _  -> {
 
             }
-            case ProjectileSpawnMessage _ -> broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "projectileSpawn")));
+            case ProjectileSpawnMessage projSpawn -> broadcast(json.toJson(projSpawn, labelPair(Message.JSON_LABEL, "projectileSpawn")));
+            case EnemyHealthUpdateMessage(long eId, int newHealth) -> {
+                Enemy enemy = enemies.get(eId);
+                if (enemy != null) {
+                    enemy.setHitPoints(newHealth);
+
+                    if (newHealth <= 0) {
+                        enemies.remove(eId);
+                        broadcast(json.toJson(new EnemyRemoveMessage(eId), labelPair(Message.JSON_LABEL, "enemyRemove")));
+                    }
+
+                    broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "enemyHealth")));
+                }
+            }
+
         }
     }
 
@@ -331,16 +342,15 @@ public final class Server {
         }
 
         public static void spawnEnemy(Server server, Enemy enemy, int startX, int startY) {
-            long nextId = enemyId++;
 
             EnemySpawnMessage spawnMessage = new EnemySpawnMessage(
-                    nextId,
+                    enemy.getId(),
                     enemy.getType(),
                     enemy.getSize(),
                     startX,
                     startY
             );
-            server.enemies.put(nextId, enemy);
+            server.enemies.put(enemy.getId(), enemy);
 
             server.broadcast(server.json.toJson(spawnMessage, labelPair(Message.JSON_LABEL, "enemySpawn")));
 

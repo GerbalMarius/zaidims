@@ -1,6 +1,7 @@
 package org.game.entity.enemy.zombie;
 
 import org.game.entity.EnemySize;
+import org.game.server.Prototype;
 
 public class SmallZombie extends Zombie {
 
@@ -17,5 +18,10 @@ public class SmallZombie extends Zombie {
         scale = 3;
         speed = 3;
         createHitbox();
+    }
+
+    @Override
+    public Prototype createDeepCopy() {
+        return new SmallZombie(this.globalX, this.globalY);
     }
 }

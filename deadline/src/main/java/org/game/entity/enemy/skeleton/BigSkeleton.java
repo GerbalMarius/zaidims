@@ -1,6 +1,7 @@
 package org.game.entity.enemy.skeleton;
 
 import org.game.entity.EnemySize;
+import org.game.server.Prototype;
 
 public class BigSkeleton extends  Skeleton {
 
@@ -17,5 +18,10 @@ public class BigSkeleton extends  Skeleton {
         scale = 5;
         speed = 2;
         createHitbox();
+    }
+
+    @Override
+    public Prototype createDeepCopy() {
+        return new BigSkeleton(this.globalX, this.globalY);
     }
 }

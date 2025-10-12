@@ -20,6 +20,7 @@ public final class GameState {
 
     private final Map<UUID, Player> players = new ConcurrentHashMap<>();
     private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
+    private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
 
     // -- player
     public void addPlayer(UUID id, ClassType type, String name, int startingX, int startingY) {
@@ -47,7 +48,7 @@ public final class GameState {
 
     private Enemy createFromMessage(EnemyType type, EnemySize size, int x, int y) {
 
-        Enemy enemy = switch (type) {
+        return switch (type) {
             case ZOMBIE -> switch (size) {
                 case SMALL -> new SmallZombie(x, y);
                 case MEDIUM -> new MediumZombie(x, y);
@@ -64,8 +65,6 @@ public final class GameState {
                 case BIG -> new BigGoblin(x, y);
             };
         };
-
-        return enemy;
     }
 
     public void updateEnemyPosition(long id, int newX, int newY) {
@@ -87,6 +86,26 @@ public final class GameState {
 
     public Map<Long, Enemy> getEnemies()  {
         return Map.copyOf(enemies);
+    }
+
+    // projectiles
+    public void spawnProjectile(UUID projectileId, int x, int y, FramePosition dir) {
+        Projectile p = new Projectile(x, y, dir, 8, 10);
+        projectiles.put(projectileId, p);
+    }
+
+    public void updateProjectiles() {
+        for (Projectile p : projectiles.values()) {
+            p.update();
+        }
+    }
+
+    public void removeProjectile(UUID projectileId) {
+        projectiles.remove(projectileId);
+    }
+
+    public Map<UUID, Projectile> getProjectiles() {
+        return Map.copyOf(projectiles);
     }
 
 }

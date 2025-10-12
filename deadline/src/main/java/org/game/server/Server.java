@@ -36,6 +36,8 @@ public final class Server {
     @Getter
     private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
 
+    private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
+
     static long enemyId = 0;
     static boolean firstPlayer = true;
 
@@ -182,6 +184,7 @@ public final class Server {
             case EnemyMoveMessage _, EnemyRemoveMessage _, EnemySpawnMessage _  -> {
 
             }
+            case ProjectileSpawnMessage _ -> broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "projectileSpawn")));
         }
     }
 

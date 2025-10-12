@@ -27,6 +27,7 @@ public final class Player extends Entity {
 
         this.scale = 3;
         this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
+        setStats();
     }
 
 
@@ -39,5 +40,24 @@ public final class Player extends Entity {
         camera.clamp(screenWidth, screenHeight, worldWidth, worldHeight);
     }
 
+    private void setStats() {
+        switch(this.playerClass) {
+            case WARRIOR ->  {
+                speed = 3;
+                maxHitPoints = hitPoints = 100;
+                attack = 25;
+            }
+            case WIZARD ->  {
+                speed = 4;
+                maxHitPoints = hitPoints = 50;
+                attack = 40;
+            }
+            case ROGUE ->  {
+                speed = 5;
+                maxHitPoints = hitPoints = 70;
+                attack = 25;
+            }
+        }
+    }
 
 }

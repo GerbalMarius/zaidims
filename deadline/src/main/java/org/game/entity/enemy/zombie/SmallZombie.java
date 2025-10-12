@@ -12,7 +12,7 @@ public class SmallZombie extends Zombie {
 
     @Override
     protected void configureStats() {
-        hitPoints = 30;
+        maxHitPoints = hitPoints = 30;
         attack = 5;
         scale = 3;
         speed = 3;

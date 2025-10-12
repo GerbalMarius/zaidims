@@ -12,7 +12,7 @@ public class SmallSkeleton extends Skeleton {
 
     @Override
     protected void configureStats() {
-        hitPoints = 20;
+        maxHitPoints = hitPoints = 20;
         attack = 7;
         scale = 3;
         speed = 4;

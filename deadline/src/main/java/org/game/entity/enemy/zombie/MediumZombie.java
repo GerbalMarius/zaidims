@@ -12,7 +12,7 @@ public class MediumZombie extends Zombie{
 
     @Override
     protected void configureStats() {
-        hitPoints = 60;
+        maxHitPoints = hitPoints = 60;
         attack = 10;
         scale = 4;
         speed = 2;

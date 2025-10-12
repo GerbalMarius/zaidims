@@ -1,10 +1,12 @@
 package org.game.client;
 
 import org.game.entity.ClassType;
+import org.game.entity.Player;
 import org.game.json.Json;
 import org.game.message.JoinMessage;
 import org.game.message.Message;
 import org.game.message.MoveMessage;
+import org.game.message.ProjectileSpawnMessage;
 import org.game.utils.GUI;
 
 import javax.swing.*;
@@ -41,6 +43,7 @@ public final class Client {
     private final GameState gameState =  new GameState();
     private GamePanel gamePanel;
     private final KeyboardHandler keyboardHandler = new KeyboardHandler();
+    private final MouseHandler mouseHandler = new MouseHandler();
 
     static void main() {
         new Client().createClientGui();
@@ -53,7 +56,7 @@ public final class Client {
         JFrame frame = new JFrame("Game");
 
 
-        gamePanel = new GamePanel(clientId, gameState, keyboardHandler);
+        gamePanel = new GamePanel(clientId, gameState, keyboardHandler, mouseHandler);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(gamePanel);
         frame.setSize(600, 400);
@@ -65,6 +68,21 @@ public final class Client {
         gamePanel.setMoveCallback((dx, dy) -> {
             MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
             sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
+        });
+
+        gamePanel.setShootCallback(() -> {
+            Player player = gameState.getPlayer(clientId);
+            if (player == null) return;
+
+            ProjectileSpawnMessage proj = new ProjectileSpawnMessage(
+                    clientId,
+                    player.getRenderX(),
+                    player.getRenderY(),
+                    player.getDirection(),
+                    UUID.randomUUID()
+            );
+
+            sendLocalInput(json.toJson(proj, labelPair(Message.JSON_LABEL, "projectileSpawn")));
         });
 
         gamePanel.startGameLoop();

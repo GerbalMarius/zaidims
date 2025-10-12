@@ -12,8 +12,7 @@ public class MediumSkeleton extends Skeleton {
 
     @Override
     protected void configureStats() {
-
-        hitPoints = 40;
+        maxHitPoints = hitPoints = 40;
         attack = 12;
         scale = 4;
         speed = 3;

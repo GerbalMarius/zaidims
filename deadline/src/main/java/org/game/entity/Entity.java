@@ -11,7 +11,7 @@ import static org.game.entity.ImageSprite.*;
 import static org.game.entity.ImageSprite.rightSprite;
 
 @Data
-public sealed abstract class Entity permits Player, Enemy {
+public sealed abstract class Entity permits Enemy, Player, Projectile {
 
     private static final long INTERP_MS = 100;
     private static final int DEFAULT_SPEED = 5;
@@ -24,6 +24,7 @@ public sealed abstract class Entity permits Player, Enemy {
     protected int scale;
 
     protected int speed;
+    protected int maxHitPoints;
     protected int hitPoints;
     protected int attack;
 
@@ -179,5 +180,24 @@ public sealed abstract class Entity permits Player, Enemy {
         System.arraycopy(frames, 0, this.movementFrames, 0, arraySize);
     }
 
+    public void drawHealthBar(Graphics2D g2, int x, int y, int width, Color color) {
+        if (maxHitPoints <= 0) return ;
+
+        int barHeight = 6;
+        int offsetY = -10; // virs galvos
+
+        double hpRatio = (double) hitPoints / maxHitPoints;
+        int filledWidth = (int) (width * hpRatio);
+
+        g2.setColor(Color.BLACK);
+        g2.fillRect(x, y + offsetY, width, barHeight);
+
+        g2.setColor(color);
+        g2.fillRect(x, y + offsetY, filledWidth, barHeight);
+
+        g2.setColor(Color.WHITE);
+        g2.setStroke(new BasicStroke(1));
+        g2.drawRect(x, y + offsetY, width, barHeight);
+    }
 
 }

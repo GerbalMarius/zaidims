@@ -12,7 +12,7 @@ public class MediumGoblin extends Goblin {
 
     @Override
     protected void configureStats() {
-        hitPoints = 50;
+        maxHitPoints = hitPoints = 50;
         attack = 15;
         scale = 4;
         speed = 4;

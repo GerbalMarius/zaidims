@@ -25,6 +25,10 @@ public final class GamePanel extends JPanel implements Runnable {
     private final GameState state;
 
     private final KeyboardHandler keyboardHandler;
+    private final  MouseHandler mouseHandler;
+
+    private long lastShotTime = 0;
+    private final long shootCooldown = 300;
 
     @Getter
     private final UUID clientId;
@@ -33,6 +37,9 @@ public final class GamePanel extends JPanel implements Runnable {
 
     @Setter
     private BiConsumer<Integer, Integer> moveCallback;
+
+    @Setter
+    private Runnable shootCallback;
 
     private final Queue<Message> incomingMessages = new ConcurrentLinkedQueue<>();
 
@@ -45,10 +52,11 @@ public final class GamePanel extends JPanel implements Runnable {
     private final  TileManager tileManager;
     public CollisionChecker cChecker;
 
-    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler) {
+    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
+        this.mouseHandler = mouseHandler;
         this.camera = new Camera(0.12, 80, 50);
         this.tileManager = new TileManager();
         cChecker = new CollisionChecker(tileManager);
@@ -56,6 +64,7 @@ public final class GamePanel extends JPanel implements Runnable {
         setBackground(Color.WHITE);
         setFocusable(true);
         addKeyListener(this.keyboardHandler);
+        addMouseListener(this.mouseHandler);
 
         initialSnap(state.getPlayer(clientId));
     }
@@ -91,7 +100,6 @@ public final class GamePanel extends JPanel implements Runnable {
         Player currentPlayer = state.getPlayer(clientId);
         optimisticMove(currentPlayer);
 
-
         long nowMillis = System.currentTimeMillis();
         if (nowMillis - lastSendTime > 50) {
             if (pendingDx != 0 || pendingDy != 0) {
@@ -106,6 +114,18 @@ public final class GamePanel extends JPanel implements Runnable {
         if(currentPlayer != null) {
             currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
         }
+
+        if (mouseHandler.isLeftClicked() && currentPlayer != null) {
+            long now = System.currentTimeMillis();
+            if (now - lastShotTime >= shootCooldown) {
+                if (shootCallback != null) {
+                    shootCallback.run(); //send local shoot to server
+                }
+                lastShotTime = now;
+            }
+        }
+
+        state.updateProjectiles();
     }
 
     private void optimisticMove(Player player) {
@@ -163,10 +183,13 @@ public final class GamePanel extends JPanel implements Runnable {
         tileManager.draw(g2d, this.camera, getWidth(), getHeight());
 
         Map<UUID, Player> players = state.getPlayers();
-        Map<Long, Enemy> enemies = state.getEnemies();
 
         redrawPlayers(players, g2d);
-        redrawEnemies(players, enemies, g2d);
+        redrawEnemies(g2d);
+
+        for (Projectile p : state.getProjectiles().values()) {
+            p.draw(g2d);
+        }
 
         g2d.dispose();
 
@@ -175,7 +198,7 @@ public final class GamePanel extends JPanel implements Runnable {
         uiGraphics.dispose();
     }
 
-    private void redrawEnemies(Map<UUID, Player> players, Map<Long, Enemy> enemies, Graphics2D g2d) {
+    private void redrawEnemies(Graphics2D g2d) {
         final  int tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
         for (var enemyEntry : state.getEnemiesEntries()) {
             Enemy enemy = enemyEntry.getValue();
@@ -184,6 +207,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
             enemy.updateDirectionByRender();
             enemy.draw(g2d, enemyX, enemyY, tileSize * enemy.getScale());
+            enemy.drawHealthBar(g2d, enemyX, enemyY, tileSize * enemy.getScale(), Color.RED);
         }
     }
 
@@ -207,6 +231,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
             playerData.draw(g2d, x, y, tileSize * playerData.getScale());
             GUI.drawNameBox(g2d, name, x, y, tileSize * playerData.getScale());
+            playerData.drawHealthBar(g2d, x, y, tileSize * playerData.getScale(), Color.GREEN);
         }
     }
 
@@ -233,6 +258,9 @@ public final class GamePanel extends JPanel implements Runnable {
                 case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) -> state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
                 case EnemyRemoveMessage(var enemyId)  -> state.removeEnemy(enemyId);
                 case EnemyMoveMessage(var enemyId, int newX, int newY)  -> state.updateEnemyPosition(enemyId,  newX, newY);
+                case ProjectileSpawnMessage(UUID shooterId, int startX, int startY, FramePosition dir, UUID projId) ->
+                        state.spawnProjectile(projId, startX, startY, dir);
+
             }
             processed++;
         }

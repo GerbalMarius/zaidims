@@ -2,11 +2,11 @@ package org.game.client;
 
 import lombok.Getter;
 
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 @Getter
-public final class KeyboardHandler implements KeyListener {
+public final class KeyboardHandler extends KeyAdapter {
 
     private boolean upPressed;
 
@@ -15,12 +15,6 @@ public final class KeyboardHandler implements KeyListener {
     private boolean leftPressed;
 
     private boolean rightPressed;
-
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-
-    }
 
     @Override
     public void keyPressed(KeyEvent e) {

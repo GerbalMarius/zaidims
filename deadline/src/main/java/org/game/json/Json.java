@@ -27,7 +27,8 @@ public final class Json {
                 .registerSubtype(MoveMessage.class, "move")
                 .registerSubtype(EnemyMoveMessage.class, "enemyMove")
                 .registerSubtype(EnemySpawnMessage.class, "enemySpawn")
-                .registerSubtype(EnemyRemoveMessage.class, "enemyRemove");
+                .registerSubtype(EnemyRemoveMessage.class, "enemyRemove")
+                .registerSubtype(ProjectileSpawnMessage.class, "projectileSpawn");
 
     }
 

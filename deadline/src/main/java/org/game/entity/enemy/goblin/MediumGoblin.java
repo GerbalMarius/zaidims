@@ -1,6 +1,7 @@
 package org.game.entity.enemy.goblin;
 
 import org.game.entity.EnemySize;
+import org.game.server.Prototype;
 
 public class MediumGoblin extends Goblin {
 
@@ -17,5 +18,10 @@ public class MediumGoblin extends Goblin {
         scale = 4;
         speed = 4;
         createHitbox();
+    }
+
+    @Override
+    public Prototype createDeepCopy() {
+        return new MediumGoblin(this.globalX, this.globalY);
     }
 }

@@ -7,6 +7,7 @@ import org.game.entity.strategy.EnemyStrategy;
 import org.game.entity.strategy.RunAwayStrategy;
 import org.game.entity.strategy.WanderStrategy;
 import org.game.server.CollisionChecker;
+import org.game.server.Prototype;
 
 import java.awt.*;
 import java.util.Collection;
@@ -14,7 +15,7 @@ import java.util.Map;
 
 @Getter
 @Setter
-public abstract non-sealed class Enemy extends Entity {
+public abstract non-sealed class Enemy extends Entity implements Prototype {
 
     private long id;
 
@@ -29,7 +30,6 @@ public abstract non-sealed class Enemy extends Entity {
         configureStats();
 
     }
-
 
     protected abstract void configureStats();
 
@@ -64,9 +64,6 @@ public abstract non-sealed class Enemy extends Entity {
 
         strategy.execute(this, players, allEnemies, checker);
     }
-
-
-
 
     public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionChecker checker) {
         int steps = Math.max(Math.abs(mx), Math.abs(my));
@@ -114,5 +111,16 @@ public abstract non-sealed class Enemy extends Entity {
 
         return closest;
     }
+
+    @Override
+    public Prototype createShallowCopy() {
+        try {
+            return (Enemy) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
 }

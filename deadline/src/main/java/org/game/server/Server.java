@@ -101,6 +101,7 @@ public final class Server {
 
         if (firstPlayer) {
             spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
+            spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
             updateManager.startUpdating();
             firstPlayer = false;
             return;

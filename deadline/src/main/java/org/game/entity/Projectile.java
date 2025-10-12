@@ -6,6 +6,7 @@ import org.game.server.CollisionChecker;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.function.Consumer;
 
 @Getter
 @Setter
@@ -22,7 +23,7 @@ public final class Projectile extends Entity {
         this.hitbox = new Rectangle(8, 16, 16, 16);
     }
 
-    public void update(Collection<? extends Enemy> enemies, CollisionChecker checker) {
+    public void update(Collection<? extends Enemy> enemies, CollisionChecker checker, Consumer<? super Enemy> healthTickAction) {
         if (!active) return;
 
         switch (getDirection()) {
@@ -58,6 +59,8 @@ public final class Projectile extends Entity {
             if (projectileHitbox.intersects(enemyHitbox)) {
                 enemy.setHitPoints(enemy.getHitPoints() - this.damage);
                 this.active = false;
+
+                healthTickAction.accept(enemy);
                 break;
             }
         }

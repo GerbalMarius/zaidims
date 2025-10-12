@@ -3,10 +3,7 @@ package org.game.client;
 import org.game.entity.ClassType;
 import org.game.entity.Player;
 import org.game.json.Json;
-import org.game.message.JoinMessage;
-import org.game.message.Message;
-import org.game.message.MoveMessage;
-import org.game.message.ProjectileSpawnMessage;
+import org.game.message.*;
 import org.game.utils.GUI;
 
 import javax.swing.*;
@@ -75,7 +72,6 @@ public final class Client {
             if (player == null) return;
 
          ProjectileSpawnMessage proj = new ProjectileSpawnMessage(
-                             clientId,
                              player.getGlobalX(),
                              player.getGlobalY(),
                              player.getDirection(),
@@ -83,6 +79,12 @@ public final class Client {
                      );
 
             sendLocalInput(json.toJson(proj, labelPair(Message.JSON_LABEL, "projectileSpawn")));
+        });
+
+        gamePanel.setHealthCallback( enemy -> {
+
+            EnemyHealthUpdateMessage msg = new EnemyHealthUpdateMessage(enemy.getId(), enemy.getHitPoints());
+            sendLocalInput(json.toJson(msg, labelPair(Message.JSON_LABEL, "enemyHealth")));
         });
 
         gamePanel.startGameLoop();

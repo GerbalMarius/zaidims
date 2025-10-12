@@ -15,6 +15,8 @@ import java.util.Map;
 @Setter
 public abstract non-sealed class Enemy extends Entity {
 
+    private long id;
+
     protected EnemyType  type;
     protected EnemySize  size;
 

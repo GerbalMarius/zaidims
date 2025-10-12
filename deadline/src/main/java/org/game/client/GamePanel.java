@@ -12,12 +12,10 @@ import org.game.utils.GUI;
 import javax.swing.*;
 import java.awt.*;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Queue;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public final class GamePanel extends JPanel implements Runnable {
     private static final int FPS = 60;
@@ -41,6 +39,9 @@ public final class GamePanel extends JPanel implements Runnable {
 
     @Setter
     private Runnable shootCallback;
+
+    @Setter
+    private Consumer<? super Enemy> healthCallback;
 
     private final Queue<Message> incomingMessages = new ConcurrentLinkedQueue<>();
 
@@ -131,7 +132,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
     public void updateProjectiles(Collection<? extends Enemy> enemies) {
         for (Projectile p : state.getProjectiles().values()) {
-            p.update(enemies, cChecker);
+            p.update(enemies, cChecker, healthCallback);
         }
 
         state.getProjectiles().entrySet().removeIf(e -> !e.getValue().isActive());
@@ -267,9 +268,16 @@ public final class GamePanel extends JPanel implements Runnable {
                 case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) -> state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
                 case EnemyRemoveMessage(var enemyId)  -> state.removeEnemy(enemyId);
                 case EnemyMoveMessage(var enemyId, int newX, int newY)  -> state.updateEnemyPosition(enemyId,  newX, newY);
-                case ProjectileSpawnMessage(UUID shooterId, int startX, int startY, FramePosition dir, UUID projId) ->
+                case ProjectileSpawnMessage(int startX, int startY, FramePosition dir, UUID projId) ->
                         state.spawnProjectile(projId, startX, startY, dir);
 
+                case EnemyBulkCopyMessage(Map<Long, EnemyCopy> enemies) -> state.copyAllEnemies(enemies);
+                case EnemyHealthUpdateMessage(long enemyId, int newHealth) -> {
+                    Enemy enemy = state.getEnemies().get(enemyId);
+                    if (enemy != null) {
+                        enemy.setHitPoints(newHealth);
+                    }
+                }
             }
             processed++;
         }

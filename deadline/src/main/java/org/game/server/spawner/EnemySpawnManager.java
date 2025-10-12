@@ -18,6 +18,8 @@ public final class EnemySpawnManager {
     private final Server server;
     private final Random random = new Random();
 
+    private static long enemyId = 0;
+
     private final EnemySpawner goblinSpawner = new GoblinSpawner();
     private final EnemySpawner zombieSpawner = new ZombieSpawner();
     private final EnemySpawner skeletonSpawner = new SkeletonSpawner();
@@ -69,6 +71,9 @@ public final class EnemySpawnManager {
             case MEDIUM -> spawner.spawnMedium(x, y);
             case BIG -> spawner.spawnLarge(x, y);
         };
+
+        long nextId = enemyId++;
+        enemy.setId(nextId);
 
         ServerActions.spawnEnemy(server, enemy, x, y);
 

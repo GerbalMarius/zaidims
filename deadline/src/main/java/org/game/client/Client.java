@@ -16,7 +16,10 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+
+import java.util.Queue;
+import java.util.UUID;
+
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.game.json.JsonLabelPair.labelPair;
@@ -81,8 +84,7 @@ public final class Client {
             sendLocalInput(json.toJson(proj, labelPair(Message.JSON_LABEL, "projectileSpawn")));
         });
 
-        gamePanel.setHealthCallback( enemy -> {
-
+        gamePanel.setHealthCallback(enemy -> {
             EnemyHealthUpdateMessage msg = new EnemyHealthUpdateMessage(enemy.getId(), enemy.getHitPoints());
             sendLocalInput(json.toJson(msg, labelPair(Message.JSON_LABEL, "enemyHealth")));
         });

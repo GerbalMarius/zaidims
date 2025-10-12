@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.game.entity.strategy.ChaseStrategy;
 import org.game.entity.strategy.EnemyStrategy;
+import org.game.entity.strategy.RunAwayStrategy;
 import org.game.entity.strategy.WanderStrategy;
 import org.game.server.CollisionChecker;
 
@@ -45,21 +46,27 @@ public abstract non-sealed class Enemy extends Entity {
         double distance = Math.sqrt(dx * dx + dy * dy);
 
         double visionRange = 500.0;
-        double loseSightRange = 350.0;
+        double lowHpThreshold = maxHitPoints * 0.3;
 
         if (strategy == null) {
             strategy = new WanderStrategy();
         }
 
-        if (strategy instanceof WanderStrategy && distance <= visionRange) {
-            strategy = new ChaseStrategy();
-        } else if (strategy instanceof ChaseStrategy && distance > loseSightRange) {
+        if(visionRange >= distance) {
+            if(hitPoints <= lowHpThreshold && !(strategy instanceof RunAwayStrategy)) {
+                strategy = new RunAwayStrategy();
+            } else if ( hitPoints > lowHpThreshold && !(strategy instanceof ChaseStrategy)) {
+                strategy = new ChaseStrategy();
+            }
+        } else if (!(strategy instanceof WanderStrategy) && visionRange < distance) {
             strategy = new WanderStrategy();
         }
 
         strategy.execute(this, players, allEnemies, checker);
-
     }
+
+
+
 
     public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionChecker checker) {
         int steps = Math.max(Math.abs(mx), Math.abs(my));

@@ -11,7 +11,6 @@ import java.util.Map;
 
 public class ChaseStrategy implements EnemyStrategy {
 
-
     @Override
     public void execute(Enemy enemy, Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
         Player target = enemy.getClosestPlayer(players);

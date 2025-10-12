@@ -3,6 +3,7 @@ package org.game.server.spawner;
 import org.game.entity.Enemy;
 import org.game.entity.Player;
 import org.game.server.Server;
+import org.game.server.Server.ServerActions;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -40,7 +41,7 @@ public final class EnemyUpdateManager {
             Enemy enemy = entry.getValue();
 
             enemy.updateAI(players, enemies, server.getEnemyChecker());
-            Server.ServerActions.broadcastEnemyMove(id, enemy.getGlobalX(), enemy.getGlobalY(), server);
+            ServerActions.broadcastEnemyMove(id, enemy.getGlobalX(), enemy.getGlobalY(), server);
         }
     }
 }

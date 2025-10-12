@@ -4,6 +4,7 @@ import org.game.entity.Enemy;
 import org.game.entity.EnemySize;
 import org.game.entity.EnemyType;
 import org.game.server.Server;
+import org.game.server.Server.ServerActions;
 import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
@@ -33,7 +34,7 @@ public final class EnemySpawnManager {
 
     private void spawnRandomEnemy() {
 
-         var  enemyTypes = EnemyType.values();
+         var enemyTypes = EnemyType.values();
         EnemySpawner spawner = switch (enemyTypes[random.nextInt(enemyTypes.length)]) {
             case GOBLIN -> goblinSpawner;
             case ZOMBIE -> zombieSpawner;
@@ -41,11 +42,9 @@ public final class EnemySpawnManager {
         };
 
 
-        EnemySize size = EnemySize.values()[random.nextInt(EnemySize.values().length)];
+         var enemySizes = EnemySize.values();
 
-
-//        int x = random.nextInt(WorldSettings.WORLD_WIDTH / 2);
-//        int y = random.nextInt(WorldSettings.WORLD_HEIGHT / 2);
+        EnemySize size = enemySizes[random.nextInt(enemySizes.length)];
         int maxAttempts = 50;
         int x = 0, y = 0;
         boolean found = false;
@@ -71,7 +70,7 @@ public final class EnemySpawnManager {
             case BIG -> spawner.spawnLarge(x, y);
         };
 
-        Server.ServerActions.spawnEnemy(server, enemy, x, y);
+        ServerActions.spawnEnemy(server, enemy, x, y);
 
     }
 

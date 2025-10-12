@@ -1,5 +1,6 @@
 package org.game.client;
 
+import lombok.Getter;
 import org.game.entity.*;
 import org.game.entity.enemy.goblin.BigGoblin;
 import org.game.entity.enemy.goblin.MediumGoblin;
@@ -19,7 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class GameState {
 
     private final Map<UUID, Player> players = new ConcurrentHashMap<>();
+    @Getter
     private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
+    @Getter
     private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
 
     // -- player
@@ -84,28 +87,14 @@ public final class GameState {
         return Set.copyOf(enemies.entrySet());
     }
 
-    public Map<Long, Enemy> getEnemies()  {
-        return Map.copyOf(enemies);
-    }
-
     // projectiles
     public void spawnProjectile(UUID projectileId, int x, int y, FramePosition dir) {
         Projectile p = new Projectile(x, y, dir, 8, 10);
         projectiles.put(projectileId, p);
     }
 
-    public void updateProjectiles() {
-        for (Projectile p : projectiles.values()) {
-            p.update();
-        }
-    }
-
     public void removeProjectile(UUID projectileId) {
         projectiles.remove(projectileId);
-    }
-
-    public Map<UUID, Projectile> getProjectiles() {
-        return Map.copyOf(projectiles);
     }
 
 }

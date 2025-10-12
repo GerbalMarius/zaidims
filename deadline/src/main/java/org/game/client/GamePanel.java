@@ -12,6 +12,7 @@ import org.game.utils.GUI;
 import javax.swing.*;
 import java.awt.*;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
@@ -125,7 +126,15 @@ public final class GamePanel extends JPanel implements Runnable {
             }
         }
 
-        state.updateProjectiles();
+        updateProjectiles(state.getEnemies().values());
+    }
+
+    public void updateProjectiles(Collection<? extends Enemy> enemies) {
+        for (Projectile p : state.getProjectiles().values()) {
+            p.update(enemies, cChecker);
+        }
+
+        state.getProjectiles().entrySet().removeIf(e -> !e.getValue().isActive());
     }
 
     private void optimisticMove(Player player) {

@@ -74,13 +74,13 @@ public final class Client {
             Player player = gameState.getPlayer(clientId);
             if (player == null) return;
 
-            ProjectileSpawnMessage proj = new ProjectileSpawnMessage(
-                    clientId,
-                    player.getRenderX(),
-                    player.getRenderY(),
-                    player.getDirection(),
-                    UUID.randomUUID()
-            );
+         ProjectileSpawnMessage proj = new ProjectileSpawnMessage(
+                             clientId,
+                             player.getGlobalX(),
+                             player.getGlobalY(),
+                             player.getDirection(),
+                             UUID.randomUUID()
+                     );
 
             sendLocalInput(json.toJson(proj, labelPair(Message.JSON_LABEL, "projectileSpawn")));
         });

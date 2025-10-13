@@ -278,6 +278,12 @@ public final class GamePanel extends JPanel implements Runnable {
                         enemy.setHitPoints(newHealth);
                     }
                 }
+                case PlayerHealthUpdateMessage(UUID playerId, int newHealth) -> {
+                    Player player = state.getPlayer(playerId);
+                    if (player != null) {
+                        player.setHitPoints(newHealth);
+                    }
+                }
             }
             processed++;
         }

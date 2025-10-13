@@ -49,6 +49,7 @@ public final class Server {
     private final CollisionChecker enemyChecker = new CollisionChecker(new TileManager());
 
 
+    @Getter
     private final Json json = new Json();
 
 
@@ -196,6 +197,15 @@ public final class Server {
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "enemyHealth")));
                 }
             }
+            case PlayerHealthUpdateMessage(UUID playerId, int newHealth) -> {
+                var player = clients.values().stream()
+                        .filter(c -> c.getId().equals(playerId))
+                        .findFirst()
+                        .orElse(null);
+                if (player != null) {
+                    broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "playerHealth")));
+                }
+            }
 
         }
     }
@@ -296,6 +306,10 @@ public final class Server {
 
     }
 
+    public void sendToAll(String msg) {
+        broadcast(msg);
+    }
+
     public final static class ServerActions {
 
         private ServerActions() {
@@ -311,6 +325,8 @@ public final class Server {
             state.setId(playerId);
             state.setPlayerClass(playerClass);
             state.setName(playerName);
+            Player newPlayer = new Player(playerClass, playerName, state.getX(), state.getY());
+            state.setPlayer(newPlayer);
 
             Collection<ClientState> states = server.clients.values();
 
@@ -334,13 +350,19 @@ public final class Server {
                 IO.println("Spoofed MOVE ignored");
                 return;
             }
+
             state.setX(state.getX() + dx);
             state.setY(state.getY() + dy);
 
-            MoveMessage move = new MoveMessage(id, state.getX(), state.getY());
+            if (state.getPlayer() != null) {
+                state.getPlayer().setGlobalX(state.getX());
+                state.getPlayer().setGlobalY(state.getY());
+            }
 
+            MoveMessage move = new MoveMessage(id, state.getX(), state.getY());
             server.broadcast(server.json.toJson(move, labelPair(Message.JSON_LABEL, "move")));
         }
+
 
         public static void spawnEnemy(Server server, Enemy enemy, int startX, int startY) {
 

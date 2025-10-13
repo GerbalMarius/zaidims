@@ -206,6 +206,7 @@ public final class Server {
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "playerHealth")));
                 }
             }
+            case PlayerRespawnMessage _ -> {}
 
         }
     }
@@ -309,6 +310,30 @@ public final class Server {
     public void sendToAll(String msg) {
         broadcast(msg);
     }
+
+    public void respawnPlayer(UUID playerId, int respawnX, int respawnY) {
+        // Surandam klienta
+        ClientState cs = clients.values().stream()
+                .filter(c -> c.getId().equals(playerId))
+                .findFirst()
+                .orElse(null);
+
+        if (cs == null) return;
+
+        // Atnaujinam serverio busena
+        cs.setX(respawnX);
+        cs.setY(respawnY);
+
+        var respawnMsg = new PlayerRespawnMessage(playerId, respawnX, respawnY);
+        sendToAll(json.toJson(respawnMsg, labelPair(Message.JSON_LABEL, "playerRespawn")));
+
+        // Taip pat issiunciam MoveMessage, kad klientai atnaujintu pozicija
+        var moveMsg = new MoveMessage(playerId, respawnX, respawnY);
+        sendToAll(json.toJson(moveMsg, labelPair(Message.JSON_LABEL, "move")));
+
+        System.out.println("Player with ID " + playerId + " respawned (" + respawnX + ", " + respawnY + ")");
+    }
+
 
     public final static class ServerActions {
 

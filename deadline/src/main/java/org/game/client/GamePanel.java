@@ -284,6 +284,19 @@ public final class GamePanel extends JPanel implements Runnable {
                         player.setHitPoints(newHealth);
                     }
                 }
+                case PlayerRespawnMessage(UUID playerId, int respawnX, int respawnY) -> {
+                    Player player = state.getPlayer(playerId);
+                    if (player != null) {
+                        player.setGlobalX(respawnX);
+                        player.setGlobalY(respawnY);
+                        player.setHitPoints(player.getMaxHitPoints());
+
+                        if (playerId.equals(clientId)) {
+                            JOptionPane.showMessageDialog(this,"lmao you dead!","Respawn", JOptionPane.INFORMATION_MESSAGE);
+                        }
+                    }
+                }
+
             }
             processed++;
         }

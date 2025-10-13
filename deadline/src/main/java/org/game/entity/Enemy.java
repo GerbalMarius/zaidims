@@ -7,11 +7,10 @@ import org.game.entity.strategy.EnemyStrategy;
 import org.game.entity.strategy.RunAwayStrategy;
 import org.game.entity.strategy.WanderStrategy;
 import org.game.message.Message;
+import org.game.message.MoveMessage;
 import org.game.message.PlayerHealthUpdateMessage;
-import org.game.server.ClientState;
-import org.game.server.CollisionChecker;
-import org.game.server.Prototype;
-import org.game.server.Server;
+import org.game.message.PlayerRespawnMessage;
+import org.game.server.*;
 
 import java.awt.*;
 import java.util.Collection;
@@ -94,7 +93,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     private void attack(Player target, Server server) {
         int damage = this.attack;
         target.takeDamage(damage);
-        System.out.println(this.type + " smoge " + target.getName() + " uz " + damage + " zalos");
+        System.out.println(this.type + " hit " + target.getName() + " with " + damage + " damage");
 
         UUID targetId = server.getClients().values().stream()
                 .filter(cs -> cs.getName().equals(target.getName()))
@@ -103,13 +102,24 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
                 .orElse(null);
 
         if (targetId != null) {
-            var msg = new PlayerHealthUpdateMessage(targetId, target.getHitPoints());
-            server.sendToAll(server.getJson().toJson(msg,
+            var healthMsg = new PlayerHealthUpdateMessage(targetId, target.getHitPoints());
+            server.sendToAll(server.getJson().toJson(healthMsg,
                     labelPair(Message.JSON_LABEL, "playerHealth")));
+
+            if (target.getHitPoints() <= 0) {
+                System.out.println(target.getName() + " is dead! Respawn...");
+
+                target.setHitPoints(target.getMaxHitPoints());
+
+                int respawnX = WorldSettings.TILE_SIZE * 23;
+                int respawnY = WorldSettings.TILE_SIZE * 21;
+                target.setGlobalX(respawnX);
+                target.setGlobalY(respawnY);
+
+                server.respawnPlayer(targetId, respawnX, respawnY);
+            }
         }
     }
-
-
 
     public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionChecker checker) {
         int steps = Math.max(Math.abs(mx), Math.abs(my));

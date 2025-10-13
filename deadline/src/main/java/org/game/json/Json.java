@@ -31,7 +31,8 @@ public final class Json {
                 .registerSubtype(EnemyBulkCopyMessage.class, "enemyCopy")
                 .registerSubtype(EnemyHealthUpdateMessage.class, "enemyHealth")
                 .registerSubtype(ProjectileSpawnMessage.class, "projectileSpawn")
-                .registerSubtype(PlayerHealthUpdateMessage.class, "playerHealth");
+                .registerSubtype(PlayerHealthUpdateMessage.class, "playerHealth")
+                .registerSubtype(PlayerRespawnMessage.class, "playerRespawn");
 
     }
 

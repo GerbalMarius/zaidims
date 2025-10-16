@@ -2,16 +2,17 @@ package org.game.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.game.entity.strategy.ChaseStrategy;
-import org.game.entity.strategy.EnemyStrategy;
-import org.game.entity.strategy.RunAwayStrategy;
-import org.game.entity.strategy.WanderStrategy;
-import org.game.server.CollisionChecker;
-import org.game.server.Prototype;
+import org.game.entity.strategy.*;
+import org.game.message.Message;
+import org.game.message.PlayerHealthUpdateMessage;
+import org.game.server.*;
 
 import java.awt.*;
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
+
+import static org.game.json.JsonLabelPair.labelPair;
 
 @Getter
 @Setter
@@ -23,6 +24,10 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     protected EnemySize  size;
 
     protected EnemyStrategy strategy;
+
+    private long lastAttackTime = 0;
+    private long attackCooldown = 1000;
+    private double attackRange = 50.0;
 
 
     protected Enemy(int x, int y) {
@@ -37,7 +42,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
     }
 
-    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker) {
+    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker, Server server) {
         Player target = getClosestPlayer(players);
         if (target == null) return;
 
@@ -49,7 +54,17 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         double lowHpThreshold = maxHitPoints * 0.3;
 
         if (strategy == null) {
-            strategy = new WanderStrategy();
+            if (type == EnemyType.GOBLIN) {
+                int[][] patrolRoute = {
+                        {getGlobalX(), getGlobalY()},
+                        {getGlobalX() + 150, getGlobalY()},
+                        {getGlobalX() + 150, getGlobalY() + 150},
+                        {getGlobalX(), getGlobalY() + 150}
+                };
+                strategy = new PatrolStrategy(patrolRoute);
+            } else {
+                strategy = new WanderStrategy();
+            }
         }
 
         if(visionRange >= distance) {
@@ -58,11 +73,65 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
             } else if ( hitPoints > lowHpThreshold && !(strategy instanceof ChaseStrategy)) {
                 strategy = new ChaseStrategy();
             }
-        } else if (!(strategy instanceof WanderStrategy) && visionRange < distance) {
+            tryAttack(target, server);
+        } else if (!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) {
             strategy = new WanderStrategy();
+        } else if (!(strategy instanceof PatrolStrategy) && visionRange < distance && type == EnemyType.GOBLIN) {
+            int[][] patrolRoute = {
+                    {getGlobalX(), getGlobalY()},
+                    {getGlobalX() + 150, getGlobalY()},
+                    {getGlobalX() + 150, getGlobalY() + 150},
+                    {getGlobalX(), getGlobalY() + 150}
+            };
+            strategy = new PatrolStrategy(patrolRoute);
         }
 
         strategy.execute(this, players, allEnemies, checker);
+    }
+
+    private void tryAttack(Player target, Server server) {
+        double dx = target.getGlobalX() - this.getGlobalX();
+        double dy = target.getGlobalY() - this.getGlobalY();
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance <= attackRange) {
+            long now = System.currentTimeMillis();
+            if (now - lastAttackTime >= attackCooldown) {
+                attack(target, server);
+                lastAttackTime = now;
+            }
+        }
+    }
+
+    private void attack(Player target, Server server) {
+        int damage = this.attack;
+        target.takeDamage(damage);
+        System.out.println(this.type + " hit " + target.getName() + " with " + damage + " damage");
+
+        UUID targetId = server.getClients().values().stream()
+                .filter(cs -> cs.getName().equals(target.getName()))
+                .map(ClientState::getId)
+                .findFirst()
+                .orElse(null);
+
+        if (targetId != null) {
+            var healthMsg = new PlayerHealthUpdateMessage(targetId, target.getHitPoints());
+            server.sendToAll(server.getJson().toJson(healthMsg,
+                    labelPair(Message.JSON_LABEL, "playerHealth")));
+
+            if (target.getHitPoints() <= 0) {
+                System.out.println(target.getName() + " is dead! Respawn...");
+
+                target.setHitPoints(target.getMaxHitPoints());
+
+                int respawnX = WorldSettings.TILE_SIZE * 23;
+                int respawnY = WorldSettings.TILE_SIZE * 21;
+                target.setGlobalX(respawnX);
+                target.setGlobalY(respawnY);
+
+                server.respawnPlayer(targetId, respawnX, respawnY);
+            }
+        }
     }
 
     public void tryMove(int mx, int my, Collection<Enemy> otherEnemies, CollisionChecker checker) {

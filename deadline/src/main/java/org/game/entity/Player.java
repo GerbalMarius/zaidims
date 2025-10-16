@@ -60,4 +60,11 @@ public final class Player extends Entity {
         }
     }
 
+    public void takeDamage(int dmg) {
+        if (hitPoints <= 0) return; // jau miręs, ignoruojam
+        this.hitPoints -= dmg;
+        if (this.hitPoints < 0) this.hitPoints = 0;
+        System.out.println(name + " gavo " + dmg + " zalos. Liko HP: " + hitPoints);
+    }
+
 }

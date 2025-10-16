@@ -2,14 +2,9 @@ package org.game.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.game.entity.strategy.ChaseStrategy;
-import org.game.entity.strategy.EnemyStrategy;
-import org.game.entity.strategy.RunAwayStrategy;
-import org.game.entity.strategy.WanderStrategy;
+import org.game.entity.strategy.*;
 import org.game.message.Message;
-import org.game.message.MoveMessage;
 import org.game.message.PlayerHealthUpdateMessage;
-import org.game.message.PlayerRespawnMessage;
 import org.game.server.*;
 
 import java.awt.*;
@@ -59,7 +54,17 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         double lowHpThreshold = maxHitPoints * 0.3;
 
         if (strategy == null) {
-            strategy = new WanderStrategy();
+            if (type == EnemyType.GOBLIN) {
+                int[][] patrolRoute = {
+                        {getGlobalX(), getGlobalY()},
+                        {getGlobalX() + 150, getGlobalY()},
+                        {getGlobalX() + 150, getGlobalY() + 150},
+                        {getGlobalX(), getGlobalY() + 150}
+                };
+                strategy = new PatrolStrategy(patrolRoute);
+            } else {
+                strategy = new WanderStrategy();
+            }
         }
 
         if(visionRange >= distance) {
@@ -69,8 +74,16 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
                 strategy = new ChaseStrategy();
             }
             tryAttack(target, server);
-        } else if (!(strategy instanceof WanderStrategy) && visionRange < distance) {
+        } else if (!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) {
             strategy = new WanderStrategy();
+        } else if (!(strategy instanceof PatrolStrategy) && visionRange < distance && type == EnemyType.GOBLIN) {
+            int[][] patrolRoute = {
+                    {getGlobalX(), getGlobalY()},
+                    {getGlobalX() + 150, getGlobalY()},
+                    {getGlobalX() + 150, getGlobalY() + 150},
+                    {getGlobalX(), getGlobalY() + 150}
+            };
+            strategy = new PatrolStrategy(patrolRoute);
         }
 
         strategy.execute(this, players, allEnemies, checker);

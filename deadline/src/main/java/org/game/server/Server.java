@@ -327,7 +327,7 @@ public final class Server {
         var respawnMsg = new PlayerRespawnMessage(playerId, respawnX, respawnY);
         sendToAll(json.toJson(respawnMsg, labelPair(Message.JSON_LABEL, "playerRespawn")));
 
-        // Taip pat issiunciam MoveMessage, kad klientai atnaujintu pozicija
+        // issiunciam MoveMessage, kad klientai atnaujintu pozicija
         var moveMsg = new MoveMessage(playerId, respawnX, respawnY);
         sendToAll(json.toJson(moveMsg, labelPair(Message.JSON_LABEL, "move")));
 

@@ -2,8 +2,11 @@ package org.game.server;
 
 import lombok.Getter;
 import org.game.entity.*;
+import org.game.entity.powerup.PowerUp;
+import org.game.entity.powerup.PowerUpType;
 import org.game.json.Json;
 import org.game.message.*;
+import org.game.server.powerup.PowerUpManager;
 import org.game.server.spawner.EnemySpawnManager;
 import org.game.server.spawner.EnemyUpdateManager;
 import org.game.tiles.TileManager;
@@ -37,6 +40,9 @@ public final class Server {
     @Getter
     private final Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
 
+    @Getter
+    private final Map<Long, PowerUp> powerUps = new ConcurrentHashMap<>();
+
     @SuppressWarnings("unused")
     private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
 
@@ -45,8 +51,10 @@ public final class Server {
     private  final  EnemySpawnManager spawnManager = new EnemySpawnManager(this);
     private final EnemyUpdateManager updateManager = new EnemyUpdateManager(this);
 
+    private final PowerUpManager powerUpManager = new PowerUpManager(this);
+
     @Getter
-    private final CollisionChecker enemyChecker = new CollisionChecker(new TileManager());
+    private final CollisionChecker entityChecker = new CollisionChecker(new TileManager());
 
 
     @Getter
@@ -104,6 +112,7 @@ public final class Server {
             spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
             spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
             updateManager.startUpdating();
+            powerUpManager.startDispensing(0, 5, TimeUnit.SECONDS);
             firstPlayer = false;
             return;
         }
@@ -197,7 +206,7 @@ public final class Server {
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "enemyHealth")));
                 }
             }
-            case PlayerHealthUpdateMessage(UUID playerId, int newHealth) -> {
+            case PlayerHealthUpdateMessage(UUID playerId, _) -> {
                 var player = clients.values().stream()
                         .filter(c -> c.getId().equals(playerId))
                         .findFirst()
@@ -208,6 +217,8 @@ public final class Server {
             }
             case PlayerRespawnMessage _ -> {}
 
+            case PowerUpRemoveMessage _, PowerUpSpawnMessage _ -> {
+            }
         }
     }
 
@@ -402,6 +413,19 @@ public final class Server {
 
             server.broadcast(server.json.toJson(spawnMessage, labelPair(Message.JSON_LABEL, "enemySpawn")));
 
+        }
+
+        public static void spawnPowerUp(Server server, PowerUp powerUp, PowerUpType type, int startX, int startY) {
+            long id = powerUp.getId();
+            PowerUpSpawnMessage msgPowerUp = new PowerUpSpawnMessage(
+                    id,
+                    type,
+                    startX,
+                    startY
+            );
+            server.powerUps.put(id, powerUp);
+
+            server.broadcast(server.json.toJson(msgPowerUp, labelPair(Message.JSON_LABEL, "powerUpSpawn")));
         }
 
 

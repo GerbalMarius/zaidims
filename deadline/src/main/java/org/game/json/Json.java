@@ -21,18 +21,28 @@ public final class Json {
 
     //load polymorphic types through these factories
     private static RuntimeTypeAdapterFactory<Message> getMessageFactory() {
-        return RuntimeTypeAdapterFactory.of(Message.class, Message.JSON_LABEL)
+        RuntimeTypeAdapterFactory<Message> parent = RuntimeTypeAdapterFactory.of(Message.class, Message.JSON_LABEL);
+
+        RuntimeTypeAdapterFactory<Message> coreMessages = parent
                 .registerSubtype(JoinMessage.class, "join")
                 .registerSubtype(LeaveMessage.class, "leave")
-                .registerSubtype(MoveMessage.class, "move")
+                .registerSubtype(MoveMessage.class, "move");
+
+        RuntimeTypeAdapterFactory<Message> enemyMessages = coreMessages
                 .registerSubtype(EnemyMoveMessage.class, "enemyMove")
                 .registerSubtype(EnemySpawnMessage.class, "enemySpawn")
                 .registerSubtype(EnemyRemoveMessage.class, "enemyRemove")
                 .registerSubtype(EnemyBulkCopyMessage.class, "enemyCopy")
-                .registerSubtype(EnemyHealthUpdateMessage.class, "enemyHealth")
+                .registerSubtype(EnemyHealthUpdateMessage.class, "enemyHealth");
+
+        RuntimeTypeAdapterFactory<Message> playerMessages = enemyMessages
                 .registerSubtype(ProjectileSpawnMessage.class, "projectileSpawn")
                 .registerSubtype(PlayerHealthUpdateMessage.class, "playerHealth")
                 .registerSubtype(PlayerRespawnMessage.class, "playerRespawn");
+
+        return playerMessages
+                .registerSubtype(PowerUpSpawnMessage.class, "powerUpSpawn")
+                .registerSubtype(PowerUpRemoveMessage.class, "powerUpRemove");
 
     }
 

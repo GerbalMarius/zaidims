@@ -43,7 +43,7 @@ public final class EnemyUpdateManager {
             long id = entry.getKey();
             Enemy enemy = entry.getValue();
 
-            enemy.updateAI(players, enemies, server.getEnemyChecker(), server);
+            enemy.updateAI(players, enemies, server.getEntityChecker(), server);
             ServerActions.broadcastEnemyMove(id, enemy.getGlobalX(), enemy.getGlobalY(), server);
         }
     }

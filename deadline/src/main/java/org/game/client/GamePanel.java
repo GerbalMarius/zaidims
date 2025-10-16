@@ -3,6 +3,8 @@ package org.game.client;
 import lombok.Getter;
 import lombok.Setter;
 import org.game.entity.*;
+import org.game.entity.powerup.PowerUp;
+import org.game.entity.powerup.PowerUpType;
 import org.game.server.CollisionChecker;
 import org.game.tiles.TileManager;
 import org.game.message.*;
@@ -193,9 +195,12 @@ public final class GamePanel extends JPanel implements Runnable {
         tileManager.draw(g2d, this.camera, getWidth(), getHeight());
 
         Map<UUID, Player> players = state.getPlayers();
+        Map<Long, PowerUp> powerUps = state.getPowerUps();
 
         redrawPlayers(players, g2d);
         redrawEnemies(g2d);
+        redrawPowerUps(g2d,  powerUps);
+
 
         for (Projectile p : state.getProjectiles().values()) {
             p.draw(g2d);
@@ -206,6 +211,12 @@ public final class GamePanel extends JPanel implements Runnable {
         Graphics2D uiGraphics = (Graphics2D) g.create();
         GlobalUI.getInstance().drawCounter(uiGraphics, getWidth());
         uiGraphics.dispose();
+    }
+
+    private void redrawPowerUps(Graphics2D g2d, Map<Long, PowerUp> powerUps) {
+       for (var powerup : powerUps.values()) {
+           powerup.draw(g2d);
+       }
     }
 
     private void redrawEnemies(Graphics2D g2d) {
@@ -297,6 +308,8 @@ public final class GamePanel extends JPanel implements Runnable {
                     }
                 }
 
+                case PowerUpRemoveMessage(long powerUpId) -> state.removePowerUp(powerUpId);
+                case PowerUpSpawnMessage(long powerUpId, PowerUpType powerUp, int x, int y)  -> state.spawnPowerUp(powerUpId, powerUp, x, y);
             }
             processed++;
         }

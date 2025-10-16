@@ -7,7 +7,6 @@ import org.game.entity.enemy.goblin.MediumGoblin;
 import org.game.entity.enemy.skeleton.MediumSkeleton;
 import org.game.entity.enemy.zombie.MediumZombie;
 import org.game.server.Server;
-import org.game.server.Server.ServerActions;
 import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
@@ -17,6 +16,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public final class EnemySpawnManager {
+
+    private static final int ENEMY_SPAWN_POOL_SIZE = 2;
 
     private final Server server;
     private final Random random = new Random();
@@ -31,7 +32,8 @@ public final class EnemySpawnManager {
     private final Enemy zombiePrototype = new MediumZombie(20, 20);
     private final Enemy skeletonPrototype = new MediumSkeleton(20, 20);
 
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(ENEMY_SPAWN_POOL_SIZE);
 
     public EnemySpawnManager(Server server) {
         this.server = server;
@@ -53,10 +55,6 @@ public final class EnemySpawnManager {
         EnemySize size = enemySizes[random.nextInt(enemySizes.length)];
 
         int[] pos = findSpawnPosition();
-        if (pos == null) {
-            System.out.println("❌ Unable to find spawn position");
-            return;
-        }
 
         Enemy enemy = switch (size) {
             case SMALL -> spawner.spawnSmall(pos[0], pos[1]);
@@ -101,8 +99,8 @@ public final class EnemySpawnManager {
     private int[] findSpawnPosition() {
         int maxAttempts = 50;
         for (int i = 0; i < maxAttempts; i++) {
-            int x = random.nextInt(server.getEnemyChecker().getTileManager().getMapTileNum()[0].length * 32);
-            int y = random.nextInt(server.getEnemyChecker().getTileManager().getMapTileNum().length * 32);
+            int x = random.nextInt(server.getEntityChecker().getTileManager().getMapTileNum()[0].length * 32);
+            int y = random.nextInt(server.getEntityChecker().getTileManager().getMapTileNum().length * 32);
 
             if (isWalkableTile(x, y)) {
                 return new int[]{x, y};
@@ -113,7 +111,7 @@ public final class EnemySpawnManager {
 
 
     private boolean isWalkableTile(int x, int y) {
-        TileManager tileManager = server.getEnemyChecker().getTileManager();
+        TileManager tileManager = server.getEntityChecker().getTileManager();
 
         int tileSize = WorldSettings.TILE_SIZE;
         int col = x / tileSize;

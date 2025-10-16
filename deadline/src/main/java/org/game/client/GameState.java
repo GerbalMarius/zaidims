@@ -10,6 +10,7 @@ import org.game.entity.enemy.skeleton.SmallSkeleton;
 import org.game.entity.enemy.zombie.BigZombie;
 import org.game.entity.enemy.zombie.MediumZombie;
 import org.game.entity.enemy.zombie.SmallZombie;
+import org.game.entity.powerup.*;
 import org.game.message.EnemyCopy;
 
 import java.util.Map;
@@ -25,6 +26,9 @@ public final class GameState {
     private  Map<Long, Enemy> enemies = new ConcurrentHashMap<>();
     @Getter
     private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
+
+    @Getter
+    private final Map<Long, PowerUp> powerUps = new ConcurrentHashMap<>();
 
     // -- player
     public void addPlayer(UUID id, ClassType type, String name, int startingX, int startingY) {
@@ -113,6 +117,23 @@ public final class GameState {
 
     public void removeProjectile(UUID projectileId) {
         projectiles.remove(projectileId);
+    }
+    
+    //powerups
+    public void spawnPowerUp(long id, PowerUpType type, int x, int y) {
+        
+        CorePowerUp powerUp = switch (type) {
+            case MAX_HP -> new MaxHpPowerUp(x, y);
+            case ATTACK -> new AttackPowerUp(x, y);
+            case SPEED -> new SpeedPowerUp(x, y);
+        };
+        powerUp.setId(id);
+        
+        powerUps.put(id, powerUp);
+    }
+
+    public void removePowerUp(long id) {
+        powerUps.remove(id);
     }
 
 }

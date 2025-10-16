@@ -115,10 +115,6 @@ public final class GameState {
         projectiles.put(projectileId, p);
     }
 
-    public void removeProjectile(UUID projectileId) {
-        projectiles.remove(projectileId);
-    }
-    
     //powerups
     public void spawnPowerUp(long id, PowerUpType type, int x, int y) {
         

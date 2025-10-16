@@ -1,7 +1,6 @@
 package org.game.entity.powerup;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.game.server.WorldSettings;
 import org.game.utils.ByteFiles;
 

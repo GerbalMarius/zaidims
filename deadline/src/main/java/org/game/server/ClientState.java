@@ -3,6 +3,7 @@ package org.game.server;
 import lombok.Getter;
 import lombok.Setter;
 import org.game.entity.ClassType;
+import org.game.entity.Player;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -17,6 +18,9 @@ public final class ClientState {
     private boolean isReading = false;
     private  int messageLength = 0;
     private final Queue<ByteBuffer> writeQueue = new ArrayDeque<>();
+
+    @Getter
+    Player player;
 
     private UUID id;
     private String name;

@@ -1,5 +1,6 @@
 package org.game.server;
 
+import lombok.Getter;
 import org.game.entity.Entity;
 import org.game.tiles.Tile;
 import org.game.tiles.TileManager;
@@ -8,6 +9,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
+@Getter
 public final class CollisionChecker {
 
     private final TileManager tileManager;
@@ -85,8 +87,5 @@ public final class CollisionChecker {
     }
 
 
-    public TileManager getTileManager() {
-        return tileManager;
-    }
 }
 

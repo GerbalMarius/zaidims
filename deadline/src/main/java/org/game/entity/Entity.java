@@ -172,16 +172,17 @@ public sealed abstract class Entity permits Enemy, Player, Projectile {
     }
 
     protected void copyFrames4d(ImageSprite[] frames) {
-        int arraySize = 4;
-        this.movementFrames = new ImageSprite[arraySize];
-        if (frames.length != arraySize){
+        final int arraySize = 4;
+        if (frames.length != arraySize) {
             throw new IllegalArgumentException("frames must contain 4 images");
         }
+
+        this.movementFrames = new ImageSprite[arraySize];
         System.arraycopy(frames, 0, this.movementFrames, 0, arraySize);
     }
 
     public void drawHealthBar(Graphics2D g2, int x, int y, int width, Color color) {
-        if (maxHitPoints <= 0) return ;
+        if (maxHitPoints <= 0) return;
 
         int barHeight = 6;
         int offsetY = -10; // virs galvos

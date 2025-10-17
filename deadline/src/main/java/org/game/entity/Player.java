@@ -16,6 +16,7 @@ public final class Player extends Entity {
 
     private final ClassType playerClass;
 
+
     public Player(ClassType type, String name, int x, int y) {
         Objects.requireNonNull(name);
         super(x, y);
@@ -62,11 +63,16 @@ public final class Player extends Entity {
         }
     }
 
+    public boolean isAlive() {
+        return hitPoints > 0;
+    }
+
     public void takeDamage(int dmg) {
-        if (hitPoints <= 0) return;
-        this.hitPoints -= dmg;
-        if (this.hitPoints < 0) this.hitPoints = 0;
-        log.debug("{} received {} damage. HP left: {}", name, dmg, hitPoints);
+        int clamped = Math.max(0, dmg);//to avoid negative damage that would heal the player
+
+        this.hitPoints = Math.max(0, this.hitPoints - clamped);//neg hp case
+
+        log.debug("{} received {} damage. HP left: {}", name, clamped, hitPoints);
     }
 
 }

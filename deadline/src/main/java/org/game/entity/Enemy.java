@@ -72,11 +72,11 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         if(visionRange >= distance) {
             if(hitPoints <= lowHpThreshold && !(strategy instanceof RunAwayStrategy)) {
                 strategy = new RunAwayStrategy();
-            } else if ( hitPoints > lowHpThreshold && !(strategy instanceof ChaseStrategy)) {
+            } else if ((hitPoints > lowHpThreshold && !(strategy instanceof ChaseStrategy)) && target.isAlive()) {
                 strategy = new ChaseStrategy();
             }
             tryAttack(target, server);
-        } else if (!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) {
+        } else if ((!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) || !target.isAlive()) {
             strategy = new WanderStrategy();
         } else if (!(strategy instanceof PatrolStrategy) && visionRange < distance && type == EnemyType.GOBLIN) {
             int[][] patrolRoute = {
@@ -106,6 +106,9 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     }
 
     private void attack(Player target, Server server) {
+        if (!target.isAlive()) {
+            return;
+        }
         int damage = this.attack;
         target.takeDamage(damage);
         log.debug("{} hit {} with {} damage", this.type, target.getName(), damage);

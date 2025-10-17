@@ -22,8 +22,8 @@ public final class EnemyUpdateManager {
         this.server = server;
     }
 
-    public void startUpdating() {
-        scheduler.scheduleAtFixedRate(this::updateEnemies, 0, 50, TimeUnit.MILLISECONDS); // kas 100ms
+    public void startUpdating(long initialDelay, long period, TimeUnit timeUnit) {
+        scheduler.scheduleAtFixedRate(this::updateEnemies, initialDelay, period, timeUnit);
     }
 
     private void updateEnemies() {

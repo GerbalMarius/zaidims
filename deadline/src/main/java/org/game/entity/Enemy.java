@@ -2,6 +2,7 @@ package org.game.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.game.entity.strategy.*;
 import org.game.message.Message;
 import org.game.message.PlayerHealthUpdateMessage;
@@ -16,6 +17,7 @@ import static org.game.json.JsonLabelPair.labelPair;
 
 @Getter
 @Setter
+@Slf4j
 public abstract non-sealed class Enemy extends Entity implements Prototype {
 
     private long id;
@@ -106,7 +108,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     private void attack(Player target, Server server) {
         int damage = this.attack;
         target.takeDamage(damage);
-        System.out.println(this.type + " hit " + target.getName() + " with " + damage + " damage");
+        log.debug("{} hit {} with {} damage", this.type, target.getName(), damage);
 
         UUID targetId = server.getClients().values().stream()
                 .filter(cs -> cs.getName().equals(target.getName()))
@@ -120,7 +122,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
                     labelPair(Message.JSON_LABEL, "playerHealth")));
 
             if (target.getHitPoints() <= 0) {
-                System.out.println(target.getName() + " is dead! Respawn...");
+                log.info("{} is dead! Respawn...", target.getName());
 
                 target.setHitPoints(target.getMaxHitPoints());
 
@@ -146,12 +148,9 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
             setGlobalY(getGlobalY() + stepY);
             setCollisionOn(false);
 
-            // tikriname plyteles
             checker.checkTile(this);
 
-            // tikriname kitus priees
             checker.checkEntityCollision(this, otherEnemies);
-            //checker.checkEntityCollision(this, players);
 
             if (isCollisionOn()) {
                 setGlobalX(getGlobalX() - stepX);
@@ -186,8 +185,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         try {
             return (Enemy) super.clone();
         } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("Unable to clone entity : " + this.getClass().getSimpleName(), e);
         }
     }
 

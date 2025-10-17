@@ -33,13 +33,13 @@ public abstract class CorePowerUp implements PowerUp {
     }
 
     protected void loadSprite(String powerUpName){
-        this.sprite = ByteFiles.loadImage("res/potions/" + powerUpName + ".png");
+        this.sprite = ByteFiles.loadImage("assets/potions/" + powerUpName + ".png");
     }
 
     @Override
     public void draw(Graphics2D g2d) {
-        int  tileSize = WorldSettings.TILE_SIZE;
-        g2d.drawImage(sprite, globalX, globalY, tileSize, tileSize, null);
+        int  imgSize = (int)Math.ceil(WorldSettings.TILE_SIZE * 0.75d);
+        g2d.drawImage(sprite, globalX, globalY, imgSize, imgSize, null);
     }
 
     @Override

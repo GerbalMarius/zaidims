@@ -114,7 +114,7 @@ public sealed abstract class Entity permits Enemy, Player, Projectile {
     }
 
     private BufferedImage loadImage(String source, String prefix, String direction, int frame) {
-        return ByteFiles.loadImage(MessageFormat.format("res/{0}/{1}_{2}_{3}.png", source, prefix, direction, frame));
+        return ByteFiles.loadImage(MessageFormat.format("assets/{0}/{1}_{2}_{3}.png", source, prefix, direction, frame));
     }
 
     public void draw(Graphics2D g2, int x, int y, int tileSize) {

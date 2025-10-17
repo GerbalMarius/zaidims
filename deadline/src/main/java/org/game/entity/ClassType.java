@@ -16,9 +16,9 @@ public enum ClassType {
 
     public ImageIcon getIcon() {
        return switch (this) {
-            case WARRIOR -> scaleIcon(new ImageIcon("res/player/war_down_1.png"));
-            case ROGUE -> scaleIcon(new ImageIcon("res/player/rog_down_1.png"));
-            case WIZARD ->  scaleIcon(new ImageIcon("res/player/wiz_down_1.png"));
+            case WARRIOR -> scaleIcon(new ImageIcon("assets/player/war_down_1.png"));
+            case ROGUE -> scaleIcon(new ImageIcon("assets/player/rog_down_1.png"));
+            case WIZARD ->  scaleIcon(new ImageIcon("assets/player/wiz_down_1.png"));
         };
     }
 

@@ -48,53 +48,61 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         Player target = getClosestPlayer(players);
         if (target == null) return;
 
-        double dx = target.getGlobalX() - this.getGlobalX();
-        double dy = target.getGlobalY() - this.getGlobalY();
-        double distance = Math.sqrt(dx * dx + dy * dy);
+        double distance = calculateDistanceTo(target);
 
         double visionRange = 500.0;
         double lowHpThreshold = maxHitPoints * 0.3;
 
-        if (strategy == null) {
-            if (type == EnemyType.GOBLIN) {
-                int[][] patrolRoute = {
-                        {getGlobalX(), getGlobalY()},
-                        {getGlobalX() + 150, getGlobalY()},
-                        {getGlobalX() + 150, getGlobalY() + 150},
-                        {getGlobalX(), getGlobalY() + 150}
-                };
-                strategy = new PatrolStrategy(patrolRoute);
-            } else {
-                strategy = new WanderStrategy();
-            }
-        }
+        setInitialStrategy();
 
         if(visionRange >= distance) {
-            if(hitPoints <= lowHpThreshold && !(strategy instanceof RunAwayStrategy)) {
-                strategy = new RunAwayStrategy();
-            } else if ((hitPoints > lowHpThreshold && !(strategy instanceof ChaseStrategy)) && target.isAlive()) {
-                strategy = new ChaseStrategy();
-            }
+            switchStrategyBasedOnHp(lowHpThreshold, target);
             tryAttack(target, server);
+
         } else if ((!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) || !target.isAlive()) {
             strategy = new WanderStrategy();
         } else if (!(strategy instanceof PatrolStrategy) && visionRange < distance && type == EnemyType.GOBLIN) {
-            int[][] patrolRoute = {
-                    {getGlobalX(), getGlobalY()},
-                    {getGlobalX() + 150, getGlobalY()},
-                    {getGlobalX() + 150, getGlobalY() + 150},
-                    {getGlobalX(), getGlobalY() + 150}
-            };
-            strategy = new PatrolStrategy(patrolRoute);
+            enablePatrolStrategy();
         }
 
         strategy.execute(this, players, allEnemies, checker);
     }
 
+    private void setInitialStrategy() {
+        if (strategy != null) {
+            return;
+        }
+
+        if (type == EnemyType.GOBLIN) {
+            enablePatrolStrategy();
+        } else {
+            strategy = new WanderStrategy();
+        }
+    }
+
+    private void switchStrategyBasedOnHp(double lowHpThreshold, Player target) {
+        if(hitPoints <= lowHpThreshold && !(strategy instanceof RunAwayStrategy)) {
+            strategy = new RunAwayStrategy();
+        } else if ((hitPoints > lowHpThreshold && !(strategy instanceof ChaseStrategy)) && target.isAlive()) {
+            strategy = new ChaseStrategy();
+        }
+    }
+
+    private void enablePatrolStrategy() {
+        int x = getGlobalX();
+        int y = getGlobalY();
+
+        int[][] patrolRoute = {
+                {x, y},
+                {x + 150, y},
+                {x + 150, y + 150},
+                {x, y + 150}
+        };
+        strategy = new PatrolStrategy(patrolRoute);
+    }
+
     private void tryAttack(Player target, Server server) {
-        double dx = target.getGlobalX() - this.getGlobalX();
-        double dy = target.getGlobalY() - this.getGlobalY();
-        double distance = Math.sqrt(dx * dx + dy * dy);
+        double distance = calculateDistanceTo(target);
 
         if (distance <= attackRange) {
             long now = System.currentTimeMillis();
@@ -103,6 +111,12 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
                 lastAttackTime = now;
             }
         }
+    }
+
+    private double calculateDistanceTo(Player target) {
+        double dx = target.getGlobalX() - this.getGlobalX();
+        double dy = target.getGlobalY() - this.getGlobalY();
+        return Math.hypot(dx, dy);
     }
 
     private void attack(Player target, Server server) {
@@ -129,8 +143,8 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
 
                 target.setHitPoints(target.getMaxHitPoints());
 
-                int respawnX = WorldSettings.TILE_SIZE * 23;
-                int respawnY = WorldSettings.TILE_SIZE * 21;
+                int respawnX = WorldSettings.CENTER_X;
+                int respawnY = WorldSettings.CENTER_Y;
                 target.setGlobalX(respawnX);
                 target.setGlobalY(respawnY);
 

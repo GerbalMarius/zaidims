@@ -7,7 +7,6 @@ import org.game.entity.enemy.goblin.MediumGoblin;
 import org.game.entity.enemy.skeleton.MediumSkeleton;
 import org.game.entity.enemy.zombie.MediumZombie;
 import org.game.server.Server;
-import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
 import java.util.Random;
@@ -54,7 +53,9 @@ public final class EnemySpawnManager {
         var enemySizes = EnemySize.values();
         EnemySize size = enemySizes[random.nextInt(enemySizes.length)];
 
-        int[] pos = findSpawnPosition();
+        TileManager tileManager = server.getEntityChecker().getTileManager();
+
+        int[] pos = tileManager.findRandomSpawnPosition(random, 50);
 
         Enemy enemy = switch (size) {
             case SMALL -> spawner.spawnSmall(pos[0], pos[1]);
@@ -72,13 +73,14 @@ public final class EnemySpawnManager {
 
     private void spawnWave() {
         int waveSize = 5;
+        TileManager tileManager = server.getEntityChecker().getTileManager();
 
         for (int i = 0; i < waveSize; i++) {
             Enemy prototype = chooseRandomPrototype();
             Enemy enemy = (Enemy) prototype.createDeepCopy();
 
             enemy.setId(enemyId++);
-            int[] spawnPos = findSpawnPosition();
+            int[] spawnPos = tileManager.findRandomSpawnPosition(random, 50);
             enemy.setGlobalX(spawnPos[0]);
             enemy.setGlobalY(spawnPos[1]);
 
@@ -94,30 +96,5 @@ public final class EnemySpawnManager {
             case ZOMBIE -> zombiePrototype;
             case SKELETON -> skeletonPrototype;
         };
-    }
-
-    private int[] findSpawnPosition() {
-        int maxAttempts = 50;
-        for (int i = 0; i < maxAttempts; i++) {
-            int x = random.nextInt(server.getEntityChecker().getTileManager().getMapTileNum()[0].length * 32);
-            int y = random.nextInt(server.getEntityChecker().getTileManager().getMapTileNum().length * 32);
-
-            if (isWalkableTile(x, y)) {
-                return new int[]{x, y};
-            }
-        }
-        return new int[]{0, 0}; // fallback
-    }
-
-
-    private boolean isWalkableTile(int x, int y) {
-        TileManager tileManager = server.getEntityChecker().getTileManager();
-
-        int tileSize = WorldSettings.TILE_SIZE;
-        int col = x / tileSize;
-        int row = y / tileSize;
-
-        int tileNum = tileManager.getMapTileNum()[row][col];
-        return !tileManager.getTiles().get(tileNum).hasCollision();
     }
 }

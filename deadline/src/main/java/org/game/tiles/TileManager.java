@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Random;
 
 import static org.game.utils.ByteFiles.loadImage;
 
@@ -21,8 +22,8 @@ public class TileManager {
     public TileManager() {
         mapTileNum = new int[WorldSettings.MAX_WORLD_ROW][WorldSettings.MAX_WORLD_COL];
 
-        loadAllTiles("res/tiles");
-        loadMap("res/maps/world02.txt");
+        loadAllTiles("assets/tiles");
+        loadMap("assets/maps/world02.txt");
     }
 
     public void loadAllTiles(String root) {
@@ -99,6 +100,27 @@ public class TileManager {
                 g2d.drawImage(tiles.get(tileNum).image(), worldX, worldY, tileSize, tileSize, null);
             }
         }
+    }
+
+    public int[] findRandomSpawnPosition(Random rand, int maxGenAttempts) {
+        for (int i = 0; i < maxGenAttempts; i++) {
+            int x = rand.nextInt(mapTileNum[0].length * 32);
+            int y = rand.nextInt(mapTileNum.length * 32);
+
+            if (isWalkableTile(x, y)) {
+                return new int[]{x, y};
+            }
+        }
+        return new int[]{WorldSettings.CENTER_X, WorldSettings.CENTER_Y};
+    }
+
+    public boolean isWalkableTile(int x, int y) {
+        int tileSize = WorldSettings.TILE_SIZE;
+        int col = x / tileSize;
+        int row = y / tileSize;
+
+        int tileNum = mapTileNum[row][col];
+        return !tiles.get(tileNum).hasCollision();
     }
 
 }

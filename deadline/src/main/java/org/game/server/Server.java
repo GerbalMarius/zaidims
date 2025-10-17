@@ -1,6 +1,7 @@
 package org.game.server;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import static org.game.json.JsonLabelPair.labelPair;
 import static org.game.server.Server.ServerActions.*;
 
+@Slf4j
 public final class Server {
 
     private static final int PORT = 9000;
@@ -73,7 +75,7 @@ public final class Server {
 
         serverChannel.bind(new InetSocketAddress(PORT));
         serverChannel.register(selector, SelectionKey.OP_ACCEPT);
-        IO.println("Server started on port: " + PORT);
+        log.info("Server started on port: " + PORT);
 
         for (; ; ) {
 
@@ -106,13 +108,11 @@ public final class Server {
         ClientState cs = new ClientState();
         sk.attach(cs);
         clients.put(sc, cs);
-        IO.println("Accepted  from : " + sc.getRemoteAddress());
+        log.info("Accepted  from : {}", sc.getRemoteAddress());
 
         if (firstPlayer) {
-            spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
-            spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
-            updateManager.startUpdating();
-            powerUpManager.startDispensing(0, 5, TimeUnit.SECONDS);
+            startUpdatingEnemies();
+            powerUpManager.startDispensing(10, 5, TimeUnit.SECONDS);
             firstPlayer = false;
             return;
         }
@@ -127,6 +127,12 @@ public final class Server {
 
         sendTo(sc, json.toJson(new EnemyBulkCopyMessage(enemyCopies), labelPair(Message.JSON_LABEL, "enemyCopy")));
 
+    }
+
+    private void startUpdatingEnemies() {
+        spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
+        spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
+        updateManager.startUpdating(0, 50, TimeUnit.MILLISECONDS);
     }
 
     private void read(SelectionKey key) throws IOException {
@@ -182,7 +188,7 @@ public final class Server {
 
     private void onMessage(SocketChannel from, Message message) throws IOException {
         ClientState state = clients.get(from);
-        IO.println("From " + from.getRemoteAddress() + ": " + message.toString());
+        log.info("From {}: {}", from.getRemoteAddress(), message.toString());
 
         switch (message) {
             case JoinMessage(UUID playerId, ClassType playerClass, String playerName, int _, int _) ->
@@ -273,9 +279,9 @@ public final class Server {
         try {
             remote = sc.getRemoteAddress().toString();
         } catch (IOException e) {
-            System.err.println("ERROR GETTING REMOTE ADDRESS");
+            log.error("ERROR GETTING REMOTE ADDRESS");
         }
-        IO.println("Closing " + remote);
+        log.debug("Closing {}", remote);
 
         if (cs != null && cs.getId() != null) {
             LeaveMessage leaveMessage = new LeaveMessage(cs.getId());
@@ -286,7 +292,7 @@ public final class Server {
         try {
             sc.close();
         } catch (IOException e) {
-            System.err.println("Error closing client " + remote);
+            log.error("Error closing client {}", remote);
         }
         key.cancel();
     }
@@ -342,7 +348,7 @@ public final class Server {
         var moveMsg = new MoveMessage(playerId, respawnX, respawnY);
         sendToAll(json.toJson(moveMsg, labelPair(Message.JSON_LABEL, "move")));
 
-        System.out.println("Player with ID " + playerId + " respawned (" + respawnX + ", " + respawnY + ")");
+        log.info("Player with ID {} respawned ({}, {})", playerId, respawnX, respawnY);
     }
 
 
@@ -366,8 +372,8 @@ public final class Server {
 
             Collection<ClientState> states = server.clients.values();
 
-            state.setX(WorldSettings.TILE_SIZE * 23);
-            state.setY(WorldSettings.TILE_SIZE * 21);
+            state.setX(WorldSettings.CENTER_X);
+            state.setY(WorldSettings.CENTER_Y);
 
             for (ClientState other : states) {
                 if (other.getId() != null && state != other) {
@@ -383,7 +389,7 @@ public final class Server {
 
         public static void movePlayer(UUID id, Server server, int dx, int dy, ClientState state) {
             if (state.getId() == null || !state.getId().equals(id)) {
-                IO.println("Spoofed MOVE ignored");
+                log.debug("Spoofed MOVE ignored");
                 return;
             }
 

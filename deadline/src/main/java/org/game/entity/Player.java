@@ -1,6 +1,7 @@
 package org.game.entity;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.game.client.Camera;
 
 import java.awt.*;
@@ -8,6 +9,7 @@ import java.util.Objects;
 
 
 @Getter
+@Slf4j
 public final class Player extends Entity {
 
     private final String name;
@@ -61,10 +63,10 @@ public final class Player extends Entity {
     }
 
     public void takeDamage(int dmg) {
-        if (hitPoints <= 0) return; // jau miręs, ignoruojam
+        if (hitPoints <= 0) return;
         this.hitPoints -= dmg;
         if (this.hitPoints < 0) this.hitPoints = 0;
-        System.out.println(name + " gavo " + dmg + " zalos. Liko HP: " + hitPoints);
+        log.debug("{} received {} damage. HP left: {}", name, dmg, hitPoints);
     }
 
 }

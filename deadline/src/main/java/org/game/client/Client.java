@@ -1,5 +1,6 @@
 package org.game.client;
 
+import lombok.extern.slf4j.Slf4j;
 import org.game.entity.ClassType;
 import org.game.entity.Player;
 import org.game.json.Json;
@@ -24,6 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static org.game.json.JsonLabelPair.labelPair;
 
+@Slf4j
 public final class Client {
 
     private static final int PORT = 9000;
@@ -125,7 +127,7 @@ public final class Client {
                 playerName = "Player " + clientId.toString().substring(0, 10);
             }
             chosenClass = selectedClass[0];
-            IO.println("Player name: " + playerName + ", Class: " + chosenClass);
+            log.info("Player name: {}, Class: {}", playerName, chosenClass);
         } else {
             return true; // canceled
         }
@@ -135,7 +137,7 @@ public final class Client {
 
     private void startNetworkThread() {
         var threadBuilder = Thread.ofVirtual()
-                .name("ClientThread : " + clientId);
+                .name("ClientThread : " + playerName);
 
 
         threadBuilder.start(() -> {
@@ -184,7 +186,7 @@ public final class Client {
             }
 
         } catch (IOException e) {
-            System.err.println("Failed to connect to server on port : " + PORT + " " + " connection refused");
+            log.error("Failed to connect to server on port : " + PORT + " " + " connection refused");
             Thread.sleep(600);
             //try to connect again
             connectToServer();
@@ -193,7 +195,7 @@ public final class Client {
                 if (socketChannel != null) socketChannel.close();
                 if (selector != null) selector.close();
             } catch (IOException e) {
-                System.err.println(e.getMessage());
+                log.error(e.getMessage());
             }
         }
     }
@@ -268,7 +270,7 @@ public final class Client {
     private void finishConnect(SelectionKey key) throws IOException {
         SocketChannel sc = (SocketChannel) key.channel();
         if (sc.finishConnect()) {
-            IO.println("Connected to server");
+            log.debug("Connected to server");
 
             int ops = SelectionKey.OP_READ;
             if (!pendingWrites.isEmpty()) {

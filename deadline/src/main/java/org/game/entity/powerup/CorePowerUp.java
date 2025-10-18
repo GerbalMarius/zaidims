@@ -38,8 +38,8 @@ public abstract class CorePowerUp implements PowerUp {
 
     @Override
     public void draw(Graphics2D g2d) {
-        int  tileSize = WorldSettings.TILE_SIZE;
-        g2d.drawImage(sprite, globalX, globalY, tileSize, tileSize, null);
+        int  tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
+        g2d.drawImage(sprite, globalX, globalY, tileSize * SCALE, tileSize * SCALE, null);
     }
 
     @Override

@@ -4,6 +4,9 @@ import lombok.Getter;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
+import org.game.entity.powerup.decorator.AttackDecorator;
+import org.game.entity.powerup.decorator.MaxHpDecorator;
+import org.game.entity.powerup.decorator.SpeedDecorator;
 import org.game.json.Json;
 import org.game.message.*;
 import org.game.server.powerup.PowerUpManager;
@@ -112,7 +115,7 @@ public final class Server {
             spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
             spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
             updateManager.startUpdating();
-            powerUpManager.startDispensing(0, 5, TimeUnit.SECONDS);
+            powerUpManager.startDispensing(10, 15, TimeUnit.SECONDS);
             firstPlayer = false;
             return;
         }
@@ -182,7 +185,7 @@ public final class Server {
 
     private void onMessage(SocketChannel from, Message message) throws IOException {
         ClientState state = clients.get(from);
-        IO.println("From " + from.getRemoteAddress() + ": " + message.toString());
+        //IO.println("From " + from.getRemoteAddress() + ": " + message.toString());
 
         switch (message) {
             case JoinMessage(UUID playerId, ClassType playerClass, String playerName, int _, int _) ->
@@ -206,20 +209,74 @@ public final class Server {
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "enemyHealth")));
                 }
             }
-            case PlayerHealthUpdateMessage(UUID playerId, _) -> {
-                var player = clients.values().stream()
+            case PlayerRespawnMessage _ -> {}
+
+            case PowerUpSpawnMessage _, PlayerStatsUpdateMessage _ -> {
+            }
+            case PowerUpRemoveMessage(long powerUpId) -> applyPowerUp(from, message, powerUpId);
+            case PlayerHealthUpdateMessage(UUID playerId, int newHealth) -> {
+                var client = clients.values().stream()
                         .filter(c -> c.getId().equals(playerId))
                         .findFirst()
                         .orElse(null);
-                if (player != null) {
+
+                if (client != null) {
+                    Player player = client.getPlayer();
+                    player.setHitPoints(newHealth);
+
+                    // Jei HP <= 0 – respawninam
+                    if (newHealth <= 0) {
+                        int respawnX = 500; // arba koks nors spawn taškas
+                        int respawnY = 500;
+
+                        player.setGlobalX(respawnX);
+                        player.setGlobalY(respawnY);
+                        player.setHitPoints(player.getMaxHitPoints());
+
+                        PlayerRespawnMessage respawnMsg = new PlayerRespawnMessage(playerId, respawnX, respawnY);
+                        broadcast(json.toJson(respawnMsg, labelPair(Message.JSON_LABEL, "playerRespawn")));
+                    }
+
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "playerHealth")));
                 }
             }
-            case PlayerRespawnMessage _ -> {}
 
-            case PowerUpRemoveMessage _, PowerUpSpawnMessage _ -> {
-            }
         }
+    }
+
+    private void applyPowerUp(SocketChannel from, Message message, long powerUpId) {
+        PowerUp powerUp = powerUps.get(powerUpId);
+        if (powerUp == null) return;
+
+        // Surandam zaideja
+        ClientState cs = clients.get(from);
+        if (cs == null || cs.getPlayer() == null) return;
+
+        Player player = cs.getPlayer();
+
+        //Atnaujinam stats serverio lygyje
+        switch (powerUp.getType()) {
+            case ATTACK -> cs.setPlayer(new AttackDecorator(player, 5));
+            case SPEED -> cs.setPlayer(new SpeedDecorator(player, 1));
+            case MAX_HP -> cs.setPlayer(new MaxHpDecorator(player, 10));
+        }
+
+        powerUps.remove(powerUpId);
+
+        // Broadcastinam visiems klientams
+        broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "powerUpRemove")));
+
+        // Broadcastinam atnaujinta player health/attack/speed, kad klientai galetu sinchronizuoti
+        Player decorated = cs.getPlayer();
+        PlayerStatsUpdateMessage statsMsg = new PlayerStatsUpdateMessage(
+                cs.getId(),
+                decorated.getHitPoints(),
+                decorated.getMaxHitPoints(),
+                decorated.getAttack(),
+                decorated.getSpeed()
+        );
+
+        broadcast(json.toJson(statsMsg, labelPair(Message.JSON_LABEL, "playerStats")));
     }
 
     private void write(SelectionKey key) throws IOException {

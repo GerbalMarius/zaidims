@@ -8,7 +8,7 @@ import java.util.Objects;
 
 
 @Getter
-public final class Player extends Entity {
+public non-sealed class Player extends Entity {
 
     private final String name;
 
@@ -50,21 +50,21 @@ public final class Player extends Entity {
             case WIZARD ->  {
                 speed = 4;
                 maxHitPoints = hitPoints = 50;
-                attack = 40;
+                attack = 30;
             }
             case ROGUE ->  {
                 speed = 5;
                 maxHitPoints = hitPoints = 70;
-                attack = 25;
+                attack = 15;
             }
         }
     }
 
     public void takeDamage(int dmg) {
-        if (hitPoints <= 0) return; // jau miręs, ignoruojam
-        this.hitPoints -= dmg;
-        if (this.hitPoints < 0) this.hitPoints = 0;
-        System.out.println(name + " gavo " + dmg + " zalos. Liko HP: " + hitPoints);
+        if (getHitPoints() <= 0) return;
+        this.setHitPoints(this.getHitPoints() - dmg);
+        if (this.getHitPoints() < 0) this.setHitPoints(0);
+        System.out.println(name + " gavo " + dmg + " zalos. Liko HP: " + getHitPoints());
     }
 
 }

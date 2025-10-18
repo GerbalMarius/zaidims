@@ -19,7 +19,7 @@ public final class ClientState {
     private  int messageLength = 0;
     private final Queue<ByteBuffer> writeQueue = new ArrayDeque<>();
 
-    @Getter
+    @Getter @Setter
     Player player;
 
     private UUID id;

@@ -38,16 +38,21 @@ public final class PowerUpManager {
     }
 
     private synchronized void dispenseRandomPowerUp() {
-        PowerUpType[] availablePowerUpTypes = PowerUpType.values();
 
         int[] pos = findSpawnPosition();
-
         final int x = pos[0];
         final int y = pos[1];
 
-        System.out.println("Available powerups: " + Arrays.toString(availablePowerUpTypes));
+        double rand = random.nextDouble(); // 0.0–1.0
+        PowerUpType powerUpType;
 
-        PowerUpType powerUpType = availablePowerUpTypes[random.nextInt(availablePowerUpTypes.length)];
+        if (rand < 0.10) {
+            powerUpType = PowerUpType.SPEED; // 10%
+        } else if (rand < 0.55) {
+            powerUpType = PowerUpType.ATTACK; // 45%
+        } else {
+            powerUpType = PowerUpType.MAX_HP; // 45%
+        }
 
         PowerUp selectedPowerUp = switch (powerUpType) {
             case SPEED -> speedDispenser.dispensePowerUp(x, y);
@@ -56,7 +61,6 @@ public final class PowerUpManager {
         };
 
         selectedPowerUp.setId(powerUpId++);
-
         Server.ServerActions.spawnPowerUp(server, selectedPowerUp, powerUpType, x, y);
     }
 

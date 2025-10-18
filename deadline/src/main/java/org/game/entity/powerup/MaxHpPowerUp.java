@@ -11,4 +11,9 @@ public final class MaxHpPowerUp extends CorePowerUp {
         flatHpIncrease = 100;
         loadSprite("health");
     }
+
+    @Override
+    public PowerUpType getType() {
+        return PowerUpType.MAX_HP;
+    }
 }

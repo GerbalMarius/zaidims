@@ -5,6 +5,9 @@ import lombok.Setter;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
+import org.game.entity.powerup.decorator.AttackDecorator;
+import org.game.entity.powerup.decorator.MaxHpDecorator;
+import org.game.entity.powerup.decorator.SpeedDecorator;
 import org.game.server.CollisionChecker;
 import org.game.tiles.TileManager;
 import org.game.message.*;
@@ -44,6 +47,12 @@ public final class GamePanel extends JPanel implements Runnable {
 
     @Setter
     private Consumer<? super Enemy> healthCallback;
+
+    @Setter
+    private Consumer<PowerUp> onPowerUpPickup;
+    public void setPowerUpCallback(Consumer<PowerUp> callback) {
+        this.onPowerUpPickup = callback;
+    }
 
     private final Queue<Message> incomingMessages = new ConcurrentLinkedQueue<>();
 
@@ -104,6 +113,8 @@ public final class GamePanel extends JPanel implements Runnable {
         Player currentPlayer = state.getPlayer(clientId);
         optimisticMove(currentPlayer);
 
+        checkPlayerPowerUpCollision(currentPlayer);
+
         long nowMillis = System.currentTimeMillis();
         if (nowMillis - lastSendTime > 50) {
             if (pendingDx != 0 || pendingDy != 0) {
@@ -130,6 +141,38 @@ public final class GamePanel extends JPanel implements Runnable {
         }
 
         updateProjectiles(state.getEnemies().values());
+    }
+
+    private void checkPlayerPowerUpCollision(Player player) {
+        if (player == null) return;
+
+        for (var entry : new ArrayList<>(state.getPowerUps().entrySet())) {
+            long id = entry.getKey();
+            PowerUp powerUp = entry.getValue();
+
+            Rectangle playerHitbox = new Rectangle(
+                    player.getGlobalX(), player.getGlobalY(),
+                    WorldSettings.ORIGINAL_TILE_SIZE, WorldSettings.ORIGINAL_TILE_SIZE
+            );
+
+            if (playerHitbox.intersects(powerUp.getHitbox())) {
+
+                Player decoratedPlayer = switch (powerUp.getClass().getSimpleName()) {
+                    case "AttackPowerUp" -> new AttackDecorator(player, 5);
+                    case "SpeedPowerUp"  -> new SpeedDecorator(player, 1);
+                    case "MaxHpPowerUp"     -> new MaxHpDecorator(player, 10);
+                    default -> player;
+                };
+
+                state.setPlayer(clientId, decoratedPlayer);
+
+                if (onPowerUpPickup != null) {
+                    onPowerUpPickup.accept(powerUp);
+                }
+
+                state.removePowerUp(id);
+            }
+        }
     }
 
     public void updateProjectiles(Collection<? extends Enemy> enemies) {
@@ -197,16 +240,17 @@ public final class GamePanel extends JPanel implements Runnable {
         Map<UUID, Player> players = state.getPlayers();
         Map<Long, PowerUp> powerUps = state.getPowerUps();
 
-        redrawPlayers(players, g2d);
-        redrawEnemies(g2d);
         redrawPowerUps(g2d,  powerUps);
 
+        redrawPlayers(players, g2d);
+        redrawEnemies(g2d);
 
         for (Projectile p : state.getProjectiles().values()) {
             p.draw(g2d);
         }
 
         g2d.dispose();
+        GlobalUI.getInstance().drawCounter(g2d, getWidth());
 
         Graphics2D uiGraphics = (Graphics2D) g.create();
         GlobalUI.getInstance().drawCounter(uiGraphics, getWidth());
@@ -279,8 +323,8 @@ public final class GamePanel extends JPanel implements Runnable {
                 case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) -> state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
                 case EnemyRemoveMessage(var enemyId)  -> state.removeEnemy(enemyId);
                 case EnemyMoveMessage(var enemyId, int newX, int newY)  -> state.updateEnemyPosition(enemyId,  newX, newY);
-                case ProjectileSpawnMessage(int startX, int startY, FramePosition dir, UUID projId) ->
-                        state.spawnProjectile(projId, startX, startY, dir);
+                case ProjectileSpawnMessage(int startX, int startY, FramePosition dir, UUID projId, UUID playerId) ->
+                        state.spawnProjectile(projId, playerId, startX, startY, dir);
 
                 case EnemyBulkCopyMessage(Map<Long, EnemyCopy> enemies) -> state.copyAllEnemies(enemies);
                 case EnemyHealthUpdateMessage(long enemyId, int newHealth) -> {
@@ -310,6 +354,17 @@ public final class GamePanel extends JPanel implements Runnable {
 
                 case PowerUpRemoveMessage(long powerUpId) -> state.removePowerUp(powerUpId);
                 case PowerUpSpawnMessage(long powerUpId, PowerUpType powerUp, int x, int y)  -> state.spawnPowerUp(powerUpId, powerUp, x, y);
+                case PlayerStatsUpdateMessage(UUID playerId, int hitPoints, int maxHitPoints, int attack, int speed) -> {
+                   Player player = state.getPlayer(playerId);
+                    if (player != null) {
+                        player.setHitPoints(hitPoints);
+                        player.setMaxHitPoints(maxHitPoints);
+                        player.setAttack(attack);
+                        player.setSpeed(speed);
+                    }
+                }
+
+
             }
             processed++;
         }

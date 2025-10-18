@@ -39,6 +39,10 @@ public final class GameState {
         return players.get(id);
     }
 
+    public void setPlayer(UUID id, Player value){
+         players.put(id, value);
+    }
+
     public void removePlayer(UUID id) {
         players.remove(id);
     }
@@ -110,8 +114,8 @@ public final class GameState {
     }
 
     // projectiles
-    public void spawnProjectile(UUID projectileId, int x, int y, FramePosition dir) {
-        Projectile p = new Projectile(x, y, dir, 8, 10);
+    public void spawnProjectile(UUID projectileId, UUID playerId, int x, int y, FramePosition dir) {
+        Projectile p = new Projectile(x, y, dir, 8, players.get(playerId).getAttack());
         projectiles.put(projectileId, p);
     }
 

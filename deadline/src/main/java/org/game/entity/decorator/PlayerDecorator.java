@@ -22,10 +22,7 @@ public abstract class PlayerDecorator extends Player {
         return wrappedPlayer.getSpeed();
     }
 
-    @Override
-    public boolean regenIfNeeded(long nowMillis) {
-        return wrappedPlayer.regenIfNeeded(nowMillis);
-    }
+
 
     @Override
     public int getHitPoints() {
@@ -52,7 +49,6 @@ public abstract class PlayerDecorator extends Player {
     public void setHpRegenAmount(int hpRegenAmount) {
         wrappedPlayer.setHpRegenAmount(hpRegenAmount);
     }
-
     @Override
     public int getHpRegenAmount() {
         return wrappedPlayer.getHpRegenAmount();

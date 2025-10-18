@@ -149,7 +149,7 @@ public final class Server {
             if (player == null) continue;
             boolean changed = player.regenIfNeeded(now);
             if (changed) {
-                PlayerHealthUpdateMessage healthMsg = new PlayerHealthUpdateMessage(cs.getId(), player.getHitPoints());
+                var healthMsg = new PlayerHealthUpdateMessage(cs.getId(), player.getHitPoints());
                 broadcast(json.toJson(healthMsg, labelPair(Message.JSON_LABEL, "playerHealth")));
             }
         }
@@ -240,11 +240,9 @@ public final class Server {
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "enemyHealth")));
                 }
             }
-            case PlayerRespawnMessage _ -> {
+            case PlayerRespawnMessage _, PowerUpSpawnMessage _, PlayerStatsUpdateMessage _ -> {
             }
 
-            case PowerUpSpawnMessage _, PlayerStatsUpdateMessage _ -> {
-            }
             case PowerUpRemoveMessage(long powerUpId) -> applyPowerUp(from, message, powerUpId);
             case PlayerHealthUpdateMessage(UUID playerId, int newHealth) -> {
                 var client = clients.values().stream()

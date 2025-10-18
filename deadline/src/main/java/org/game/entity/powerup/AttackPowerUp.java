@@ -11,4 +11,9 @@ public final class AttackPowerUp extends CorePowerUp {
         this.flatAttackIncrease = 3;
         loadSprite("attack");
     }
+
+    @Override
+    public PowerUpType getType() {
+        return PowerUpType.ATTACK;
+    }
 }

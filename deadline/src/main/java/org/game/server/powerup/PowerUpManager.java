@@ -35,18 +35,24 @@ public final class PowerUpManager {
         scheduler.scheduleAtFixedRate(this::dispenseRandomPowerUp, initialDelay, period, timeUnit);
     }
 
-    private synchronized void dispenseRandomPowerUp() {
-        PowerUpType[] availablePowerUpTypes = PowerUpType.values();
+    private  void dispenseRandomPowerUp() {
 
         TileManager tileManager = server.getEntityChecker().getTileManager();
 
         int[] pos = tileManager.findRandomSpawnPosition(random, 50);
-
         final int x = pos[0];
         final int y = pos[1];
 
+        double rand = random.nextDouble();
+        PowerUpType powerUpType;
 
-        PowerUpType powerUpType = availablePowerUpTypes[random.nextInt(availablePowerUpTypes.length)];
+        if (rand < 0.10) {
+            powerUpType = PowerUpType.SPEED; // 10%
+        } else if (rand < 0.55) {
+            powerUpType = PowerUpType.ATTACK; // 45%
+        } else {
+            powerUpType = PowerUpType.MAX_HP; // 45%
+        }
 
         PowerUp selectedPowerUp = switch (powerUpType) {
             case SPEED -> speedDispenser.dispensePowerUp(x, y);
@@ -55,7 +61,6 @@ public final class PowerUpManager {
         };
 
         selectedPowerUp.setId(powerUpId++);
-
         Server.ServerActions.spawnPowerUp(server, selectedPowerUp, powerUpType, x, y);
     }
 

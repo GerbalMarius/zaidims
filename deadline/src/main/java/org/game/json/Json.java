@@ -42,8 +42,8 @@ public final class Json {
 
         return playerMessages
                 .registerSubtype(PowerUpSpawnMessage.class, "powerUpSpawn")
-                .registerSubtype(PowerUpRemoveMessage.class, "powerUpRemove");
-
+                .registerSubtype(PowerUpRemoveMessage.class, "powerUpRemove")
+                .registerSubtype(PlayerStatsUpdateMessage.class, "playerStats");
     }
 
 
@@ -54,19 +54,6 @@ public final class Json {
         var key = prop1.key();
 
         addPropertyToObj(jsonObj, key, val);
-        return gson.toJson(jsonObj);
-    }
-
-
-    @SafeVarargs
-    public final <T, V> String toJson(T item, JsonLabelPair<V>... props) {
-        JsonObject jsonObj = gson.toJsonTree(item).getAsJsonObject();
-
-        for (JsonLabelPair<V> prop : props) {
-            var val = prop.value();
-            var key = prop.key();
-            addPropertyToObj(jsonObj, key, val);
-        }
         return gson.toJson(jsonObj);
     }
 

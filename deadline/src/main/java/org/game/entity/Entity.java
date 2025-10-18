@@ -182,12 +182,12 @@ public sealed abstract class Entity permits Enemy, Player, Projectile {
     }
 
     public void drawHealthBar(Graphics2D g2, int x, int y, int width, Color color) {
-        if (maxHitPoints <= 0) return;
+        if (getHitPoints() <= 0) return;
 
         int barHeight = 6;
         int offsetY = -10; // virs galvos
 
-        double hpRatio = (double) hitPoints / maxHitPoints;
+        double hpRatio = (double) getHitPoints() / getMaxHitPoints();
         int filledWidth = (int) (width * hpRatio);
 
         g2.setColor(Color.BLACK);

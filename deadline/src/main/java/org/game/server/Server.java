@@ -138,7 +138,7 @@ public final class Server {
             } catch (Exception e) {
                 log.error("Regen task error", e);
             }
-        }, 0, 1, TimeUnit.SECONDS);
+        }, 0, 50, TimeUnit.MILLISECONDS);
     }
 
     private void regenAllPlayers() {
@@ -265,7 +265,6 @@ public final class Server {
                         PlayerRespawnMessage respawnMsg = new PlayerRespawnMessage(playerId, respawnX, respawnY);
                         broadcast(json.toJson(respawnMsg, labelPair(Message.JSON_LABEL, "playerRespawn")));
                     }
-
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "playerHealth")));
                 }
             }

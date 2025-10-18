@@ -17,10 +17,5 @@ public final class MaxHpDecorator extends PlayerDecorator {
     @Override
     public  int getHitPoints() { return super.getHitPoints(); }
 
-    @Override
-    public void setMaxHitPoints(int hp) {
-        super.setMaxHitPoints(hp);
-    }
-
 
 }

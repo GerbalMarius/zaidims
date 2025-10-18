@@ -7,8 +7,8 @@ public abstract class PlayerDecorator extends Player {
     protected final Player wrappedPlayer;
 
     protected PlayerDecorator(Player wrappedPlayer) {
-        this.wrappedPlayer = wrappedPlayer;
         super(wrappedPlayer.getPlayerClass(), wrappedPlayer.getName(), wrappedPlayer.getGlobalX(), wrappedPlayer.getGlobalY());
+        this.wrappedPlayer = wrappedPlayer;
     }
 
 

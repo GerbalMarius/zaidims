@@ -2,11 +2,11 @@ package org.game.client;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
 import org.game.entity.decorator.AttackDecorator;
-import org.game.entity.decorator.MaxHpDecorator;
 import org.game.entity.decorator.SpeedDecorator;
 import org.game.server.CollisionChecker;
 import org.game.tiles.TileManager;
@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+@Slf4j
 public final class GamePanel extends JPanel implements Runnable {
     private static final int FPS = 60;
 
@@ -143,7 +144,7 @@ public final class GamePanel extends JPanel implements Runnable {
     private void checkPlayerPowerUpCollision(Player player) {
         if (player == null) return;
 
-        for (var entry : new ArrayList<>(state.getPowerUps().entrySet())) {
+        for (var entry : state.getPowerUps().entrySet()) {
             long id = entry.getKey();
             PowerUp powerUp = entry.getValue();
 
@@ -154,12 +155,16 @@ public final class GamePanel extends JPanel implements Runnable {
 
             if (!playerHitbox.intersects(powerUp.getHitbox())) continue;
 
+            /*trecio keiso nereik nes per serva updatinas hp,
+            tai jeigu mes updatinsim ir cia bus tas pats bufas dukartus ir regenins iki ne +20 o +10 nes servas tik zinos apie +10
+             */
             Player decoratedPlayer = switch (powerUp.getClass().getSimpleName().toLowerCase()) {
                 case String s when s.contains("attack") -> new AttackDecorator(player, 5);
                 case String s when s.contains("speed") -> new SpeedDecorator(player, 1);
-                case String s when s.contains("maxhp") -> new MaxHpDecorator(player, 10);
                 default -> player;
             };
+            log.debug(String.valueOf(decoratedPlayer.getAttack()));
+            log.debug(String.valueOf(decoratedPlayer.getSpeed()));
 
             state.setPlayer(clientId, decoratedPlayer);
 
@@ -235,8 +240,8 @@ public final class GamePanel extends JPanel implements Runnable {
 
         tileManager.draw(g2d, this.camera, getWidth(), getHeight());
 
-        Map<UUID, Player> players = state.getPlayers();
         Map<Long, PowerUp> powerUps = state.getPowerUps();
+        Map<UUID, Player> players = state.getPlayers();
 
         redrawPowerUps(g2d, powerUps);
 

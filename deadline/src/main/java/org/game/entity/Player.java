@@ -1,6 +1,7 @@
 package org.game.entity;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.Camera;
 
@@ -10,12 +11,18 @@ import java.util.Objects;
 
 @Getter
 @Slf4j
-public final class Player extends Entity {
+public non-sealed class Player extends Entity {
 
     private final String name;
 
     private final ClassType playerClass;
 
+    @Setter
+    private int hpRegenAmount;
+
+    private long hpRegenIntervalMs;
+
+    private long lastRegenTimestamp;
 
     public Player(ClassType type, String name, int x, int y) {
         Objects.requireNonNull(name);
@@ -29,8 +36,10 @@ public final class Player extends Entity {
         this.lastRenderY = getRenderY();
 
         this.scale = 3;
-        this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
+        this.hitbox = new Rectangle(8, 16, 11 * scale, 11 * scale);
         setStats();
+
+        setClassRegenDefaults();
     }
 
 
@@ -44,35 +53,63 @@ public final class Player extends Entity {
     }
 
     private void setStats() {
-        switch(this.playerClass) {
-            case WARRIOR ->  {
+        switch (this.playerClass) {
+            case WARRIOR -> {
                 speed = 3;
                 maxHitPoints = hitPoints = 100;
                 attack = 25;
             }
-            case WIZARD ->  {
+            case WIZARD -> {
                 speed = 4;
                 maxHitPoints = hitPoints = 50;
-                attack = 40;
+                attack = 30;
             }
-            case ROGUE ->  {
+            case ROGUE -> {
                 speed = 5;
                 maxHitPoints = hitPoints = 70;
-                attack = 25;
+                attack = 15;
             }
         }
     }
 
+    private void setClassRegenDefaults() {
+        switch (this.playerClass) {
+            case WARRIOR -> { hpRegenAmount = 3; hpRegenIntervalMs = 2_000; }
+            case WIZARD  -> { hpRegenAmount = 2; hpRegenIntervalMs = 3_000; }
+            case ROGUE   -> { hpRegenAmount = 2; hpRegenIntervalMs = 1_000; }
+        }
+        lastRegenTimestamp = System.currentTimeMillis();
+    }
+
+    public boolean regenIfNeeded(long nowMillis) {
+        if (hpRegenAmount <= 0 || hpRegenIntervalMs <= 0) return false;
+        if (!isAlive()) return false;
+        if (getHitPoints() >= getMaxHitPoints()) {
+            lastRegenTimestamp = nowMillis;
+            return false;
+        }
+        if (nowMillis - lastRegenTimestamp >= hpRegenIntervalMs) {
+            int newHp = Math.min(getMaxHitPoints(), getHitPoints() + hpRegenAmount);
+            if (newHp != getHitPoints()) {
+                setHitPoints(newHp);
+                lastRegenTimestamp = nowMillis;
+                log.debug("{} regenerated {} HP -> {}/{}", name, hpRegenAmount, getHitPoints(), getMaxHitPoints());
+                return true;
+            } else {
+                lastRegenTimestamp = nowMillis;
+            }
+        }
+        return false;
+    }
+
     public boolean isAlive() {
-        return hitPoints > 0;
+        return getHitPoints() > 0;
     }
 
     public void takeDamage(int dmg) {
-        int clamped = Math.max(0, dmg);//to avoid negative damage that would heal the player
-
-        this.hitPoints = Math.max(0, this.hitPoints - clamped);//neg hp case
-
-        log.debug("{} received {} damage. HP left: {}", name, clamped, hitPoints);
+        if (getHitPoints() <= 0) return;
+        this.setHitPoints(this.getHitPoints() - dmg);
+        if (this.getHitPoints() < 0) this.setHitPoints(0);
+        log.debug("{} received {} dmg pts. HP left: {}", name, dmg, getHitPoints());
     }
-
 }

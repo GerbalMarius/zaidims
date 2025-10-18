@@ -80,7 +80,8 @@ public final class Client {
                              player.getGlobalX(),
                              player.getGlobalY(),
                              player.getDirection(),
-                             UUID.randomUUID()
+                             UUID.randomUUID(),
+                             clientId
                      );
 
             sendLocalInput(json.toJson(proj, labelPair(Message.JSON_LABEL, "projectileSpawn")));
@@ -89,6 +90,11 @@ public final class Client {
         gamePanel.setHealthCallback(enemy -> {
             EnemyHealthUpdateMessage msg = new EnemyHealthUpdateMessage(enemy.getId(), enemy.getHitPoints());
             sendLocalInput(json.toJson(msg, labelPair(Message.JSON_LABEL, "enemyHealth")));
+        });
+
+        gamePanel.setPowerUpCallback(powerUp -> {
+            PowerUpRemoveMessage msg = new PowerUpRemoveMessage(powerUp.getId());
+            sendLocalInput(json.toJson(msg, labelPair(Message.JSON_LABEL, "powerUpRemove")));
         });
 
         gamePanel.startGameLoop();

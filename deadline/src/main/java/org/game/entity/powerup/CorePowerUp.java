@@ -29,7 +29,7 @@ public abstract class CorePowerUp implements PowerUp {
         this.globalX = globalX;
         this.globalY = globalY;
 
-        hitbox = new Rectangle(globalX, globalY, SCALE * 11, SCALE * 11);
+        hitbox = new Rectangle(globalX, globalY, SCALE * 12, SCALE * 12);
     }
 
     protected void loadSprite(String powerUpName){
@@ -38,8 +38,8 @@ public abstract class CorePowerUp implements PowerUp {
 
     @Override
     public void draw(Graphics2D g2d) {
-        int  imgSize = (int)Math.ceil(WorldSettings.TILE_SIZE * 0.75d);
-        g2d.drawImage(sprite, globalX, globalY, imgSize, imgSize, null);
+        int  tileSize = WorldSettings.ORIGINAL_TILE_SIZE;
+        g2d.drawImage(sprite, globalX, globalY, tileSize * SCALE, tileSize * SCALE, null);
     }
 
     @Override

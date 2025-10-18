@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
+import org.game.entity.decorator.AttackDecorator;
+import org.game.entity.decorator.MaxHpDecorator;
+import org.game.entity.decorator.SpeedDecorator;
 import org.game.json.Json;
 import org.game.message.*;
 import org.game.server.powerup.PowerUpManager;
@@ -21,8 +24,7 @@ import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static org.game.json.JsonLabelPair.labelPair;
@@ -45,18 +47,17 @@ public final class Server {
     @Getter
     private final Map<Long, PowerUp> powerUps = new ConcurrentHashMap<>();
 
-    @SuppressWarnings("unused")
-    private final Map<UUID, Projectile> projectiles = new ConcurrentHashMap<>();
-
     private static boolean firstPlayer = true;
 
-    private  final  EnemySpawnManager spawnManager = new EnemySpawnManager(this);
+    private final EnemySpawnManager spawnManager = new EnemySpawnManager(this);
     private final EnemyUpdateManager updateManager = new EnemyUpdateManager(this);
 
     private final PowerUpManager powerUpManager = new PowerUpManager(this);
 
     @Getter
     private final CollisionChecker entityChecker = new CollisionChecker(new TileManager());
+
+    private final ScheduledExecutorService playerHpRegenTick = Executors.newSingleThreadScheduledExecutor();
 
 
     @Getter
@@ -112,21 +113,46 @@ public final class Server {
 
         if (firstPlayer) {
             startUpdatingEnemies();
-            powerUpManager.startDispensing(10, 5, TimeUnit.SECONDS);
+            powerUpManager.startDispensing(10, 15, TimeUnit.SECONDS);
+            startPlayerRegen();
             firstPlayer = false;
             return;
         }
         Map<Long, EnemyCopy> enemyCopies = enemies.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, endData -> {
-                             Enemy value = endData.getValue();
-                           return new EnemyCopy(
-                                   endData.getKey(), value.getType(),
-                                   value.getSize(), value.getGlobalX(),
-                                   value.getGlobalY(), value.getHitPoints());
-                        }));
+                .collect(Collectors.toMap(Map.Entry::getKey, endData -> {
+                    Enemy value = endData.getValue();
+                    return new EnemyCopy(
+                            endData.getKey(), value.getType(),
+                            value.getSize(), value.getGlobalX(),
+                            value.getGlobalY(), value.getHitPoints());
+                }));
 
         sendTo(sc, json.toJson(new EnemyBulkCopyMessage(enemyCopies), labelPair(Message.JSON_LABEL, "enemyCopy")));
 
+    }
+
+    private void startPlayerRegen() {
+        playerHpRegenTick.scheduleAtFixedRate(() -> {
+            try {
+                regenAllPlayers();
+            } catch (Exception e) {
+                log.error("Regen task error", e);
+            }
+        }, 0, 1, TimeUnit.SECONDS);
+    }
+
+    private void regenAllPlayers() {
+        long now = System.currentTimeMillis();
+        for (var entry : clients.entrySet()) {
+            ClientState cs = entry.getValue();
+            Player player = cs.getPlayer();
+            if (player == null) continue;
+            boolean changed = player.regenIfNeeded(now);
+            if (changed) {
+                PlayerHealthUpdateMessage healthMsg = new PlayerHealthUpdateMessage(cs.getId(), player.getHitPoints());
+                broadcast(json.toJson(healthMsg, labelPair(Message.JSON_LABEL, "playerHealth")));
+            }
+        }
     }
 
     private void startUpdatingEnemies() {
@@ -188,17 +214,19 @@ public final class Server {
 
     private void onMessage(SocketChannel from, Message message) throws IOException {
         ClientState state = clients.get(from);
-        log.info("From {}: {}", from.getRemoteAddress(), message.toString());
+        // log.info("From {}: {}", from.getRemoteAddress(), message.toString());
 
         switch (message) {
             case JoinMessage(UUID playerId, ClassType playerClass, String playerName, int _, int _) ->
                     createPlayer(from, this, playerId, playerClass, playerName, state);
             case MoveMessage(UUID id, int dx, int dy) -> movePlayer(id, this, dx, dy, state);
-            case LeaveMessage leaveMessage -> broadcast(json.toJson(leaveMessage, labelPair(Message.JSON_LABEL, "leave")));
-            case EnemyMoveMessage _, EnemyRemoveMessage _, EnemySpawnMessage _, EnemyBulkCopyMessage _  -> {
+            case LeaveMessage leaveMessage ->
+                    broadcast(json.toJson(leaveMessage, labelPair(Message.JSON_LABEL, "leave")));
+            case EnemyMoveMessage _, EnemyRemoveMessage _, EnemySpawnMessage _, EnemyBulkCopyMessage _ -> {
 
             }
-            case ProjectileSpawnMessage projSpawn -> broadcast(json.toJson(projSpawn, labelPair(Message.JSON_LABEL, "projectileSpawn")));
+            case ProjectileSpawnMessage projSpawn ->
+                    broadcast(json.toJson(projSpawn, labelPair(Message.JSON_LABEL, "projectileSpawn")));
             case EnemyHealthUpdateMessage(long eId, int newHealth) -> {
                 Enemy enemy = enemies.get(eId);
                 if (enemy != null) {
@@ -212,20 +240,71 @@ public final class Server {
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "enemyHealth")));
                 }
             }
-            case PlayerHealthUpdateMessage(UUID playerId, _) -> {
-                var player = clients.values().stream()
+            case PlayerRespawnMessage _ -> {
+            }
+
+            case PowerUpSpawnMessage _, PlayerStatsUpdateMessage _ -> {
+            }
+            case PowerUpRemoveMessage(long powerUpId) -> applyPowerUp(from, message, powerUpId);
+            case PlayerHealthUpdateMessage(UUID playerId, int newHealth) -> {
+                var client = clients.values().stream()
                         .filter(c -> c.getId().equals(playerId))
                         .findFirst()
                         .orElse(null);
-                if (player != null) {
+
+                if (client != null) {
+                    Player player = client.getPlayer();
+                    player.setHitPoints(newHealth);
+
+                    if (newHealth <= 0) {
+                        int respawnX = WorldSettings.CENTER_X;
+                        int respawnY = WorldSettings.CENTER_Y;
+
+                        player.setGlobalX(respawnX);
+                        player.setGlobalY(respawnY);
+                        player.setHitPoints(player.getMaxHitPoints());
+
+                        PlayerRespawnMessage respawnMsg = new PlayerRespawnMessage(playerId, respawnX, respawnY);
+                        broadcast(json.toJson(respawnMsg, labelPair(Message.JSON_LABEL, "playerRespawn")));
+                    }
+
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "playerHealth")));
                 }
             }
-            case PlayerRespawnMessage _ -> {}
 
-            case PowerUpRemoveMessage _, PowerUpSpawnMessage _ -> {
-            }
         }
+    }
+
+    private void applyPowerUp(SocketChannel from, Message message, long powerUpId) {
+        PowerUp powerUp = powerUps.get(powerUpId);
+        if (powerUp == null) return;
+
+        ClientState cs = clients.get(from);
+        if (cs == null || cs.getPlayer() == null) return;
+
+        Player player = cs.getPlayer();
+
+        switch (powerUp.getType()) {
+            case ATTACK -> cs.setPlayer(new AttackDecorator(player, 5));
+            case SPEED -> cs.setPlayer(new SpeedDecorator(player, 1));
+            case MAX_HP -> cs.setPlayer(new MaxHpDecorator(player, 10));
+        }
+
+        powerUps.remove(powerUpId);
+
+
+        broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "powerUpRemove")));
+
+        Player decorated = cs.getPlayer();
+        PlayerStatsUpdateMessage statsMsg = new PlayerStatsUpdateMessage(
+                cs.getId(),
+                decorated.getHitPoints(),
+                decorated.getMaxHitPoints(),
+                decorated.getAttack(),
+                decorated.getSpeed()
+        );
+
+        broadcast(json.toJson(statsMsg, labelPair(Message.JSON_LABEL, "playerStats")));
     }
 
     private void write(SelectionKey key) throws IOException {
@@ -329,7 +408,7 @@ public final class Server {
     }
 
     public void respawnPlayer(UUID playerId, int respawnX, int respawnY) {
-        // Surandam klienta
+
         ClientState cs = clients.values().stream()
                 .filter(c -> c.getId().equals(playerId))
                 .findFirst()
@@ -337,18 +416,16 @@ public final class Server {
 
         if (cs == null) return;
 
-        // Atnaujinam serverio busena
         cs.setX(respawnX);
         cs.setY(respawnY);
 
         var respawnMsg = new PlayerRespawnMessage(playerId, respawnX, respawnY);
         sendToAll(json.toJson(respawnMsg, labelPair(Message.JSON_LABEL, "playerRespawn")));
 
-        // issiunciam MoveMessage, kad klientai atnaujintu pozicija
         var moveMsg = new MoveMessage(playerId, respawnX, respawnY);
         sendToAll(json.toJson(moveMsg, labelPair(Message.JSON_LABEL, "move")));
 
-        log.info("Player with ID {} respawned ({}, {})", playerId, respawnX, respawnY);
+        log.debug("Player with ID {} respawned ({}, {})", playerId, respawnX, respawnY);
     }
 
 

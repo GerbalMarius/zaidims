@@ -12,4 +12,9 @@ public final class SpeedPowerUp extends CorePowerUp {
         this.flatSpeedIncrease = 1;
         loadSprite("speed");
     }
+
+    @Override
+    public PowerUpType getType() {
+        return PowerUpType.SPEED;
+    }
 }

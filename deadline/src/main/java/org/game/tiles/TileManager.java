@@ -13,7 +13,6 @@ import java.util.Random;
 
 import static org.game.utils.ByteFiles.loadImage;
 
-// int[y][x] , y - row , x - col
 @Getter
 public class TileManager {
     private List<Tile> tiles;
@@ -103,24 +102,27 @@ public class TileManager {
     }
 
     public int[] findRandomSpawnPosition(Random rand, int maxGenAttempts) {
-        for (int i = 0; i < maxGenAttempts; i++) {
-            int x = rand.nextInt(mapTileNum[0].length * 32);
-            int y = rand.nextInt(mapTileNum.length * 32);
+        int rows = mapTileNum.length;
+        int cols = mapTileNum[0].length;
+        int tileSize = WorldSettings.TILE_SIZE;
 
-            if (isWalkableTile(x, y)) {
-                return new int[]{x, y};
+        for (int i = 0; i < maxGenAttempts; i++) {
+            int row = rand.nextInt(rows);
+            int col = rand.nextInt(cols);
+
+            if (!isWalkable(row, col)) {
+                continue;
             }
+
+            int x = col * tileSize + tileSize / 2;
+            int y = row * tileSize + tileSize / 2;
+            return new int[]{x, y};
         }
         return new int[]{WorldSettings.CENTER_X, WorldSettings.CENTER_Y};
     }
 
-    public boolean isWalkableTile(int x, int y) {
-        int tileSize = WorldSettings.TILE_SIZE;
-        int col = x / tileSize;
-        int row = y / tileSize;
-
-        int tileNum = mapTileNum[row][col];
-        return !tiles.get(tileNum).hasCollision();
+    private boolean isWalkable(int y, int x) {
+        return !tiles.get(mapTileNum[y][x]).hasCollision();
     }
 
 }

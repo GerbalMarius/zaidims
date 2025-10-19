@@ -23,7 +23,6 @@ public abstract class PlayerDecorator extends Player {
     }
 
 
-
     @Override
     public int getHitPoints() {
         return wrappedPlayer.getHitPoints();
@@ -49,6 +48,7 @@ public abstract class PlayerDecorator extends Player {
     public void setHpRegenAmount(int hpRegenAmount) {
         wrappedPlayer.setHpRegenAmount(hpRegenAmount);
     }
+
     @Override
     public int getHpRegenAmount() {
         return wrappedPlayer.getHpRegenAmount();

@@ -157,7 +157,7 @@ public final class Server {
 
     private void startUpdatingEnemies() {
         spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
-        spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
+        spawnManager.startWaveSystem(10, 50, TimeUnit.SECONDS);
         updateManager.startUpdating(0, 50, TimeUnit.MILLISECONDS);
     }
 
@@ -441,13 +441,18 @@ public final class Server {
             state.setId(playerId);
             state.setPlayerClass(playerClass);
             state.setName(playerName);
-            Player newPlayer = new Player(playerClass, playerName, state.getX(), state.getY());
+            state.setX(WorldSettings.CENTER_X);
+            state.setY(WorldSettings.CENTER_Y);
+            Player newPlayer = new PlayerBuilder()
+                    .ofClass(playerClass)
+                    .withName(playerName)
+                    .at(state.getX(), state.getY())
+                    .build();
             state.setPlayer(newPlayer);
 
             Collection<ClientState> states = server.clients.values();
 
-            state.setX(WorldSettings.CENTER_X);
-            state.setY(WorldSettings.CENTER_Y);
+
 
             for (ClientState other : states) {
                 if (other.getId() != null && state != other) {

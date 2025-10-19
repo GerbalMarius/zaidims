@@ -2,14 +2,7 @@ package org.game.client;
 
 import lombok.Getter;
 import org.game.entity.*;
-import org.game.entity.enemy.goblin.BigGoblin;
-import org.game.entity.enemy.goblin.MediumGoblin;
-import org.game.entity.enemy.goblin.SmallGoblin;
-import org.game.entity.enemy.skeleton.MediumSkeleton;
-import org.game.entity.enemy.skeleton.SmallSkeleton;
-import org.game.entity.enemy.zombie.BigZombie;
-import org.game.entity.enemy.zombie.MediumZombie;
-import org.game.entity.enemy.zombie.SmallZombie;
+import org.game.entity.EnemyBuilder;
 import org.game.entity.powerup.*;
 import org.game.message.EnemyCopy;
 
@@ -61,40 +54,33 @@ public final class GameState {
     }
 
     public synchronized void copyAllEnemies(Map<Long, EnemyCopy> enemies) {
-
         this.enemies = new ConcurrentHashMap<>(enemies.size());
 
         for (var copy : enemies.entrySet()) {
             long id = copy.getKey();
             EnemyCopy enData = copy.getValue();
-            final Enemy fromMessage = createFromMessage(enData.enemyType(), enData.enemySize(), enData.initialX(), enData.initialY());
-            fromMessage.setId(id);
-            fromMessage.setHitPoints(enData.hpPoints());
-            this.enemies.put(copy.getKey(), fromMessage);
-            GlobalUI.getInstance().incrementCounter();
 
+            Enemy enemy = new EnemyBuilder()
+                    .ofType(enData.enemyType())
+                    .withSize(enData.enemySize())
+                    .at(enData.initialX(), enData.initialY())
+                    .withId(id)
+                    .withHitPoints(enData.hpPoints())
+                    .build();
+
+            this.enemies.put(id, enemy);
+            GlobalUI.getInstance().incrementCounter();
         }
     }
 
     private Enemy createFromMessage(EnemyType type, EnemySize size, int x, int y) {
-        return switch (type) {
-            case ZOMBIE -> switch (size) {
-                case SMALL -> new SmallZombie(x, y);
-                case MEDIUM -> new MediumZombie(x, y);
-                case BIG -> new BigZombie(x, y);
-            };
-            case SKELETON -> switch (size) {
-                case SMALL -> new SmallSkeleton(x, y);
-                case MEDIUM -> new MediumSkeleton(x, y);
-                case BIG -> new BigZombie(x, y);
-            };
-            case GOBLIN -> switch (size) {
-                case SMALL -> new SmallGoblin(x, y);
-                case MEDIUM -> new MediumGoblin(x, y);
-                case BIG -> new BigGoblin(x, y);
-            };
-        };
+        return new EnemyBuilder()
+                .ofType(type)
+                .withSize(size)
+                .at(x, y)
+                .build();
     }
+
 
     public void updateEnemyPosition(long id, int newX, int newY) {
         Enemy enemy = enemies.get(id);

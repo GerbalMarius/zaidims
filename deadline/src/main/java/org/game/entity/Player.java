@@ -76,13 +76,12 @@ public non-sealed class Player extends Entity {
         switch (this.playerClass) {
             case WARRIOR -> { hpRegenAmount = 3; hpRegenIntervalMs = 2_000; }
             case WIZARD  -> { hpRegenAmount = 2; hpRegenIntervalMs = 3_000; }
-            case ROGUE   -> { hpRegenAmount = 2; hpRegenIntervalMs = 1_000; }
+            case ROGUE   -> { hpRegenAmount = 1; hpRegenIntervalMs = 1_000; }
         }
         lastRegenTimestamp = System.currentTimeMillis();
     }
 
     public boolean regenIfNeeded(long nowMillis) {
-        if (hpRegenAmount <= 0 || hpRegenIntervalMs <= 0) return false;
         if (!isAlive()) return false;
         if (getHitPoints() >= getMaxHitPoints()) {
             lastRegenTimestamp = nowMillis;

@@ -1,4 +1,4 @@
-package org.game.client;
+package org.game.client.input;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -33,10 +33,6 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
             case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> rightPressed = false;
 
         }
-    }
-
-    public boolean anyKeyPressed() {
-        return upPressed || downPressed || leftPressed || rightPressed;
     }
 
     @Override

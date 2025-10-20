@@ -1,10 +1,10 @@
-package org.game.client;
+package org.game.client.input;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 
-public final class MouseHandler extends MouseAdapter implements ClickHandler {
+public final class MouseHandler extends MouseAdapter implements InputHandler {
     private boolean leftClicked;
 
     private boolean rightClicked;
@@ -25,17 +25,13 @@ public final class MouseHandler extends MouseAdapter implements ClickHandler {
         }
     }
 
-    public boolean anyButtonPressed() {
-        return leftClicked || rightClicked;
-    }
-
     @Override
-    public boolean isLeftClicked() {
+    public boolean isPrimaryClicked() {
         return leftClicked;
     }
 
     @Override
-    public boolean isRightClicked() {
+    public boolean isSecondaryClicked() {
         return rightClicked;
     }
 }

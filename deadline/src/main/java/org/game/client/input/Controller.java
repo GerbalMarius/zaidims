@@ -1,4 +1,4 @@
-package org.game.client;
+package org.game.client.input;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +8,7 @@ import org.lwjgl.system.MemoryStack;
 
 @Slf4j
 @Getter
-public final class ControllerHandler {
+public final class Controller {
 
     private final int controllerIndex;
     private final float deadZone;
@@ -17,11 +17,11 @@ public final class ControllerHandler {
     private boolean up, down, left, right;
     private boolean buttonX, buttonY;
 
-    public ControllerHandler() {
-        this(0, 0.05f);
+    public Controller() {
+        this(0, 0.25f);
     }
 
-    public ControllerHandler(int controllerIndex, float deadZone) {
+    public Controller(int controllerIndex, float deadZone) {
         this.controllerIndex = Math.max(0, Math.min(15, controllerIndex));
         this.deadZone = Math.max(0f, Math.min(1f, deadZone));
 
@@ -44,6 +44,7 @@ public final class ControllerHandler {
 
             if (!GLFW.glfwGetGamepadState(jid, state)) {
                 connected = false;
+                clear();
                 return;
             }
 

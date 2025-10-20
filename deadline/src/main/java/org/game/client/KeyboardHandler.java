@@ -1,12 +1,9 @@
 package org.game.client;
 
-import lombok.Getter;
-
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-@Getter
-public final class KeyboardHandler extends KeyAdapter {
+public final class KeyboardHandler extends KeyAdapter implements InputHandler {
 
     private boolean upPressed;
 
@@ -40,5 +37,25 @@ public final class KeyboardHandler extends KeyAdapter {
 
     public boolean anyKeyPressed() {
         return upPressed || downPressed || leftPressed || rightPressed;
+    }
+
+    @Override
+    public boolean isUpPressed() {
+        return upPressed;
+    }
+
+    @Override
+    public boolean isDownPressed() {
+        return downPressed;
+    }
+
+    @Override
+    public boolean isLeftPressed() {
+        return leftPressed;
+    }
+
+    @Override
+    public boolean isRightPressed() {
+        return rightPressed;
     }
 }

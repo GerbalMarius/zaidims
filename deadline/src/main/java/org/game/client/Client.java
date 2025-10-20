@@ -52,13 +52,17 @@ public final class Client {
     }
 
     private void createClientGui() {
-        if (showCharacterWindow()) return;
+        ControllerHandler controllerHandler = new ControllerHandler();
+        if (showCharacterWindow()) {
+            controllerHandler.shutdown();
+            return;
+        }
 
         //-----UI
         JFrame frame = new JFrame("Game");
 
 
-        gamePanel = new GamePanel(clientId, gameState, keyboardHandler, mouseHandler);
+        gamePanel = new GamePanel(clientId, gameState, keyboardHandler, mouseHandler, controllerHandler);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(gamePanel);
         frame.setSize(600, 400);

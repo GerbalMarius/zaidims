@@ -1,13 +1,10 @@
-package org.game.client;
-
-import lombok.Getter;
+package org.game.client.input;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 
-@Getter
-public final class MouseHandler extends MouseAdapter {
+public final class MouseHandler extends MouseAdapter implements InputHandler {
     private boolean leftClicked;
 
     private boolean rightClicked;
@@ -16,7 +13,7 @@ public final class MouseHandler extends MouseAdapter {
     public void mousePressed(MouseEvent e) {
         switch (e.getButton()) {
             case MouseEvent.BUTTON1 -> leftClicked = true;
-            case MouseEvent.BUTTON2 -> rightClicked = true;
+            case MouseEvent.BUTTON3 -> rightClicked = true;
         }
     }
 
@@ -24,11 +21,17 @@ public final class MouseHandler extends MouseAdapter {
     public void mouseReleased(MouseEvent e) {
         switch (e.getButton()){
             case MouseEvent.BUTTON1 -> leftClicked = false;
-            case MouseEvent.BUTTON2 -> rightClicked = false;
+            case MouseEvent.BUTTON3 -> rightClicked = false;
         }
     }
 
-    public boolean anyButtonPressed() {
-        return leftClicked || rightClicked;
+    @Override
+    public boolean isPrimaryClicked() {
+        return leftClicked;
+    }
+
+    @Override
+    public boolean isSecondaryClicked() {
+        return rightClicked;
     }
 }

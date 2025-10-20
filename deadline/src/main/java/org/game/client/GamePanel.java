@@ -3,6 +3,10 @@ package org.game.client;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.game.client.input.Controller;
+import org.game.client.input.ControllerAdapter;
+import org.game.client.input.KeyboardHandler;
+import org.game.client.input.MouseHandler;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
@@ -31,6 +35,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
     private final KeyboardHandler keyboardHandler;
     private final MouseHandler mouseHandler;
+    private final ControllerAdapter controllerAdapter;
 
     private long lastShotTime = 0;
     private final long shootCooldown = 300;
@@ -63,7 +68,7 @@ public final class GamePanel extends JPanel implements Runnable {
     private final TileManager tileManager;
     public CollisionChecker cChecker;
 
-    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler) {
+    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler, Controller controller) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
@@ -71,6 +76,7 @@ public final class GamePanel extends JPanel implements Runnable {
         this.camera = new Camera(0.12, 80, 50);
         this.tileManager = new TileManager();
         cChecker = new CollisionChecker(tileManager);
+        this.controllerAdapter = new ControllerAdapter(controller);
 
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -104,6 +110,7 @@ public final class GamePanel extends JPanel implements Runnable {
                 delta--;
             }
         }
+        controllerAdapter.shutdown();
     }
 
     private void updateGame() {
@@ -128,7 +135,7 @@ public final class GamePanel extends JPanel implements Runnable {
             currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
         }
 
-        if (mouseHandler.isLeftClicked() && currentPlayer != null) {
+        if ((mouseHandler.isPrimaryClicked() || controllerAdapter.isPrimaryClicked()) && currentPlayer != null) {
             long now = System.currentTimeMillis();
             if (now - lastShotTime >= shootCooldown) {
                 if (shootCallback != null) {
@@ -137,6 +144,7 @@ public final class GamePanel extends JPanel implements Runnable {
                 lastShotTime = now;
             }
         }
+        controllerAdapter.update();
 
         updateProjectiles(state.getEnemies().values());
     }
@@ -153,18 +161,16 @@ public final class GamePanel extends JPanel implements Runnable {
                     WorldSettings.ORIGINAL_TILE_SIZE, WorldSettings.ORIGINAL_TILE_SIZE
             );
 
-            if (!playerHitbox.intersects(powerUp.getHitbox())) continue;
+            if (!playerHitbox.intersects(powerUp.getHitbox())) {
+                continue;
+            }
 
-            /*trecio keiso nereik nes per serva updatinas hp,
-            tai jeigu mes updatinsim ir cia bus tas pats bufas dukartus ir regenins iki ne +20 o +10 nes servas tik zinos apie +10
-             */
+
             Player decoratedPlayer = switch (powerUp.getClass().getSimpleName().toLowerCase()) {
                 case String s when s.contains("attack") -> new AttackDecorator(player, 5);
                 case String s when s.contains("speed") -> new SpeedDecorator(player, 1);
                 default -> player;
             };
-            log.debug(String.valueOf(decoratedPlayer.getAttack()));
-            log.debug(String.valueOf(decoratedPlayer.getSpeed()));
 
             state.setPlayer(clientId, decoratedPlayer);
 
@@ -186,8 +192,10 @@ public final class GamePanel extends JPanel implements Runnable {
     }
 
     private void optimisticMove(Player player) {
-        if (player == null || !keyboardHandler.anyKeyPressed()
-                || !player.isAlive() || !this.isFocusOwner()) {
+        if (player == null ||  (!keyboardHandler.anyKeyPressed()
+                               && !controllerAdapter.anyKeyPressed()
+                               && !mouseHandler.anyKeyPressed())
+                   || !player.isAlive() || !this.isFocusOwner()) {
             return;
         }
 
@@ -195,10 +203,21 @@ public final class GamePanel extends JPanel implements Runnable {
 
         int speed = player.getSpeed();
 
-        if (keyboardHandler.isLeftPressed()) dx -= speed;
-        if (keyboardHandler.isRightPressed()) dx += speed;
-        if (keyboardHandler.isUpPressed()) dy -= speed;
-        if (keyboardHandler.isDownPressed()) dy += speed;
+        if (keyboardHandler.isLeftPressed() || controllerAdapter.isLeftPressed()) {
+            dx -= speed;
+        }
+
+        if (keyboardHandler.isRightPressed() || controllerAdapter.isRightPressed()) {
+            dx += speed;
+        }
+
+        if (keyboardHandler.isUpPressed() || controllerAdapter.isUpPressed()) {
+            dy -= speed;
+        }
+
+        if (keyboardHandler.isDownPressed() || controllerAdapter.isDownPressed()) {
+            dy += speed;
+        }
 
 
         if (dx != 0) {

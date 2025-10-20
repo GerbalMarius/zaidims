@@ -2,7 +2,7 @@
   <configuration default="false" name="Client" type="Application" factoryName="Application" singleton="false">
     <option name="MAIN_CLASS_NAME" value="org.game.client.Client" />
     <module name="deadline" />
-    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED" />
+    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED --sun-misc-unsafe-memory-access=allow" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

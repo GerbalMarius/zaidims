@@ -61,24 +61,24 @@
             <dependency>
                 <groupId>org.lwjgl</groupId>
                 <artifactId>lwjgl</artifactId>
-                <version>3.3.3</version>
+                <version>3.3.6</version>
             </dependency>
             <dependency>
                 <groupId>org.lwjgl</groupId>
                 <artifactId>lwjgl-glfw</artifactId>
-                <version>3.3.3</version>
+                <version>3.3.6</version>
             </dependency>
             <dependency>
                 <groupId>org.lwjgl</groupId>
                 <artifactId>lwjgl</artifactId>
                 <classifier>natives-windows</classifier>
-                <version>3.3.3</version>
+                <version>3.3.6</version>
             </dependency>
             <dependency>
                 <groupId>org.lwjgl</groupId>
                 <artifactId>lwjgl-glfw</artifactId>
                 <classifier>natives-windows</classifier>
-                <version>3.3.3</version>
+                <version>3.3.6</version>
             </dependency>
 
 

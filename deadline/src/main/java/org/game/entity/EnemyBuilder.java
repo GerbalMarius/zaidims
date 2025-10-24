@@ -1,14 +1,9 @@
 package org.game.entity;
 
-import org.game.entity.enemy.goblin.BigGoblin;
-import org.game.entity.enemy.goblin.MediumGoblin;
-import org.game.entity.enemy.goblin.SmallGoblin;
-import org.game.entity.enemy.skeleton.BigSkeleton;
-import org.game.entity.enemy.skeleton.MediumSkeleton;
-import org.game.entity.enemy.skeleton.SmallSkeleton;
-import org.game.entity.enemy.zombie.BigZombie;
-import org.game.entity.enemy.zombie.MediumZombie;
-import org.game.entity.enemy.zombie.SmallZombie;
+import org.game.server.spawner.EnemySpawner;
+import org.game.server.spawner.GoblinSpawner;
+import org.game.server.spawner.SkeletonSpawner;
+import org.game.server.spawner.ZombieSpawner;
 
 public class EnemyBuilder {
     private EnemyType type = EnemyType.ZOMBIE;
@@ -19,9 +14,18 @@ public class EnemyBuilder {
     private Integer customHitPoints;
     private Integer customAttack;
     private Integer customSpeed;
+    private EnemySpawner spawner;
 
     public EnemyBuilder ofType(EnemyType type) {
         this.type = type;
+        if (this.spawner == null) {
+            this.spawner = getSpawnerForType(type);
+        }
+        return this;
+    }
+
+    public EnemyBuilder withSpawner(EnemySpawner spawner) {
+        this.spawner = spawner;
         return this;
     }
 
@@ -57,6 +61,10 @@ public class EnemyBuilder {
     }
 
     public Enemy build() {
+        if (spawner == null) {
+            spawner = getSpawnerForType(type);
+        }
+
         Enemy enemy = createEnemy();
 
         if (customHitPoints != null) {
@@ -80,22 +88,18 @@ public class EnemyBuilder {
     }
 
     private Enemy createEnemy() {
+        return switch (size) {
+            case SMALL -> spawner.spawnSmall(x, y);
+            case MEDIUM -> spawner.spawnMedium(x, y);
+            case BIG -> spawner.spawnLarge(x, y);
+        };
+    }
+
+    private EnemySpawner getSpawnerForType(EnemyType type) {
         return switch (type) {
-            case ZOMBIE -> switch (size) {
-                case SMALL -> new SmallZombie(x, y);
-                case MEDIUM -> new MediumZombie(x, y);
-                case BIG -> new BigZombie(x, y);
-            };
-            case SKELETON -> switch (size) {
-                case SMALL -> new SmallSkeleton(x, y);
-                case MEDIUM -> new MediumSkeleton(x, y);
-                case BIG -> new BigSkeleton(x, y);
-            };
-            case GOBLIN -> switch (size) {
-                case SMALL -> new SmallGoblin(x, y);
-                case MEDIUM -> new MediumGoblin(x, y);
-                case BIG -> new BigGoblin(x, y);
-            };
+            case ZOMBIE -> new ZombieSpawner();
+            case SKELETON -> new SkeletonSpawner();
+            case GOBLIN -> new GoblinSpawner();
         };
     }
 }

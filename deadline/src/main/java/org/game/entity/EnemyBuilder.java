@@ -98,4 +98,16 @@ public class EnemyBuilder {
             };
         };
     }
+    public EnemyBuilder copy() {
+        EnemyBuilder b = new EnemyBuilder();
+        b.type = this.type;
+        b.size = this.size;
+        b.x = this.x;
+        b.y = this.y;
+        b.id = this.id;
+        b.customHitPoints = this.customHitPoints;
+        b.customAttack = this.customAttack;
+        b.customSpeed = this.customSpeed;
+        return b;
+    }
 }

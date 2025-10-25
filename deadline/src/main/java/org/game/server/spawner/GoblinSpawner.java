@@ -1,10 +1,9 @@
 package org.game.server.spawner;
 
 import org.game.entity.Enemy;
-import org.game.entity.EnemySize;
+import org.game.entity.enemy.goblin.BigGoblin;
+import org.game.entity.enemy.goblin.MediumGoblin;
 import org.game.entity.enemy.goblin.SmallGoblin;
-import org.game.entity.enemy.skeleton.BigSkeleton;
-import org.game.entity.enemy.skeleton.MediumSkeleton;
 
 public class GoblinSpawner implements EnemySpawner {
 
@@ -16,11 +15,11 @@ public class GoblinSpawner implements EnemySpawner {
 
     @Override
     public Enemy spawnMedium(int x, int y) {
-        return new MediumSkeleton(x, y);
+        return new MediumGoblin(x, y);
     }
 
     @Override
     public Enemy spawnLarge(int x, int y) {
-        return new BigSkeleton(x, y);
+        return new BigGoblin(x, y);
     }
 }

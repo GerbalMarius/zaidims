@@ -1,7 +1,6 @@
 package org.game.server.spawner;
 
 import org.game.entity.Enemy;
-import org.game.entity.EnemyBuilder;
 import org.game.entity.EnemySize;
 import org.game.entity.EnemyType;
 import org.game.server.Server;
@@ -21,9 +20,9 @@ public final class EnemySpawnManager {
     private final int[] waveCounter = {0};
     private static long enemyId = 0;
 
-//    private final EnemySpawner goblinSpawner = new GoblinSpawner();
-//    private final EnemySpawner zombieSpawner = new ZombieSpawner();
-//    private final EnemySpawner skeletonSpawner = new SkeletonSpawner();
+    private final EnemySpawner goblinSpawner;
+    private final EnemySpawner zombieSpawner;
+    private final EnemySpawner skeletonSpawner;
 
 //    private final Enemy goblinPrototype = new MediumGoblin(20, 20);
 //    private final Enemy zombiePrototype = new MediumZombie(20, 20);
@@ -34,6 +33,9 @@ public final class EnemySpawnManager {
 
     public EnemySpawnManager(Server server) {
         this.server = server;
+        this.goblinSpawner = new GoblinSpawner();
+        this.zombieSpawner = new ZombieSpawner();
+        this.skeletonSpawner = new SkeletonSpawner();
     }
 
     public void startSpawning(long initialDelay, long period, TimeUnit timeUnit) {
@@ -51,13 +53,10 @@ public final class EnemySpawnManager {
         int[] pos = tileManager.findRandomSpawnPosition(random, 50);
 
 
-        Enemy enemy = new EnemyBuilder()
-                .ofType(type)
-                .withSize(size)
-                .at(pos[0], pos[1])
-                .withId(enemyId++)
-                .build();
+        Enemy enemy = spawnFromSpawner(type,size,pos[0],pos[1]);
 
+        enemy.setId(enemyId++);
+        server.getEnemies().put(enemy.getId(),enemy);
         Server.ServerActions.spawnEnemy(server, enemy, pos[0], pos[1]);
     }
 
@@ -73,7 +72,6 @@ public final class EnemySpawnManager {
         boolean isBossWave = (waveNumber % 5 == 0);
         TileManager tileManager = server.getEntityChecker().getTileManager();
 
-
         for (int i = 0; i < baseCount; i++) {
 
             EnemyType type = getEnemyTypeForWave(waveNumber);
@@ -83,15 +81,14 @@ public final class EnemySpawnManager {
             int healthBonus = Math.max(0, (waveNumber - 3) * 10);
             int attackBonus = Math.max(0, (waveNumber - 3) * 2);
 
-            Enemy enemy = new EnemyBuilder()
-                    .ofType(type)
-                    .withSize(size)
-                    .at(spawnPos[0], spawnPos[1])
-                    .withId(enemyId++)
-                    .withHitPoints(getBaseHealth(size) + healthBonus)
-                    .withAttack(getBaseAttack(size) + attackBonus)
-                    .build();
+            Enemy enemy = spawnFromSpawner(type, size, spawnPos[0], spawnPos[1]);
 
+
+            enemy.setHitPoints(getBaseHealth(size) + healthBonus);
+            enemy.setMaxHitPoints(getBaseHealth(size) + healthBonus);
+            enemy.setAttack(getBaseAttack(size) + attackBonus);
+
+            enemy.setId(enemyId++);
             server.getEnemies().put(enemy.getId(), enemy);
             Server.ServerActions.spawnEnemy(server, enemy, spawnPos[0], spawnPos[1]);
         }
@@ -101,19 +98,31 @@ public final class EnemySpawnManager {
 
             EnemyType bossType = EnemyType.values()[waveNumber % EnemyType.values().length];
 
-            Enemy bossEnemy = new EnemyBuilder()
-                    .ofType(bossType)
-                    .withSize(EnemySize.BIG)
-                    .at(centerPos[0], centerPos[1])
-                    .withId(enemyId++)
-                    .withHitPoints(200 + (waveNumber * 20))
-                    .withAttack(30 + (waveNumber * 3))
-                    .withSpeed(1)
-                    .build();
+            Enemy bossEnemy = spawnFromSpawner(bossType, EnemySize.BIG, centerPos[0], centerPos[1]);
 
+            bossEnemy.setHitPoints(200 + (waveNumber * 20));
+            bossEnemy.setMaxHitPoints(200 + (waveNumber * 20));
+            bossEnemy.setAttack(30 + (waveNumber * 3));
+            bossEnemy.setSpeed(3);
+
+            bossEnemy.setId(enemyId++);
             server.getEnemies().put(bossEnemy.getId(), bossEnemy);
             Server.ServerActions.spawnEnemy(server, bossEnemy, centerPos[0], centerPos[1]);
         }
+    }
+
+    private Enemy spawnFromSpawner(EnemyType type, EnemySize size, int x, int y) {
+        EnemySpawner spawner = switch (type) {
+            case GOBLIN -> goblinSpawner;
+            case ZOMBIE -> zombieSpawner;
+            case SKELETON -> skeletonSpawner;
+        };
+
+        return switch (size) {
+            case SMALL -> spawner.spawnSmall(x, y);
+            case MEDIUM -> spawner.spawnMedium(x, y);
+            case BIG -> spawner.spawnLarge(x, y);
+        };
     }
 
     private EnemyType getEnemyTypeForWave(int waveNumber) {

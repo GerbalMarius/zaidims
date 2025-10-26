@@ -5,23 +5,21 @@ import org.game.server.Prototype;
 
 public class SmallSkeleton extends Skeleton {
 
-    public SmallSkeleton(int x, int y) {
-        super(x, y);
-        configureStats();
-        this.size = EnemySize.SMALL;
+    public SmallSkeleton() {
+        this(0, 0);
     }
 
-    @Override
-    protected void configureStats() {
-        maxHitPoints = hitPoints = 20;
-        attack = 7;
+    public SmallSkeleton(int x, int y) {
+        super(x, y);
+        this.size = EnemySize.SMALL;
         scale = 3;
-        speed = 4;
         createHitbox();
     }
 
     @Override
     public Prototype createDeepCopy() {
-        return new SmallSkeleton(this.globalX, this.globalY);
+        SmallSkeleton smallSkeleton = new SmallSkeleton(this.globalX, this.globalY);
+        copyCombatStatsTo(smallSkeleton);
+        return  smallSkeleton;
     }
 }

@@ -79,9 +79,4 @@ public final class Controller {
         up = down = left = right = false;
         buttonX = buttonY = false;
     }
-
-
-    public void shutdown() {
-        GLFW.glfwTerminate();
-    }
 }

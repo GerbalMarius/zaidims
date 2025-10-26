@@ -3,7 +3,6 @@ package org.game.client;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.game.client.input.Controller;
 import org.game.client.input.ControllerAdapter;
 import org.game.client.input.KeyboardHandler;
 import org.game.client.input.MouseHandler;
@@ -68,7 +67,7 @@ public final class GamePanel extends JPanel implements Runnable {
     private final TileManager tileManager;
     public CollisionChecker cChecker;
 
-    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler, Controller controller) {
+    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler, ControllerAdapter adapter) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
@@ -76,7 +75,7 @@ public final class GamePanel extends JPanel implements Runnable {
         this.camera = new Camera(0.12, 80, 50);
         this.tileManager = new TileManager();
         cChecker = new CollisionChecker(tileManager);
-        this.controllerAdapter = new ControllerAdapter(controller);
+        this.controllerAdapter = adapter;
 
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -87,7 +86,7 @@ public final class GamePanel extends JPanel implements Runnable {
     }
 
     public void startGameLoop() {
-        gameThread = Thread.ofVirtual()
+        gameThread = Thread.ofPlatform()
                 .name("Game Window")
                 .start(this);
 

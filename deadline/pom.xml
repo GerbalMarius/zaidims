@@ -81,6 +81,19 @@
                 <version>3.3.6</version>
             </dependency>
 
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl</artifactId>
+            <classifier>natives-macos</classifier>
+            <version>3.3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-glfw</artifactId>
+            <classifier>natives-macos</classifier>
+            <version>3.3.6</version>
+        </dependency>
+
 
 
     </dependencies>

@@ -1,5 +1,7 @@
 package org.game.client.input;
 
+import org.lwjgl.glfw.GLFW;
+
 import java.util.Objects;
 
 public final class ControllerAdapter implements InputHandler {
@@ -45,6 +47,6 @@ public final class ControllerAdapter implements InputHandler {
     }
 
     public void shutdown() {
-        controller.shutdown();
+        GLFW.glfwTerminate();
     }
 }

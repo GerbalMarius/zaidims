@@ -212,9 +212,8 @@ public final class Server {
         readBuffer.compact();
     }
 
-    private void onMessage(SocketChannel from, Message message) throws IOException {
+    private void onMessage(SocketChannel from, Message message) {
         ClientState state = clients.get(from);
-        // log.info("From {}: {}", from.getRemoteAddress(), message.toString());
 
         switch (message) {
             case JoinMessage(UUID playerId, ClassType playerClass, String playerName, int _, int _) ->
@@ -442,7 +441,13 @@ public final class Server {
             state.setId(playerId);
             state.setPlayerClass(playerClass);
             state.setName(playerName);
-            Player newPlayer = new Player(playerClass, playerName, state.getX(), state.getY());
+
+            Player newPlayer =  Player.builder()
+                    .ofClass(playerClass)
+                    .withName(playerName)
+                    .at(state.getX(), state.getY())
+                    .build();
+
             state.setPlayer(newPlayer);
 
             Collection<ClientState> states = server.clients.values();

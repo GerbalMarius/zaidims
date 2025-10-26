@@ -5,10 +5,8 @@ import org.game.server.Prototype;
 
 public class MediumSkeleton extends Skeleton {
 
-
     public MediumSkeleton() {
         this(0, 0);
-        loadSprite("ske", "enemy");
     }
     public MediumSkeleton(int x, int y) {
         super(x, y);

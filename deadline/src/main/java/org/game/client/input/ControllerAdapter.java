@@ -40,6 +40,9 @@ public final class ControllerAdapter implements InputHandler {
     }
 
     @Override
+    public boolean isZPressed() {return  controller.isZPressed();}
+
+    @Override
     public void update() {
         controller.update();
     }

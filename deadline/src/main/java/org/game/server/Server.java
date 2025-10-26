@@ -479,6 +479,12 @@ public final class Server {
             if (state.getPlayer() != null) {
                 state.getPlayer().setGlobalX(state.getX());
                 state.getPlayer().setGlobalY(state.getY());
+
+                state.getPlayer().setPrevX(state.getX());
+                state.getPlayer().setPrevY(state.getY());
+                state.getPlayer().setTargetX(state.getX());
+                state.getPlayer().setTargetY(state.getY());
+                state.getPlayer().setLastUpdateTime(System.currentTimeMillis());
             }
 
             MoveMessage move = new MoveMessage(id, state.getX(), state.getY());

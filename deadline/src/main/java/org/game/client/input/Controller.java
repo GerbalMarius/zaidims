@@ -16,6 +16,8 @@ public final class Controller {
     private boolean connected = false;
     private boolean up, down, left, right;
     private boolean buttonX, buttonY;
+    private boolean zPressed;
+
 
     public Controller() {
         this(0, 0.25f);
@@ -54,6 +56,9 @@ public final class Controller {
             this.buttonX = state.buttons(GLFW.GLFW_GAMEPAD_BUTTON_X) == GLFW.GLFW_PRESS;
             this.buttonY = state.buttons(GLFW.GLFW_GAMEPAD_BUTTON_Y) == GLFW.GLFW_PRESS;
 
+            this.zPressed = state.buttons(GLFW.GLFW_GAMEPAD_BUTTON_A) == GLFW.GLFW_PRESS;
+
+
             // D-Pad
             this.up    = state.buttons(GLFW.GLFW_GAMEPAD_BUTTON_DPAD_UP)    == GLFW.GLFW_PRESS;
             this.down  = state.buttons(GLFW.GLFW_GAMEPAD_BUTTON_DPAD_DOWN)  == GLFW.GLFW_PRESS;
@@ -78,6 +83,7 @@ public final class Controller {
     private void clear() {
         up = down = left = right = false;
         buttonX = buttonY = false;
+        zPressed = false;
     }
 
 

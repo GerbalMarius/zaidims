@@ -74,6 +74,7 @@ public interface InputHandler {
      */
     default void update() {}
 
+
     /**
      * Indicates whether *any* input event-related key or button is currently pressed.
      * <p>
@@ -82,8 +83,12 @@ public interface InputHandler {
      *
      * @return {@code true} if any key or button is currently pressed; {@code false} otherwise.
      */
+
+    default boolean isZPressed() { return false;}
+
     default boolean anyKeyPressed() {
         return isLeftPressed() || isUpPressed() || isRightPressed() || isDownPressed()
-                || isPrimaryClicked() || isSecondaryClicked();
+                || isPrimaryClicked() || isSecondaryClicked() || isZPressed();
     }
+
 }

@@ -5,23 +5,20 @@ import org.game.server.Prototype;
 
 public class BigSkeleton extends  Skeleton {
 
+    public BigSkeleton() {
+        this(0, 0);
+    }
     public BigSkeleton(int x, int y) {
         super(x, y);
-        configureStats();
         this.size = EnemySize.BIG;
-    }
-
-    @Override
-    protected void configureStats() {
-        maxHitPoints = hitPoints = 90;
-        attack = 25;
         scale = 5;
-        speed = 2;
         createHitbox();
     }
 
     @Override
     public Prototype createDeepCopy() {
-        return new BigSkeleton(this.globalX, this.globalY);
+        BigSkeleton bigSkeleton = new BigSkeleton(this.globalX, this.globalY);
+        copyCombatStatsTo(bigSkeleton);
+        return bigSkeleton;
     }
 }

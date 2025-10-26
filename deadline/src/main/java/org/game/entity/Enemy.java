@@ -51,14 +51,14 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         double lowHpThreshold = maxHitPoints * 0.3;
 
 
-        if(visionRange >= distance) {
+        if (visionRange >= distance) {
             switchStrategyBasedOnHp(lowHpThreshold, target);
             tryAttack(target, server);
 
         } else if ((!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) || !target.isAlive()) {
             strategy = new WanderStrategy();
         } else if (!(strategy instanceof PatrolStrategy) && visionRange < distance && type == EnemyType.GOBLIN) {
-            enablePatrolStrategy();
+            strategy = enablePatrolStrategy();
         }
 
         strategy.execute(this, players, allEnemies, checker);

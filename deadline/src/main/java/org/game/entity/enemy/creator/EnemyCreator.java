@@ -7,13 +7,8 @@ import org.game.entity.enemy.skeleton.Skeleton;
 import org.game.entity.enemy.zombie.MediumZombie;
 import org.game.entity.enemy.zombie.Zombie;
 
-/**
- * A utility class responsible for creating default instances of various enemy types such as Goblins,
- * Skeletons, and Zombies with predefined attributes.
- */
 public final class EnemyCreator {
     private EnemyCreator(){}
-
 
     public static Goblin createDefaultGoblin() {
         return Goblin.builder()

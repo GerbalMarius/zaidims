@@ -8,6 +8,7 @@ import org.game.entity.enemy.creator.EnemyCreator;
 import org.game.server.Server;
 import org.game.tiles.TileManager;
 
+import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -55,19 +56,21 @@ public final class EnemySpawnManager {
 
         TileManager tileManager = server.getEntityChecker().getTileManager();
 
-        int[] pos = tileManager.findRandomSpawnPosition(random, 50);
+        Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
+        final int x = spawnPos.x;
+        final int y = spawnPos.y;
 
         long nextId = enemyId++;
 
-        int spawnX = pos[0];
-        int spawnY = pos[1];
+
+
         Enemy enemy = switch (size) {
-            case SMALL -> spawner.spawnSmall(nextId, spawnX, spawnY);
-            case MEDIUM -> spawner.spawnMedium(nextId, spawnX, spawnY);
-            case BIG -> spawner.spawnLarge(nextId, spawnX, spawnY);
+            case SMALL -> spawner.spawnSmall(nextId, x, y);
+            case MEDIUM -> spawner.spawnMedium(nextId, x, y);
+            case BIG -> spawner.spawnLarge(nextId, x, y);
         };
 
-        Server.ServerActions.spawnEnemy(server, enemy, spawnX, spawnY);
+        Server.ServerActions.spawnEnemy(server, enemy, x, y);
     }
 
     public void startWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
@@ -83,13 +86,16 @@ public final class EnemySpawnManager {
             Enemy enemy = (Enemy) prototype.createDeepCopy();
 
             enemy.setId(enemyId++);
-            int[] spawnPos = tileManager.findRandomSpawnPosition(random, 50);
-            enemy.setGlobalX(spawnPos[0]);
-            enemy.setGlobalY(spawnPos[1]);
+            Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
+            int x = spawnPos.x;
+            int y = spawnPos.y;
+
+            enemy.setGlobalX(x);
+            enemy.setGlobalY(y);
 
 
             server.getEnemies().put(enemy.getId(), enemy);
-            Server.ServerActions.spawnEnemy(server, enemy, spawnPos[0], spawnPos[1]);
+            Server.ServerActions.spawnEnemy(server, enemy, x, y);
         }
     }
 

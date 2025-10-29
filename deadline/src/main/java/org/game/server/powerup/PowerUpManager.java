@@ -7,6 +7,7 @@ import org.game.entity.powerup.dispenser.SpeedDispenser;
 import org.game.server.Server;
 import org.game.tiles.TileManager;
 
+import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,9 +40,9 @@ public final class PowerUpManager {
 
         TileManager tileManager = server.getEntityChecker().getTileManager();
 
-        int[] pos = tileManager.findRandomSpawnPosition(random, 50);
-        final int x = pos[0];
-        final int y = pos[1];
+        Point pos = tileManager.findRandomSpawnPosition(random, 50);
+        final int x = pos.x;
+        final int y = pos.y;
 
         double rand = random.nextDouble();
         PowerUpType powerUpType;

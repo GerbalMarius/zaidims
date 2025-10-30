@@ -17,7 +17,7 @@ public final class ClientShootBridge implements ShootBridge {
     }
 
     @Override
-    public void onPrimaryShoot(UUID clientId, Player player, long nowMillis) {
+    public void onPrimaryShoot(UUID clientId, Player player, long nowMillis, UUID projectileId) {
         if (player == null) return;
 
         Projectile localProj = player.tryAttack(nowMillis);
@@ -26,10 +26,9 @@ public final class ClientShootBridge implements ShootBridge {
             return;
         }
 
-        UUID projId = UUID.randomUUID();
-        state.getProjectiles().put(projId, localProj);
+        state.getProjectiles().put(projectileId, localProj);
 
         log.debug("Spawned local projectile {} class={} speed={} dmg={} range={}",
-                projId, player.getPlayerClass(), localProj.getSpeed(), localProj.getDamage(), localProj.getMaxDistance());
+                projectileId, player.getPlayerClass(), localProj.getSpeed(), localProj.getDamage(), localProj.getMaxDistance());
     }
 }

@@ -49,7 +49,7 @@ public final class GamePanel extends JPanel implements Runnable {
     private BiConsumer<Integer, Integer> moveCallback;
 
     @Setter
-    private Runnable shootCallback;
+    private Consumer<UUID> shootCallback;
 
     @Setter
     private Consumer<? super Enemy> healthCallback;
@@ -70,6 +70,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
     @Setter
     private ShootBridge shootBridge;
+
 
     public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler, ControllerAdapter adapter) {
         this.clientId = clientId;
@@ -142,9 +143,16 @@ public final class GamePanel extends JPanel implements Runnable {
         if ((mouseHandler.isPrimaryClicked() || controllerAdapter.isPrimaryClicked()) && currentPlayer != null) {
             long now = System.currentTimeMillis();
             if (now - lastShotTime >= shootCooldown) {
+                UUID projId = UUID.randomUUID();
+
                 if (shootBridge != null) {
-                    shootBridge.onPrimaryShoot(clientId, currentPlayer, now);
+                    shootBridge.onPrimaryShoot(clientId, currentPlayer, now, projId);
                 }
+
+                if (shootCallback != null) {
+                    shootCallback.accept(projId);
+                }
+
                 lastShotTime = now;
             }
         }
@@ -352,8 +360,8 @@ public final class GamePanel extends JPanel implements Runnable {
                 case EnemyRemoveMessage(var enemyId) -> state.removeEnemy(enemyId);
                 case EnemyMoveMessage(var enemyId, int newX, int newY) ->
                         state.updateEnemyPosition(enemyId, newX, newY);
-                case ProjectileSpawnMessage(int startX, int startY, FramePosition dir, UUID projId, UUID playerId) ->
-                        state.spawnProjectile(projId, playerId, startX, startY, dir);
+                case ProjectileSpawnMessage(int startX, int startY, FramePosition dir, UUID projId, UUID playerId, int speed, int damage, double maxDistance) ->
+                        state.spawnProjectile(projId, playerId, startX, startY, dir, speed, damage, maxDistance);
 
                 case EnemyBulkCopyMessage(Map<Long, EnemyCopy> enemies) -> state.copyAllEnemies(enemies);
                 case EnemyHealthUpdateMessage(long enemyId, int newHealth) -> {

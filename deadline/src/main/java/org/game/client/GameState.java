@@ -112,9 +112,12 @@ public final class GameState {
     }
 
     // projectiles
-    public void spawnProjectile(UUID projectileId, UUID playerId, int x, int y, FramePosition dir) {
-        Projectile p = new Projectile(x, y, dir, 8, players.get(playerId).getAttack());
-        projectiles.put(projectileId, p);
+    public void spawnProjectile(UUID projId, UUID playerId, int startX, int startY, FramePosition dir,
+                                int speed, int damage, double maxDistance) {
+        if (this.getProjectiles().containsKey(projId)) return;
+
+        Projectile p = new Projectile(startX, startY, dir, speed, damage, maxDistance);
+        this.getProjectiles().put(projId, p);
     }
 
     //powerups

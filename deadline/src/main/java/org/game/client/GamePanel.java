@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.game.client.input.ControllerAdapter;
 import org.game.client.input.KeyboardHandler;
 import org.game.client.input.MouseHandler;
+import org.game.client.shoot.ClientShootBridge;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
@@ -16,7 +17,7 @@ import org.game.tiles.TileManager;
 import org.game.message.*;
 import org.game.server.WorldSettings;
 import org.game.utils.GUI;
-
+import org.game.client.shoot.ShootBridge;
 import javax.swing.*;
 import java.awt.*;
 
@@ -67,6 +68,9 @@ public final class GamePanel extends JPanel implements Runnable {
     private final TileManager tileManager;
     public CollisionChecker cChecker;
 
+    @Setter
+    private ShootBridge shootBridge;
+
     public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler, ControllerAdapter adapter) {
         this.clientId = clientId;
         this.state = state;
@@ -76,6 +80,7 @@ public final class GamePanel extends JPanel implements Runnable {
         this.tileManager = new TileManager();
         cChecker = new CollisionChecker(tileManager);
         this.controllerAdapter = adapter;
+        this.shootBridge = new ClientShootBridge(this.state);
 
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -137,8 +142,8 @@ public final class GamePanel extends JPanel implements Runnable {
         if ((mouseHandler.isPrimaryClicked() || controllerAdapter.isPrimaryClicked()) && currentPlayer != null) {
             long now = System.currentTimeMillis();
             if (now - lastShotTime >= shootCooldown) {
-                if (shootCallback != null) {
-                    shootCallback.run(); //send local shoot to server
+                if (shootBridge != null) {
+                    shootBridge.onPrimaryShoot(clientId, currentPlayer, now);
                 }
                 lastShotTime = now;
             }

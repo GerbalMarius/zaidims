@@ -1,9 +1,23 @@
 package org.game.client;
 
 import lombok.Getter;
-import org.game.entity.*;
-import org.game.entity.EnemyBuilder;
-import org.game.entity.powerup.*;
+import org.game.entity.ClassType;
+import org.game.entity.Enemy;
+import org.game.entity.EnemySize;
+import org.game.entity.EnemyType;
+import org.game.entity.FramePosition;
+import org.game.entity.GlobalUI;
+import org.game.entity.Player;
+import org.game.entity.Projectile;
+
+import org.game.entity.enemy.creator.EnemyMessageCreator;
+
+import org.game.entity.powerup.AttackPowerUp;
+import org.game.entity.powerup.CorePowerUp;
+import org.game.entity.powerup.MaxHpPowerUp;
+import org.game.entity.powerup.PowerUp;
+import org.game.entity.powerup.PowerUpType;
+import org.game.entity.powerup.SpeedPowerUp;
 import org.game.message.EnemyCopy;
 
 import java.util.Map;
@@ -22,6 +36,8 @@ public final class GameState {
 
     @Getter
     private final Map<Long, PowerUp> powerUps = new ConcurrentHashMap<>();
+
+    private final EnemyMessageCreator messageCreator = new EnemyMessageCreator();
 
     // -- player
     public void addPlayer(UUID id, ClassType type, String name, int startingX, int startingY) {
@@ -47,38 +63,34 @@ public final class GameState {
 
     // -- enemy
     public void spawnEnemyFromServer(long id, EnemyType type, EnemySize size, int x, int y) {
-        Enemy enemy = createFromMessage(type, size, x, y);
-        enemy.setId(id);
+        Enemy enemy = messageCreator.spawn(type,size, id, x, y);
         enemies.putIfAbsent(id, enemy);
         GlobalUI.getInstance().incrementCounter();
     }
 
     public synchronized void copyAllEnemies(Map<Long, EnemyCopy> enemies) {
+
         this.enemies = new ConcurrentHashMap<>(enemies.size());
 
         for (var copy : enemies.entrySet()) {
-            long id = copy.getKey();
             EnemyCopy enData = copy.getValue();
 
-            Enemy enemy = new EnemyBuilder()
-                    .ofType(enData.enemyType())
-                    .withSize(enData.enemySize())
-                    .at(enData.initialX(), enData.initialY())
-                    .withId(id)
-                    .withHitPoints(enData.hpPoints())
-                    .build();
+             Enemy fromMessage = messageCreator.spawn(
+                    enData.enemyType(),
 
-            this.enemies.put(id, enemy);
+                    enData.enemySize(),
+
+                    enData.id(),
+
+                    enData.initialX(),
+
+                    enData.initialY()
+             );
+
+            this.enemies.put(fromMessage.getId(), fromMessage);
             GlobalUI.getInstance().incrementCounter();
-        }
-    }
 
-    private Enemy createFromMessage(EnemyType type, EnemySize size, int x, int y) {
-        return new EnemyBuilder()
-                .ofType(type)
-                .withSize(size)
-                .at(x, y)
-                .build();
+        }
     }
 
 

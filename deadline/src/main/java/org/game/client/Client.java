@@ -1,6 +1,10 @@
 package org.game.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.game.client.input.Controller;
+import org.game.client.input.ControllerAdapter;
+import org.game.client.input.KeyboardHandler;
+import org.game.client.input.MouseHandler;
 import org.game.entity.ClassType;
 import org.game.entity.Player;
 import org.game.json.Json;
@@ -52,13 +56,17 @@ public final class Client {
     }
 
     private void createClientGui() {
-        if (showCharacterWindow()) return;
+        ControllerAdapter adapter = new ControllerAdapter(new Controller());
+        if (showCharacterWindow()) {
+            adapter.shutdown();
+            return;
+        }
 
         //-----UI
         JFrame frame = new JFrame("Game");
 
 
-        gamePanel = new GamePanel(clientId, gameState, keyboardHandler, mouseHandler);
+        gamePanel = new GamePanel(clientId, gameState, keyboardHandler, mouseHandler, adapter);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.add(gamePanel);
         frame.setSize(600, 400);

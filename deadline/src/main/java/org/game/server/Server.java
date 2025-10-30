@@ -157,7 +157,7 @@ public final class Server {
 
     private void startUpdatingEnemies() {
         spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
-        spawnManager.startWaveSystem(10, 50, TimeUnit.SECONDS);
+        spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
         updateManager.startUpdating(0, 50, TimeUnit.MILLISECONDS);
     }
 
@@ -212,9 +212,8 @@ public final class Server {
         readBuffer.compact();
     }
 
-    private void onMessage(SocketChannel from, Message message) throws IOException {
+    private void onMessage(SocketChannel from, Message message) {
         ClientState state = clients.get(from);
-        // log.info("From {}: {}", from.getRemoteAddress(), message.toString());
 
         switch (message) {
             case JoinMessage(UUID playerId, ClassType playerClass, String playerName, int _, int _) ->
@@ -265,6 +264,7 @@ public final class Server {
                         PlayerRespawnMessage respawnMsg = new PlayerRespawnMessage(playerId, respawnX, respawnY);
                         broadcast(json.toJson(respawnMsg, labelPair(Message.JSON_LABEL, "playerRespawn")));
                     }
+
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "playerHealth")));
                 }
             }
@@ -441,18 +441,19 @@ public final class Server {
             state.setId(playerId);
             state.setPlayerClass(playerClass);
             state.setName(playerName);
-            state.setX(WorldSettings.CENTER_X);
-            state.setY(WorldSettings.CENTER_Y);
-            Player newPlayer = new PlayerBuilder()
+
+            Player newPlayer =  Player.builder()
                     .ofClass(playerClass)
                     .withName(playerName)
                     .at(state.getX(), state.getY())
                     .build();
+
             state.setPlayer(newPlayer);
 
             Collection<ClientState> states = server.clients.values();
 
-
+            state.setX(WorldSettings.CENTER_X);
+            state.setY(WorldSettings.CENTER_Y);
 
             for (ClientState other : states) {
                 if (other.getId() != null && state != other) {

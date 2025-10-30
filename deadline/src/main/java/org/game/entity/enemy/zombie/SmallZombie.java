@@ -5,23 +5,21 @@ import org.game.server.Prototype;
 
 public class SmallZombie extends Zombie {
 
-    public SmallZombie(int x, int y) {
-        super(x, y);
-        configureStats();
-        this.size = EnemySize.SMALL;
+    public SmallZombie() {
+        this(0, 0);
     }
 
-    @Override
-    protected void configureStats() {
-        maxHitPoints = hitPoints = 30;
-        attack = 5;
+    public SmallZombie(int x, int y) {
+        super(x, y);
         scale = 3;
-        speed = 3;
+        this.size = EnemySize.SMALL;
         createHitbox();
     }
 
     @Override
     public Prototype createDeepCopy() {
-        return new SmallZombie(this.globalX, this.globalY);
+        SmallZombie smallZombie = new SmallZombie(this.globalX, this.globalY);
+        copyCombatStatsTo(smallZombie);
+        return smallZombie;
     }
 }

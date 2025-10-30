@@ -5,23 +5,22 @@ import org.game.server.Prototype;
 
 public class MediumZombie extends Zombie{
 
-    public MediumZombie(int x, int y) {
-        super(x, y);
-        configureStats();
-        this.size = EnemySize.MEDIUM;
+    public MediumZombie() {
+        this(0, 0);
     }
 
-    @Override
-    protected void configureStats() {
-        maxHitPoints = hitPoints = 60;
-        attack = 10;
+    public MediumZombie(int x, int y) {
+        super(x, y);
+        this.size = EnemySize.MEDIUM;
         scale = 4;
-        speed = 2;
         createHitbox();
     }
 
+
     @Override
     public Prototype createDeepCopy() {
-        return new MediumZombie(this.globalX, this.globalY);
+        MediumZombie mediumZombie = new MediumZombie(this.globalX, this.globalY);
+        copyCombatStatsTo(mediumZombie);
+        return mediumZombie;
     }
 }

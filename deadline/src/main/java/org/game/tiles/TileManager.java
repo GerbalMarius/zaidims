@@ -13,7 +13,6 @@ import java.util.Random;
 
 import static org.game.utils.ByteFiles.loadImage;
 
-// int[y][x] , y - row , x - col
 @Getter
 public class TileManager {
     private List<Tile> tiles;
@@ -28,12 +27,12 @@ public class TileManager {
 
     public void loadAllTiles(String root) {
         this.tiles = List.of(
-                new Tile(loadImage(root +"/grass.png"), false),
-                new Tile(loadImage(root+"/wall.png"), true),
-                new Tile(loadImage(root+"/water.png"), true),
-                new Tile(loadImage(root+"/earth.png"), false),
-                new Tile(loadImage(root+"/tree.png"), true),
-                new Tile(loadImage(root+"/sand.png"), false)
+                new Tile(loadImage(root + "/grass.png"), false),
+                new Tile(loadImage(root + "/wall.png"), true),
+                new Tile(loadImage(root + "/water.png"), true),
+                new Tile(loadImage(root + "/earth.png"), false),
+                new Tile(loadImage(root + "/tree.png"), true),
+                new Tile(loadImage(root + "/sand.png"), false)
         );
     }
 
@@ -59,7 +58,7 @@ public class TileManager {
                     row++;
                 }
             }
-        }catch (IOException e){
+        } catch (IOException e){
             throw new RuntimeException(e);
         }
     }
@@ -102,25 +101,37 @@ public class TileManager {
         }
     }
 
-    public int[] findRandomSpawnPosition(Random rand, int maxGenAttempts) {
-        for (int i = 0; i < maxGenAttempts; i++) {
-            int x = rand.nextInt(mapTileNum[0].length * 32);
-            int y = rand.nextInt(mapTileNum.length * 32);
+    public Point findRandomSpawnPosition(Random rand, int maxGenAttempts) {
+        int rows = mapTileNum.length;
+        int cols = mapTileNum[0].length;
+        int tileSize = WorldSettings.TILE_SIZE;
 
-            if (isWalkableTile(x, y)) {
-                return new int[]{x, y};
+        for (int i = 0; i < maxGenAttempts; i++) {
+            int row = rand.nextInt(rows);
+            int col = rand.nextInt(cols);
+
+            if (!IsWalkable(row, col)) {
+                continue;
             }
+
+            int x = col * tileSize + tileSize / 2;
+            int y = row * tileSize + tileSize / 2;
+            return new Point(x, y);
         }
-        return new int[]{WorldSettings.CENTER_X, WorldSettings.CENTER_Y};
+        return new Point(WorldSettings.CENTER_X, WorldSettings.CENTER_Y);
     }
 
-    public boolean isWalkableTile(int x, int y) {
-        int tileSize = WorldSettings.TILE_SIZE;
-        int col = x / tileSize;
-        int row = y / tileSize;
+    private boolean IsWalkable(int y, int x) {
+        Tile tile = tiles.get(mapTileNum[y][x]);
 
-        int tileNum = mapTileNum[row][col];
-        return !tiles.get(tileNum).hasCollision();
+        Tile tileBelow = tiles.get(mapTileNum[Math.min(y + 1, WorldSettings.MAX_WORLD_ROW)][x]);
+        Tile tileRight = tiles.get(mapTileNum[y][Math.min(x + 1, WorldSettings.MAX_WORLD_COL)]);
+        Tile tileLeft = tiles.get(mapTileNum[y][Math.max(0, x - 1)]);
+        Tile tileAbove = tiles.get(mapTileNum[Math.max(0, y - 1)][x]);
+
+        return !tile.hasCollision()
+                && !tileRight.hasCollision() && !tileLeft.hasCollision()
+                && !tileAbove.hasCollision()  && !tileBelow.hasCollision() ;
     }
 
 }

@@ -34,13 +34,10 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
 
     protected Enemy(int x, int y) {
         super(x, y);
-        configureStats();
 
+        this.strategy = (type == EnemyType.GOBLIN) ? enablePatrolStrategy() : new WanderStrategy();
     }
-
-    protected abstract void configureStats();
-
-    protected  void createHitbox() {
+    protected void createHitbox() {
         this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
     }
 
@@ -53,31 +50,18 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         double visionRange = 500.0;
         double lowHpThreshold = maxHitPoints * 0.3;
 
-        setInitialStrategy();
 
-        if(visionRange >= distance) {
+        if (visionRange >= distance) {
             switchStrategyBasedOnHp(lowHpThreshold, target);
             tryAttack(target, server);
 
         } else if ((!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) || !target.isAlive()) {
             strategy = new WanderStrategy();
         } else if (!(strategy instanceof PatrolStrategy) && visionRange < distance && type == EnemyType.GOBLIN) {
-            enablePatrolStrategy();
+            strategy = enablePatrolStrategy();
         }
 
         strategy.execute(this, players, allEnemies, checker);
-    }
-
-    private void setInitialStrategy() {
-        if (strategy != null) {
-            return;
-        }
-
-        if (type == EnemyType.GOBLIN) {
-            enablePatrolStrategy();
-        } else {
-            strategy = new WanderStrategy();
-        }
     }
 
     private void switchStrategyBasedOnHp(double lowHpThreshold, Player target) {
@@ -88,7 +72,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         }
     }
 
-    private void enablePatrolStrategy() {
+    private EnemyStrategy enablePatrolStrategy() {
         int x = getGlobalX();
         int y = getGlobalY();
 
@@ -98,7 +82,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
                 {x + 150, y + 150},
                 {x, y + 150}
         };
-        strategy = new PatrolStrategy(patrolRoute);
+        return new PatrolStrategy(patrolRoute);
     }
 
     private void tryAttack(Player target, Server server) {
@@ -195,6 +179,15 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         }
 
         return closest;
+    }
+
+    protected void copyCombatStatsTo(Enemy e) {
+        e.attack = this.attack;
+        e.speed  = this.speed;
+        e.hitPoints = this.hitPoints;
+        e.maxHitPoints = this.maxHitPoints;
+        e.size = this.size;
+        e.type = this.type;
     }
 
     @Override

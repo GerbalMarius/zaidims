@@ -184,10 +184,6 @@ public sealed abstract class Entity permits Enemy, Player, Projectile {
         int hp = getHitPoints();
         int maxHp = getMaxHitPoints();
 
-        if (this instanceof Player) {
-            log.debug("{} {}", getHitPoints(), getMaxHitPoints());
-        }
-
         if (maxHp <= 0 || hp <= 0) return;
 
         int barHeight = 6;

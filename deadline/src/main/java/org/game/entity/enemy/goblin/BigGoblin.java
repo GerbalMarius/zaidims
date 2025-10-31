@@ -5,23 +5,21 @@ import org.game.server.Prototype;
 
 public class BigGoblin extends Goblin {
 
-    public BigGoblin(int x, int y) {
-        super(x, y);
-        configureStats();
-        this.size = EnemySize.BIG;
+    public BigGoblin() {
+        this(0, 0);
     }
 
-    @Override
-    protected void configureStats() {
-        maxHitPoints = hitPoints = 80;
-        attack = 22;
+    public BigGoblin(int x, int y) {
+        super(x, y);
+        this.size = EnemySize.BIG;
         scale = 5;
-        speed = 3;
         createHitbox();
     }
 
     @Override
     public Prototype createDeepCopy() {
-        return new BigGoblin(this.globalX, this.globalY);
+        BigGoblin bigGoblin = new BigGoblin(this.globalX, this.globalY);
+        copyCombatStatsTo(bigGoblin);
+        return bigGoblin;
     }
 }

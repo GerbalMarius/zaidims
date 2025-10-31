@@ -1,20 +1,21 @@
 package org.game.server.spawner;
 
+import lombok.extern.slf4j.Slf4j;
 import org.game.entity.Enemy;
 import org.game.entity.EnemySize;
 import org.game.entity.EnemyType;
-import org.game.entity.enemy.goblin.MediumGoblin;
-import org.game.entity.enemy.skeleton.MediumSkeleton;
-import org.game.entity.enemy.zombie.MediumZombie;
+import org.game.entity.enemy.creator.EnemyCreator;
 import org.game.server.Server;
 import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
+import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public final class EnemySpawnManager {
 
     private static final int ENEMY_SPAWN_POOL_SIZE = 2;
@@ -28,9 +29,9 @@ public final class EnemySpawnManager {
     private final EnemySpawner zombieSpawner = new ZombieSpawner();
     private final EnemySpawner skeletonSpawner = new SkeletonSpawner();
 
-    private final Enemy goblinPrototype = new MediumGoblin(20, 20);
-    private final Enemy zombiePrototype = new MediumZombie(20, 20);
-    private final Enemy skeletonPrototype = new MediumSkeleton(20, 20);
+    private final Enemy goblinPrototype = EnemyCreator.createDefaultGoblin();
+    private final Enemy zombiePrototype = EnemyCreator.createDefaultZombie();
+    private final Enemy skeletonPrototype = EnemyCreator.createDefaultSkeleton();
 
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(ENEMY_SPAWN_POOL_SIZE);
@@ -56,16 +57,21 @@ public final class EnemySpawnManager {
 
         TileManager tileManager = server.getEntityChecker().getTileManager();
 
-        int[] pos = tileManager.findRandomSpawnPosition(random, 50);
+        Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
+        final int x = spawnPos.x;
+        final int y = spawnPos.y;
+
+        long nextId = enemyId++;
+
+
 
         Enemy enemy = switch (size) {
-            case SMALL -> spawner.spawnSmall(pos[0], pos[1]);
-            case MEDIUM -> spawner.spawnMedium(pos[0], pos[1]);
-            case BIG -> spawner.spawnLarge(pos[0], pos[1]);
+            case SMALL -> spawner.spawnSmall(nextId, x, y);
+            case MEDIUM -> spawner.spawnMedium(nextId, x, y);
+            case BIG -> spawner.spawnLarge(nextId, x, y);
         };
 
-        enemy.setId(enemyId++);
-        Server.ServerActions.spawnEnemy(server, enemy, pos[0], pos[1]);
+        Server.ServerActions.spawnEnemy(server, enemy, x, y);
     }
 
     public void startWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
@@ -81,13 +87,16 @@ public final class EnemySpawnManager {
             Enemy enemy = (Enemy) prototype.createDeepCopy();
 
             enemy.setId(enemyId++);
-            int[] spawnPos = tileManager.findRandomSpawnPosition(random, 50);
-            enemy.setGlobalX(spawnPos[0]);
-            enemy.setGlobalY(spawnPos[1]);
+            Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
+            int x = spawnPos.x;
+            int y = spawnPos.y;
+
+            enemy.setGlobalX(x);
+            enemy.setGlobalY(y);
 
 
             server.getEnemies().put(enemy.getId(), enemy);
-            Server.ServerActions.spawnEnemy(server, enemy, spawnPos[0], spawnPos[1]);
+            Server.ServerActions.spawnEnemy(server, enemy, x, y);
         }
     }
 

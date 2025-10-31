@@ -63,8 +63,6 @@ public final class EnemySpawnManager {
 
         long nextId = enemyId++;
 
-
-
         Enemy enemy = switch (size) {
             case SMALL -> spawner.spawnSmall(nextId, x, y);
             case MEDIUM -> spawner.spawnMedium(nextId, x, y);
@@ -114,13 +112,15 @@ public final class EnemySpawnManager {
             case SKELETON -> skeletonSpawner;
         };
 
-        int[] mainPos = tileManager.findRandomSpawnPosition(random, 50);
+        Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
+        int x = spawnPos.x;
+        int y = spawnPos.y;
 
         // sukuriamas pgr priesas
-        Enemy mainEnemy = spawner.spawnLarge(mainPos[0], mainPos[1]);
+        Enemy mainEnemy = spawner.spawnLarge(enemyId,x, y);
         mainEnemy.setId(enemyId++);
         server.getEnemies().put(mainEnemy.getId(), mainEnemy);
-        Server.ServerActions.spawnEnemy(server, mainEnemy, mainPos[0], mainPos[1]);
+        Server.ServerActions.spawnEnemy(server, mainEnemy, x, y);
 
         // Aplink ji sukuriam 3 shallow kopijas
         int[][] offsets = {
@@ -130,14 +130,14 @@ public final class EnemySpawnManager {
         };
 
         for (int[] offset : offsets) {
-            int copyX = mainPos[0] + offset[0];
-            int copyY = mainPos[1] + offset[1];
+            int copyX = x + offset[0];
+            int copyY = y + offset[1];
 
             int tileSize = WorldSettings.TILE_SIZE;
             int tileCol = copyX / tileSize;
             int tileRow = copyY / tileSize;
 
-            if (!tileManager.isWalkable(tileRow, tileCol)) {
+            if (!tileManager.IsWalkable(tileRow, tileCol)) {
                 System.out.println("Kopijos vieta buvo neleistina");
                 continue;
             }
@@ -151,7 +151,7 @@ public final class EnemySpawnManager {
             Server.ServerActions.spawnEnemy(server, shallowCopy, copyX, copyY);
         }
 
-        System.out.println("💀 Spawned shallow wave: main + 3 copies (" + mainEnemy.getType() + ")");
+        System.out.println("Spawned shallow wave: main + 3 copies (" + mainEnemy.getType() + ")");
     }
 
     public void comparePrototypeCopies() {

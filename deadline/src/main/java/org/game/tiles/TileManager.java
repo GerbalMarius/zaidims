@@ -121,7 +121,7 @@ public class TileManager {
         return new int[]{WorldSettings.CENTER_X, WorldSettings.CENTER_Y};
     }
 
-    private boolean isWalkable(int y, int x) {
+    public boolean isWalkable(int y, int x) {
         return !tiles.get(mapTileNum[y][x]).hasCollision();
     }
 

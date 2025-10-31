@@ -7,6 +7,7 @@ import org.game.entity.enemy.goblin.MediumGoblin;
 import org.game.entity.enemy.skeleton.MediumSkeleton;
 import org.game.entity.enemy.zombie.MediumZombie;
 import org.game.server.Server;
+import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
 import java.util.Random;
@@ -88,6 +89,79 @@ public final class EnemySpawnManager {
             server.getEnemies().put(enemy.getId(), enemy);
             Server.ServerActions.spawnEnemy(server, enemy, spawnPos[0], spawnPos[1]);
         }
+    }
+
+    public void startShallowWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
+        scheduler.scheduleAtFixedRate(this::spawnShallowWave, initialDelay, period, timeUnit);
+        comparePrototypeCopies();
+    }
+
+    public void spawnShallowWave() {
+        TileManager tileManager = server.getEntityChecker().getTileManager();
+
+        EnemySpawner spawner = switch (EnemyType.values()[random.nextInt(EnemyType.values().length)]) {
+            case GOBLIN -> goblinSpawner;
+            case ZOMBIE -> zombieSpawner;
+            case SKELETON -> skeletonSpawner;
+        };
+
+        int[] mainPos = tileManager.findRandomSpawnPosition(random, 50);
+
+        // sukuriamas pgr priesas
+        Enemy mainEnemy = spawner.spawnLarge(mainPos[0], mainPos[1]);
+        mainEnemy.setId(enemyId++);
+        server.getEnemies().put(mainEnemy.getId(), mainEnemy);
+        Server.ServerActions.spawnEnemy(server, mainEnemy, mainPos[0], mainPos[1]);
+
+        // Aplink ji sukuriam 3 shallow kopijas
+        int[][] offsets = {
+                {100, 0},
+                {-100, 0},
+                {0, 100}
+        };
+
+        for (int[] offset : offsets) {
+            int copyX = mainPos[0] + offset[0];
+            int copyY = mainPos[1] + offset[1];
+
+            int tileSize = WorldSettings.TILE_SIZE;
+            int tileCol = copyX / tileSize;
+            int tileRow = copyY / tileSize;
+
+            if (!tileManager.isWalkable(tileRow, tileCol)) {
+                System.out.println("Kopijos vieta buvo neleistina");
+                continue;
+            }
+
+            Enemy shallowCopy = (Enemy) mainEnemy.createShallowCopy();
+            shallowCopy.setGlobalX(copyX);
+            shallowCopy.setGlobalY(copyY);
+            shallowCopy.setId(enemyId++);
+
+            server.getEnemies().put(shallowCopy.getId(), shallowCopy);
+            Server.ServerActions.spawnEnemy(server, shallowCopy, copyX, copyY);
+        }
+
+        System.out.println("💀 Spawned shallow wave: main + 3 copies (" + mainEnemy.getType() + ")");
+    }
+
+    public void comparePrototypeCopies() {
+        System.out.println("--- Prototype Copy Comparison --");
+
+        Enemy prototype = skeletonPrototype;
+        System.out.println("Original Enemy: " + prototype + " @ " + System.identityHashCode(prototype));
+
+        Enemy shallowCopy = (Enemy) prototype.createShallowCopy();
+        Enemy deepCopy = (Enemy) prototype.createDeepCopy();
+
+        System.out.println("Shallow Copy:   " + shallowCopy + " @ " + System.identityHashCode(shallowCopy));
+        System.out.println("Deep Copy:      " + deepCopy + " @ " + System.identityHashCode(deepCopy));
+
+        System.out.println("--- Laukai (adresai) ---");
+        System.out.println("Hitbox:");
+        System.out.println("  original: " + System.identityHashCode(prototype.getHitbox()));
+        System.out.println("  shallow:  " + System.identityHashCode(shallowCopy.getHitbox()));
+        System.out.println("  deep:     " + System.identityHashCode(deepCopy.getHitbox()));
     }
 
     private Enemy chooseRandomPrototype() {

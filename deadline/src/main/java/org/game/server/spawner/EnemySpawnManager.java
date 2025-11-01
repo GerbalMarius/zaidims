@@ -210,8 +210,8 @@ public final class EnemySpawnManager {
     private void runWithErrorLogger(Runnable r) {
         try {
             r.run();
-        } catch (Throwable t) {
-            log.error("Spawn loop error", t); // keep the task alive
+        } catch (Exception ex) {
+            log.error("Spawn loop error", ex); // keep the task alive
         }
     }
 }

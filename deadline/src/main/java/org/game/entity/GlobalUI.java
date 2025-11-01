@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class GlobalUI {
     private static final GlobalUI INSTANCE = new GlobalUI();
 
-    private final AtomicInteger count = new AtomicInteger(0);
+    private final AtomicInteger currentEnemyCount = new AtomicInteger(0);
 
     private GlobalUI() {
 
@@ -17,15 +17,15 @@ public final class GlobalUI {
     }
 
     public void incrementCounter() {
-        count.incrementAndGet();
+        currentEnemyCount.incrementAndGet();
     }
 
     public void decrementCounter() {
-        count.decrementAndGet();
+        currentEnemyCount.decrementAndGet();
     }
 
     public void drawCounter(Graphics2D g2d, int panelWidth) {
-        String counterText = "Enemies Remaining: " + count.get();
+        String counterText = "Enemies Remaining: " + currentEnemyCount.get();
         FontMetrics fontMetrics = g2d.getFontMetrics();
         int textWidth = fontMetrics.stringWidth(counterText);
         int padding = 10;

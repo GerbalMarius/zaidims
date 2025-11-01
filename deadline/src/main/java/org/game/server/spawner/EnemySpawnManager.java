@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public final class EnemySpawnManager {
 
-    private static final int ENEMY_SPAWN_POOL_SIZE = 4;
+    private static final int ENEMY_SPAWN_POOL_SIZE = 2;
 
     private final Server server;
     private final Random random = new Random();
@@ -147,7 +147,6 @@ public final class EnemySpawnManager {
 
         Enemy mainEnemy = spawner.spawnLarge(enemyId,x, y);
         mainEnemy.setId(enemyId++);
-        server.getEnemies().put(mainEnemy.getId(), mainEnemy);
         ServerActions.spawnEnemy(server, mainEnemy, x, y);
 
         int[][] offsets = {
@@ -174,7 +173,6 @@ public final class EnemySpawnManager {
             shallowCopy.setGlobalY(copyY);
             shallowCopy.setId(enemyId++);
 
-            server.getEnemies().put(shallowCopy.getId(), shallowCopy);
             ServerActions.spawnEnemy(server, shallowCopy, copyX, copyY);
         }
 

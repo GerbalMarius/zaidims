@@ -6,6 +6,7 @@ import org.game.entity.EnemySize;
 import org.game.entity.EnemyType;
 import org.game.entity.enemy.creator.EnemyCreator;
 import org.game.server.Server;
+import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
 import java.awt.*;
@@ -62,8 +63,6 @@ public final class EnemySpawnManager {
 
         long nextId = enemyId++;
 
-
-
         Enemy enemy = switch (size) {
             case SMALL -> spawner.spawnSmall(nextId, x, y);
             case MEDIUM -> spawner.spawnMedium(nextId, x, y);
@@ -97,6 +96,81 @@ public final class EnemySpawnManager {
             server.getEnemies().put(enemy.getId(), enemy);
             Server.ServerActions.spawnEnemy(server, enemy, x, y);
         }
+    }
+
+    public void startShallowWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
+        scheduler.scheduleAtFixedRate(this::spawnShallowWave, initialDelay, period, timeUnit);
+        comparePrototypeCopies();
+    }
+
+    public void spawnShallowWave() {
+        TileManager tileManager = server.getEntityChecker().getTileManager();
+
+        EnemySpawner spawner = switch (EnemyType.values()[random.nextInt(EnemyType.values().length)]) {
+            case GOBLIN -> goblinSpawner;
+            case ZOMBIE -> zombieSpawner;
+            case SKELETON -> skeletonSpawner;
+        };
+
+        Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
+        int x = spawnPos.x;
+        int y = spawnPos.y;
+
+        // sukuriamas pgr priesas
+        Enemy mainEnemy = spawner.spawnLarge(enemyId,x, y);
+        mainEnemy.setId(enemyId++);
+        server.getEnemies().put(mainEnemy.getId(), mainEnemy);
+        Server.ServerActions.spawnEnemy(server, mainEnemy, x, y);
+
+        // Aplink ji sukuriam 3 shallow kopijas
+        int[][] offsets = {
+                {100, 0},
+                {-100, 0},
+                {0, 100}
+        };
+
+        for (int[] offset : offsets) {
+            int copyX = x + offset[0];
+            int copyY = y + offset[1];
+
+            int tileSize = WorldSettings.TILE_SIZE;
+            int tileCol = copyX / tileSize;
+            int tileRow = copyY / tileSize;
+
+            if (!tileManager.IsWalkable(tileRow, tileCol)) {
+                System.out.println("Kopijos vieta buvo neleistina");
+                continue;
+            }
+
+            Enemy shallowCopy = (Enemy) mainEnemy.createShallowCopy();
+            shallowCopy.setGlobalX(copyX);
+            shallowCopy.setGlobalY(copyY);
+            shallowCopy.setId(enemyId++);
+
+            server.getEnemies().put(shallowCopy.getId(), shallowCopy);
+            Server.ServerActions.spawnEnemy(server, shallowCopy, copyX, copyY);
+        }
+
+        System.out.println("Spawned shallow wave: main + 3 copies (" + mainEnemy.getType() + ")");
+    }
+
+    public void comparePrototypeCopies() {
+        System.out.println("--- Prototype Copy Comparison --");
+
+        Enemy prototype = skeletonPrototype;
+        System.out.println("Original Enemy: " + prototype + " @ " + System.identityHashCode(prototype));
+
+        Enemy shallowCopy = (Enemy) prototype.createShallowCopy();
+        Enemy deepCopy = (Enemy) prototype.createDeepCopy();
+
+        System.out.println("Shallow Copy:   " + shallowCopy + " @ " + System.identityHashCode(shallowCopy));
+        System.out.println("Deep Copy:      " + deepCopy + " @ " + System.identityHashCode(deepCopy));
+
+        System.out.println("--- Laukai (adresai) ---");
+        System.out.println("Hitbox:");
+        System.out.println("  original: " + System.identityHashCode(prototype.getHitbox()));
+        System.out.println("  shallow:  " + System.identityHashCode(shallowCopy.getHitbox()));
+        System.out.println("  deep:     " + System.identityHashCode(deepCopy.getHitbox()));
     }
 
     private Enemy chooseRandomPrototype() {

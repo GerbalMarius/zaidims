@@ -6,22 +6,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.game.client.input.ControllerAdapter;
 import org.game.client.input.KeyboardHandler;
 import org.game.client.input.MouseHandler;
-import org.game.client.shoot.ClientShootBridge;
+import org.game.client.shoot.ClientShootImpl;
+import org.game.client.shoot.ShootImplementation;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
 import org.game.entity.decorator.AttackDecorator;
 import org.game.entity.decorator.SpeedDecorator;
+import org.game.entity.weapon.Weapon;
+import org.game.entity.weapon.WeaponFactory;
 import org.game.server.CollisionChecker;
 import org.game.tiles.TileManager;
 import org.game.message.*;
 import org.game.server.WorldSettings;
 import org.game.utils.GUI;
-import org.game.client.shoot.ShootBridge;
 import javax.swing.*;
 import java.awt.*;
 
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -50,7 +53,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
     @Setter
     private Consumer<UUID> shootCallback;
-
+    private Weapon weapon;
     @Setter
     private Consumer<? super Enemy> healthCallback;
 
@@ -68,9 +71,6 @@ public final class GamePanel extends JPanel implements Runnable {
     private final TileManager tileManager;
     public CollisionChecker cChecker;
 
-    @Setter
-    private ShootBridge shootBridge;
-
 
     public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler, ControllerAdapter adapter) {
         this.clientId = clientId;
@@ -81,7 +81,6 @@ public final class GamePanel extends JPanel implements Runnable {
         this.tileManager = new TileManager();
         cChecker = new CollisionChecker(tileManager);
         this.controllerAdapter = adapter;
-        this.shootBridge = new ClientShootBridge(this.state);
 
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -90,6 +89,8 @@ public final class GamePanel extends JPanel implements Runnable {
 
         initialSnap(state.getPlayer(clientId));
     }
+
+
 
     public void startGameLoop() {
         gameThread = Thread.ofPlatform()
@@ -117,12 +118,14 @@ public final class GamePanel extends JPanel implements Runnable {
         }
         controllerAdapter.shutdown();
     }
-
+    public void initializeWeapon(ClassType classType) {
+        ShootImplementation clientImpl = new ClientShootImpl(state);
+        this.weapon = WeaponFactory.createFor(classType, clientImpl);
+    }
     private void updateGame() {
 
         Player currentPlayer = state.getPlayer(clientId);
         optimisticMove(currentPlayer);
-
         checkPlayerPowerUpCollision(currentPlayer);
 
         long nowMillis = System.currentTimeMillis();
@@ -140,24 +143,32 @@ public final class GamePanel extends JPanel implements Runnable {
             currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
         }
 
-        if ((mouseHandler.isPrimaryClicked() || controllerAdapter.isPrimaryClicked()) && currentPlayer != null) {
+        if ((mouseHandler.isPrimaryClicked() || controllerAdapter.isPrimaryClicked())
+                && currentPlayer != null && weapon != null) {
+
             long now = System.currentTimeMillis();
-            if (now - lastShotTime >= shootCooldown) {
-                UUID projId = UUID.randomUUID();
+            UUID baseProjectileId = UUID.randomUUID();
 
-                if (shootBridge != null) {
-                    shootBridge.onPrimaryShoot(clientId, currentPlayer, now, projId);
-                }
+            List<ShootImplementation.ProjectileData> immediateShots =
+                    weapon.fire(currentPlayer, baseProjectileId, now);
 
+            for (var data : immediateShots) {
                 if (shootCallback != null) {
-                    shootCallback.accept(projId);
+                    shootCallback.accept(data.id());
                 }
+            }
+        }
+        if (weapon != null) {
+            long now = System.currentTimeMillis();
+            List<ShootImplementation.ProjectileData> delayedShots = weapon.update(now);
 
-                lastShotTime = now;
+            for (var data : delayedShots) {
+                if (shootCallback != null) {
+                    shootCallback.accept(data.id());
+                }
             }
         }
         controllerAdapter.update();
-
         updateProjectiles(state.getEnemies().values());
     }
 
@@ -344,8 +355,12 @@ public final class GamePanel extends JPanel implements Runnable {
         int maxMsgPerTick = 100;
         while (processed < maxMsgPerTick && (msg = incomingMessages.poll()) != null) {
             switch (msg) {
-                case JoinMessage(UUID playerId, ClassType playerClass, String name, int x, int y) ->
-                        state.addPlayer(playerId, playerClass, name, x, y);
+                case JoinMessage(UUID playerId, ClassType playerClass, String name, int x, int y) -> {
+                    state.addPlayer(playerId, playerClass, name, x, y);
+                    if (playerId.equals(clientId)) {
+                        initializeWeapon(playerClass);
+                    }
+                }
                 case LeaveMessage(UUID playerId) -> state.removePlayer(playerId);
                 case MoveMessage(UUID playerId, int x, int y) -> {
                     if (!playerId.equals(clientId)) {

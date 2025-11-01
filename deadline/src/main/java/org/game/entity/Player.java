@@ -50,7 +50,7 @@ public non-sealed class Player extends Entity {
 
         setClassRegenDefaults();
 
-        this.attackBehavior = AttackFactory.defaultFor(this.playerClass);
+        //this.attackBehavior = AttackFactory.defaultFor(this.playerClass);
         this.lastAttackTimestamp = 0L;
     }
 

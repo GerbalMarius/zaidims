@@ -23,12 +23,7 @@ public class ProjectileAttack implements AttackBehavior {
         int py = owner.getGlobalY() + owner.getHitbox().y + owner.getHitbox().height / 2 - 8;
         FramePosition dir = owner.getDirection();
 
-        int computedDamage = owner.getAttack();
-        if (computedDamage <= 0) {
-            computedDamage = this.damage;
-        }
-
-        return new Projectile(px, py, dir, speed, computedDamage, maxDistance);
+        return new Projectile(px, py, dir, speed, damage, maxDistance);
     }
 
     @Override

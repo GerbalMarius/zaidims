@@ -1,11 +1,12 @@
 package org.game.entity;
 
 import java.awt.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class GlobalUI {
     private static final GlobalUI INSTANCE = new GlobalUI();
 
-    private int count = 0;
+    private final AtomicInteger count = new AtomicInteger(0);
 
     private GlobalUI() {
 
@@ -15,26 +16,16 @@ public class GlobalUI {
         return INSTANCE;
     }
 
-    public synchronized void incrementCounter() {
-        count++;
+    public  void incrementCounter() {
+        count.incrementAndGet();
     }
 
-    public synchronized void decrementCounter() {
-        if (count > 0) {
-            count--;
-        }
-    }
-
-    public synchronized void reset() {
-        count = 0;
-    }
-
-    public synchronized int getCount() {
-        return count;
+    public  void decrementCounter() {
+       count.decrementAndGet();
     }
 
     public void drawCounter(Graphics2D g2d, int panelWidth) {
-        String counterText = "Enemies Remaining: " + count;
+        String counterText = "Enemies Remaining: " + count.get();
         FontMetrics fontMetrics = g2d.getFontMetrics();
         int textWidth = fontMetrics.stringWidth(counterText);
         int padding = 10;

@@ -21,8 +21,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-public final class GUI {
-    private GUI(){}
+public final class Panels {
+    private Panels(){}
 
     public static void drawNameBox(Graphics2D g2d, String name, int x, int y, int tileSize) {
 

@@ -70,7 +70,7 @@ public final class Controller {
             this.down  = this.down  || ly >  deadZone;
 
         } catch (Exception ex) {
-            log.debug("Controller update error: {}", ex.getMessage());
+            log.error("Controller update error: {}", ex.getMessage());
             clear();
         }
     }

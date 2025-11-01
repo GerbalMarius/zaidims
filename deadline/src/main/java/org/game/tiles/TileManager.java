@@ -124,8 +124,8 @@ public class TileManager {
     public boolean IsWalkable(int y, int x) {
         Tile tile = tiles.get(mapTileNum[y][x]);
 
-        Tile tileBelow = tiles.get(mapTileNum[Math.min(y + 1, WorldSettings.MAX_WORLD_ROW)][x]);
-        Tile tileRight = tiles.get(mapTileNum[y][Math.min(x + 1, WorldSettings.MAX_WORLD_COL)]);
+        Tile tileBelow = tiles.get(mapTileNum[Math.min(y + 1, WorldSettings.MAX_WORLD_ROW - 1)][x]);
+        Tile tileRight = tiles.get(mapTileNum[y][Math.min(x + 1, WorldSettings.MAX_WORLD_COL - 1)]);
         Tile tileLeft = tiles.get(mapTileNum[y][Math.max(0, x - 1)]);
         Tile tileAbove = tiles.get(mapTileNum[Math.max(0, y - 1)][x]);
 

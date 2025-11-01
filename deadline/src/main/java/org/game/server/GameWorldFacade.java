@@ -17,16 +17,19 @@ public class GameWorldFacade {
         this.enemyUpdateManager = new EnemyUpdateManager(server);
         this.powerUpManager = new PowerUpManager(server);
     }
+    public void startSpawningWaves(long initialDelay, long period, TimeUnit timeUnit){
+        enemySpawnManager.startWaveSpawning(initialDelay, period, timeUnit);
+    }
 
-    public void initialize() {
-        //enemySpawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
-        //enemySpawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
-        //enemySpawnManager.startShallowWaveSpawning(10, 50, TimeUnit.SECONDS);
-        enemySpawnManager.spawnShallowWave();
-        enemyUpdateManager.startUpdating(0, 50, TimeUnit.MILLISECONDS);
+    public void startSpawningIndividualEnemies(long initialDelay, long period, TimeUnit timeUnit){
+        enemySpawnManager.startSpawning(initialDelay, period, timeUnit);
+    }
 
-        powerUpManager.startDispensing(10, 15, TimeUnit.SECONDS);
+    public void startUpdatingEnemyPos(long initialDelay, long period, TimeUnit timeUnit){
+        enemyUpdateManager.startUpdating(initialDelay, period, timeUnit);
+    }
 
-        System.out.println("GameWorldFacade initialized");
+    public void startDispensingPowerUps(long initialDelay, long period, TimeUnit timeUnit) {
+        powerUpManager.startDispensing(initialDelay, period, timeUnit);
     }
 }

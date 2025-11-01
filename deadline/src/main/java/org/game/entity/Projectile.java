@@ -16,15 +16,20 @@ public final class Projectile extends Entity {
     private boolean active = true;
     private double maxDistance = Double.POSITIVE_INFINITY;
     private double traveledDistance = 0;
-    public Projectile(int x, int y, FramePosition direction, int speed, int damage) {
+
+    private final Color color;
+
+    public Projectile(int x, int y, FramePosition direction, int speed, int damage, Color color) {
         super(x, y);
         this.direction = direction;
         this.speed = speed;
         this.damage = damage;
         this.hitbox = new Rectangle(8, 16, 16, 16);
+        this.color = color;
+
     }
-    public Projectile(int x, int y, FramePosition direction, int speed, int damage, double maxDistance) {
-        this(x, y, direction, speed, damage);
+    public Projectile(int x, int y, FramePosition direction, int speed, int damage, double maxDistance, Color color) {
+        this(x, y, direction, speed, damage, color);
         this.maxDistance = maxDistance;
     }
     public void update(Collection<? extends Enemy> enemies, CollisionChecker checker, Consumer<? super Enemy> healthTickAction) {
@@ -85,7 +90,7 @@ public final class Projectile extends Entity {
     public void draw(Graphics2D g2d) {
         if (!active) return;
 
-        g2d.setColor(Color.MAGENTA);
+        g2d.setColor(this.color);
         g2d.fillOval(getGlobalX(), getGlobalY(), 16, 16);
     }
 

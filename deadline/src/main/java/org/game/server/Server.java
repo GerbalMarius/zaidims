@@ -46,7 +46,7 @@ public final class Server {
 
     private static boolean firstPlayer = true;
 
-    private final GameWorldFacade worldFacade = new GameWorldFacade(this);
+    private final GameWorldFacade gameWorld = new GameWorldFacade(this);
 
     @Getter
     private final CollisionChecker entityChecker = new CollisionChecker(new TileManager());
@@ -87,7 +87,7 @@ public final class Server {
                     else if (key.isWritable()) write(key);
                 } catch (IOException e) {
                     closeKey(key);
-                    e.printStackTrace();
+                    log.error("Error handling key", e);
                 }
             }
         }
@@ -106,8 +106,14 @@ public final class Server {
         log.info("Accepted  from : {}", sc.getRemoteAddress());
 
         if (firstPlayer) {
+            gameWorld.startSpawningIndividualEnemies(0, 5, TimeUnit.SECONDS);
 
-            worldFacade.initialize();
+            gameWorld.startSpawningWaves(20, 30, TimeUnit.SECONDS);
+
+            gameWorld.startUpdatingEnemyPos(0, 50, TimeUnit.MILLISECONDS);
+
+            gameWorld.startDispensingPowerUps(10, 15, TimeUnit.SECONDS);
+
             startPlayerRegen();
             firstPlayer = false;
             return;

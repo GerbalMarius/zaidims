@@ -20,6 +20,7 @@ import org.game.entity.powerup.PowerUpType;
 import org.game.entity.powerup.SpeedPowerUp;
 import org.game.message.EnemyCopy;
 
+import java.awt.*;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -64,7 +65,7 @@ public final class GameState {
     // -- enemy
     public void spawnEnemyFromServer(long id, EnemyType type, EnemySize size, int x, int y) {
         Enemy enemy = messageCreator.spawn(type,size, id, x, y);
-        enemies.putIfAbsent(id, enemy);
+        enemies.put(id, enemy);
         GlobalUI.getInstance().incrementCounter();
     }
 
@@ -115,8 +116,11 @@ public final class GameState {
     public void spawnProjectile(UUID projId, UUID playerId, int startX, int startY, FramePosition dir,
                                 int speed, int damage, double maxDistance) {
         if (this.getProjectiles().containsKey(projId)) return;
+        Player player = this.getPlayer(playerId);
 
-        Projectile p = new Projectile(startX, startY, dir, speed, damage, maxDistance);
+        Color attackColor = player.getPlayerClass().attackColor();
+
+        Projectile p = new Projectile(startX, startY, dir, speed, damage, maxDistance, attackColor);
         this.getProjectiles().put(projId, p);
     }
 

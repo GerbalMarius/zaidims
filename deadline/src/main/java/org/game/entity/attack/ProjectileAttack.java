@@ -4,6 +4,8 @@ import org.game.entity.FramePosition;
 import org.game.entity.Player;
 import org.game.entity.Projectile;
 
+import java.awt.*;
+
 public class ProjectileAttack implements AttackBehavior {
     private final int speed;
     private final int damage;
@@ -22,8 +24,9 @@ public class ProjectileAttack implements AttackBehavior {
         int px = owner.getGlobalX() + owner.getHitbox().x + owner.getHitbox().width / 2 - 8;
         int py = owner.getGlobalY() + owner.getHitbox().y + owner.getHitbox().height / 2 - 8;
         FramePosition dir = owner.getDirection();
+        Color color = owner.getPlayerClass().attackColor();
 
-        return new Projectile(px, py, dir, speed, damage, maxDistance);
+        return new Projectile(px, py, dir, speed, damage, maxDistance, color);
     }
 
     @Override

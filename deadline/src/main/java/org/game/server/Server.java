@@ -108,7 +108,7 @@ public final class Server {
         if (firstPlayer) {
             gameWorld.startSpawningIndividualEnemies(0, 5, TimeUnit.SECONDS);
 
-            gameWorld.startSpawningWaves(20, 30, TimeUnit.SECONDS);
+            gameWorld.startSpawningWaves(10, 30, TimeUnit.SECONDS);
 
             gameWorld.startUpdatingEnemyPos(0, 50, TimeUnit.MILLISECONDS);
 

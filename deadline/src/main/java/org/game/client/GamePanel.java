@@ -19,7 +19,7 @@ import org.game.server.CollisionChecker;
 import org.game.tiles.TileManager;
 import org.game.message.*;
 import org.game.server.WorldSettings;
-import org.game.utils.GUI;
+import org.game.utils.Panels;
 import javax.swing.*;
 import java.awt.*;
 
@@ -39,9 +39,6 @@ public final class GamePanel extends JPanel implements Runnable {
     private final KeyboardHandler keyboardHandler;
     private final MouseHandler mouseHandler;
     private final ControllerAdapter controllerAdapter;
-
-    private long lastShotTime = 0;
-    private final long shootCooldown = 300;
 
     @Getter
     private final UUID clientId;
@@ -340,7 +337,7 @@ public final class GamePanel extends JPanel implements Runnable {
             String name = playerData.getName();
 
             playerData.draw(g2d, x, y, tileSize * playerData.getScale());
-            GUI.drawNameBox(g2d, name, x, y, tileSize * playerData.getScale());
+            Panels.drawNameBox(g2d, name, x, y, tileSize * playerData.getScale());
             playerData.drawHealthBar(g2d, x, y, tileSize * playerData.getScale(), Color.GREEN);
         }
     }

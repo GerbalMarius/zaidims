@@ -9,7 +9,7 @@ import org.game.entity.ClassType;
 import org.game.entity.Player;
 import org.game.json.Json;
 import org.game.message.*;
-import org.game.utils.GUI;
+import org.game.utils.Panels;
 
 import javax.swing.*;
 import java.awt.*;
@@ -124,13 +124,13 @@ public final class Client {
 
         final ClassType[] selectedClass = {null};
 
-        JPanel panel = GUI.drawClassPanel(ct -> selectedClass[0] = ct);
+        JPanel panel = Panels.drawClassPanel(ct -> selectedClass[0] = ct);
 
 
         classPanelWrapper.add(panel, BorderLayout.CENTER);
 
         JTextField nameField = new JTextField();
-        GUI.allowOnlyLetterOrDigit(nameField, 30);
+        Panels.allowOnlyLetterOrDigit(nameField, 30);
 
         Object[] message = {
                 "Enter player name:", nameField,

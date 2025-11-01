@@ -10,9 +10,6 @@ import org.game.entity.decorator.MaxHpDecorator;
 import org.game.entity.decorator.SpeedDecorator;
 import org.game.json.Json;
 import org.game.message.*;
-import org.game.server.powerup.PowerUpManager;
-import org.game.server.spawner.EnemySpawnManager;
-import org.game.server.spawner.EnemyUpdateManager;
 import org.game.tiles.TileManager;
 
 import java.io.IOException;
@@ -49,10 +46,7 @@ public final class Server {
 
     private static boolean firstPlayer = true;
 
-    private final EnemySpawnManager spawnManager = new EnemySpawnManager(this);
-    private final EnemyUpdateManager updateManager = new EnemyUpdateManager(this);
-
-    private final PowerUpManager powerUpManager = new PowerUpManager(this);
+    private final GameWorldFacade gameWorld = new GameWorldFacade(this);
 
     @Getter
     private final CollisionChecker entityChecker = new CollisionChecker(new TileManager());
@@ -93,7 +87,7 @@ public final class Server {
                     else if (key.isWritable()) write(key);
                 } catch (IOException e) {
                     closeKey(key);
-                    e.printStackTrace();
+                    log.error("Error handling key", e);
                 }
             }
         }
@@ -112,8 +106,14 @@ public final class Server {
         log.info("Accepted  from : {}", sc.getRemoteAddress());
 
         if (firstPlayer) {
-            startUpdatingEnemies();
-            powerUpManager.startDispensing(10, 15, TimeUnit.SECONDS);
+            gameWorld.startSpawningIndividualEnemies(0, 5, TimeUnit.SECONDS);
+
+            gameWorld.startSpawningWaves(20, 30, TimeUnit.SECONDS);
+
+            gameWorld.startUpdatingEnemyPos(0, 50, TimeUnit.MILLISECONDS);
+
+            gameWorld.startDispensingPowerUps(10, 15, TimeUnit.SECONDS);
+
             startPlayerRegen();
             firstPlayer = false;
             return;
@@ -153,12 +153,6 @@ public final class Server {
                 broadcast(json.toJson(healthMsg, labelPair(Message.JSON_LABEL, "playerHealth")));
             }
         }
-    }
-
-    private void startUpdatingEnemies() {
-        spawnManager.startSpawning(0, 5, TimeUnit.SECONDS);
-        spawnManager.startWaveSpawning(10, 50, TimeUnit.SECONDS);
-        updateManager.startUpdating(0, 50, TimeUnit.MILLISECONDS);
     }
 
     private void read(SelectionKey key) throws IOException {

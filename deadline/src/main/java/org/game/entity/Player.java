@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.Camera;
+import org.game.entity.attack.AttackBehavior;
+import org.game.entity.attack.AttackFactory;
 import org.game.entity.decorator.AttackDecorator;
 import org.game.entity.decorator.MaxHpDecorator;
 import org.game.entity.decorator.SpeedDecorator;
@@ -28,6 +30,9 @@ public non-sealed class Player extends Entity {
 
     private long lastRegenTimestamp;
 
+    private AttackBehavior attackBehavior;
+    private long lastAttackTimestamp;
+
     public Player(ClassType type, String name, int x, int y) {
         Objects.requireNonNull(name);
         super(x, y);
@@ -44,6 +49,22 @@ public non-sealed class Player extends Entity {
         setStats();
 
         setClassRegenDefaults();
+
+        //this.attackBehavior = AttackFactory.defaultFor(this.playerClass);
+        this.lastAttackTimestamp = 0L;
+    }
+
+    public Projectile tryAttack(long nowMillis){
+        if (attackBehavior == null) return null;
+        long cooldown = attackBehavior.getCooldownMs();
+        if (nowMillis - lastAttackTimestamp < cooldown) return null;
+        Projectile p = attackBehavior.createProjectile(this);
+        lastAttackTimestamp = nowMillis;
+        return p;
+    }
+
+    public void setAttackBehavior(AttackBehavior behavior){
+        this.attackBehavior = behavior;
     }
 
     public static PlayerBuilder builder() {

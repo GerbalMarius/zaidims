@@ -80,17 +80,25 @@ public final class Client {
             sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
         });
 
-        gamePanel.setShootCallback(() -> {
+        gamePanel.setShootCallback(projectileId -> {
             Player player = gameState.getPlayer(clientId);
             if (player == null) return;
 
-         ProjectileSpawnMessage proj = new ProjectileSpawnMessage(
-                             player.getGlobalX(),
-                             player.getGlobalY(),
-                             player.getDirection(),
-                             UUID.randomUUID(),
-                             clientId
-                     );
+            var localProj = gameState.getProjectiles().get(projectileId);
+            if (localProj == null) {
+
+                return;
+            }
+            ProjectileSpawnMessage proj = new ProjectileSpawnMessage(
+                    localProj.getGlobalX(),
+                    localProj.getGlobalY(),
+                    localProj.getDirection(),
+                    projectileId,
+                    clientId,
+                    localProj.getSpeed(),
+                    localProj.getDamage(),
+                    localProj.getMaxDistance()
+            );
 
             sendLocalInput(json.toJson(proj, labelPair(Message.JSON_LABEL, "projectileSpawn")));
         });

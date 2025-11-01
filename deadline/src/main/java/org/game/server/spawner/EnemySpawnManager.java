@@ -6,6 +6,8 @@ import org.game.entity.EnemySize;
 import org.game.entity.EnemyType;
 import org.game.entity.enemy.creator.EnemyCreator;
 import org.game.server.Server;
+import org.game.server.Server.ServerActions;
+import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
 import java.awt.*;
@@ -17,12 +19,14 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public final class EnemySpawnManager {
 
-    private static final int ENEMY_SPAWN_POOL_SIZE = 2;
+    private static final int ENEMY_SPAWN_POOL_SIZE = 4;
 
     private final Server server;
     private final Random random = new Random();
 
     private static long enemyId = 0;
+
+    private static int waveNumber = 1;
 
     private final EnemySpawner goblinSpawner = new GoblinSpawner();
     private final EnemySpawner zombieSpawner = new ZombieSpawner();
@@ -62,15 +66,13 @@ public final class EnemySpawnManager {
 
         long nextId = enemyId++;
 
-
-
         Enemy enemy = switch (size) {
             case SMALL -> spawner.spawnSmall(nextId, x, y);
             case MEDIUM -> spawner.spawnMedium(nextId, x, y);
             case BIG -> spawner.spawnLarge(nextId, x, y);
         };
 
-        Server.ServerActions.spawnEnemy(server, enemy, x, y);
+        ServerActions.spawnEnemy(server, enemy, x, y);
     }
 
     public void startWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
@@ -78,12 +80,19 @@ public final class EnemySpawnManager {
     }
 
     private void spawnWave() {
-        int waveSize = 5;
+        final int baseWaveSize = 5;
+        final int maxWaveSize = 30;
+
         TileManager tileManager = server.getEntityChecker().getTileManager();
+
+        int waveSize = scaleWaveSize(baseWaveSize, waveNumber, maxWaveSize);
+        log.debug("Spawning wave #{} with {} enemies", waveNumber, waveSize);
 
         for (int i = 0; i < waveSize; i++) {
             Enemy prototype = chooseRandomPrototype();
             Enemy enemy = (Enemy) prototype.createDeepCopy();
+
+            scaleEnemyForWave(enemy, waveNumber);
 
             enemy.setId(enemyId++);
             Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
@@ -93,10 +102,102 @@ public final class EnemySpawnManager {
             enemy.setGlobalX(x);
             enemy.setGlobalY(y);
 
-
-            server.getEnemies().put(enemy.getId(), enemy);
-            Server.ServerActions.spawnEnemy(server, enemy, x, y);
+            ServerActions.spawnEnemy(server, enemy, x, y);
         }
+        waveNumber++;
+    }
+
+    private void scaleEnemyForWave(Enemy enemy, int waveNumber) {
+        double hpMul = Math.pow(1.18, waveNumber - 1);
+        double damageMul = Math.pow(1.15, waveNumber - 1);
+
+        int hp = (int) Math.round(enemy.getMaxHitPoints() * hpMul);
+        int attack = (int) Math.round(enemy.getAttack() * damageMul);
+
+        enemy.setMaxHitPoints(hp);
+        enemy.setHitPoints(hp);
+
+        enemy.setAttack(attack);
+    }
+
+    private int scaleWaveSize(int base, int waveNumber, int cap) {
+        double linear = base * (1.0 + 0.15 * (waveNumber - 1));
+        int stepBonus = ((waveNumber - 1) / 5) * 2;
+        int size = (int)Math.round(linear) + stepBonus;
+        return Math.min(size, cap);
+    }
+
+    public void startShallowWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
+        scheduler.scheduleAtFixedRate(this::spawnShallowWave, initialDelay, period, timeUnit);
+        comparePrototypeCopies();
+    }
+
+    public void spawnShallowWave() {
+        TileManager tileManager = server.getEntityChecker().getTileManager();
+
+        EnemySpawner spawner = switch (EnemyType.values()[random.nextInt(EnemyType.values().length)]) {
+            case GOBLIN -> goblinSpawner;
+            case ZOMBIE -> zombieSpawner;
+            case SKELETON -> skeletonSpawner;
+        };
+
+        Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
+        int x = spawnPos.x;
+        int y = spawnPos.y;
+
+        Enemy mainEnemy = spawner.spawnLarge(enemyId,x, y);
+        mainEnemy.setId(enemyId++);
+        server.getEnemies().put(mainEnemy.getId(), mainEnemy);
+        ServerActions.spawnEnemy(server, mainEnemy, x, y);
+
+        int[][] offsets = {
+                {100, 0},
+                {-100, 0},
+                {0, 100}
+        };
+
+        for (int[] offset : offsets) {
+            int copyX = x + offset[0];
+            int copyY = y + offset[1];
+
+            int tileSize = WorldSettings.TILE_SIZE;
+            int tileCol = copyX / tileSize;
+            int tileRow = copyY / tileSize;
+
+            if (!tileManager.IsWalkable(tileRow, tileCol)) {
+                System.out.println("Kopijos vieta buvo neleistina");
+                continue;
+            }
+
+            Enemy shallowCopy = (Enemy) mainEnemy.createShallowCopy();
+            shallowCopy.setGlobalX(copyX);
+            shallowCopy.setGlobalY(copyY);
+            shallowCopy.setId(enemyId++);
+
+            server.getEnemies().put(shallowCopy.getId(), shallowCopy);
+            ServerActions.spawnEnemy(server, shallowCopy, copyX, copyY);
+        }
+
+        System.out.println("Spawned shallow wave: main + 3 copies (" + mainEnemy.getType() + ")");
+    }
+
+    public void comparePrototypeCopies() {
+        System.out.println("--- Prototype Copy Comparison --");
+
+        Enemy prototype = skeletonPrototype;
+        System.out.println("Original Enemy: " + prototype + " @ " + System.identityHashCode(prototype));
+
+        Enemy shallowCopy = (Enemy) prototype.createShallowCopy();
+        Enemy deepCopy = (Enemy) prototype.createDeepCopy();
+
+        System.out.println("Shallow Copy:   " + shallowCopy + " @ " + System.identityHashCode(shallowCopy));
+        System.out.println("Deep Copy:      " + deepCopy + " @ " + System.identityHashCode(deepCopy));
+
+        System.out.println("--- Laukai (adresai) ---");
+        System.out.println("Hitbox:");
+        System.out.println("  original: " + System.identityHashCode(prototype.getHitbox()));
+        System.out.println("  shallow:  " + System.identityHashCode(shallowCopy.getHitbox()));
+        System.out.println("  deep:     " + System.identityHashCode(deepCopy.getHitbox()));
     }
 
     private Enemy chooseRandomPrototype() {

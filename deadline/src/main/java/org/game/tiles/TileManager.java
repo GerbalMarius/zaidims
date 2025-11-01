@@ -121,7 +121,7 @@ public class TileManager {
         return new Point(WorldSettings.CENTER_X, WorldSettings.CENTER_Y);
     }
 
-    private boolean IsWalkable(int y, int x) {
+    public boolean IsWalkable(int y, int x) {
         Tile tile = tiles.get(mapTileNum[y][x]);
 
         Tile tileBelow = tiles.get(mapTileNum[Math.min(y + 1, WorldSettings.MAX_WORLD_ROW)][x]);

@@ -14,6 +14,14 @@ public enum ClassType {
         };
     }
 
+    public Color attackColor() {
+        return switch (this) {
+            case WARRIOR -> Color.WHITE;
+            case WIZARD -> Color.ORANGE;
+            case ROGUE -> Color.MAGENTA;
+        };
+    }
+
     public ImageIcon getIcon() {
        return switch (this) {
             case WARRIOR -> scaleIcon(new ImageIcon("assets/player/war_down_1.png"));

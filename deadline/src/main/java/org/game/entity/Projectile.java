@@ -14,23 +14,42 @@ public final class Projectile extends Entity {
 
     private int damage;
     private boolean active = true;
+    private double maxDistance = Double.POSITIVE_INFINITY;
+    private double traveledDistance = 0;
 
-    public Projectile(int x, int y, FramePosition direction, int speed, int damage) {
+    private final Color color;
+
+    public Projectile(int x, int y, FramePosition direction, int speed, int damage, Color color) {
         super(x, y);
         this.direction = direction;
         this.speed = speed;
         this.damage = damage;
         this.hitbox = new Rectangle(8, 16, 16, 16);
-    }
+        this.color = color;
 
+    }
+    public Projectile(int x, int y, FramePosition direction, int speed, int damage, double maxDistance, Color color) {
+        this(x, y, direction, speed, damage, color);
+        this.maxDistance = maxDistance;
+    }
     public void update(Collection<? extends Enemy> enemies, CollisionChecker checker, Consumer<? super Enemy> healthTickAction) {
         if (!active) return;
 
+        int dx = 0, dy = 0;
         switch (getDirection()) {
-            case UP -> moveBy(0, -speed);
-            case DOWN -> moveBy(0, speed);
-            case LEFT -> moveBy(-speed, 0);
-            case RIGHT -> moveBy(speed, 0);
+            case UP -> dy = -speed;
+            case DOWN -> dy = speed;
+            case LEFT -> dx = -speed;
+            case RIGHT -> dx = speed;
+        }
+
+        moveBy(dx, dy);
+        traveledDistance += Math.hypot(dx, dy);
+
+        // range check
+        if (traveledDistance >= maxDistance) {
+            this.active = false;
+            return;
         }
 
         // Tile collision
@@ -71,7 +90,7 @@ public final class Projectile extends Entity {
     public void draw(Graphics2D g2d) {
         if (!active) return;
 
-        g2d.setColor(Color.ORANGE);
+        g2d.setColor(this.color);
         g2d.fillOval(getGlobalX(), getGlobalY(), 16, 16);
     }
 

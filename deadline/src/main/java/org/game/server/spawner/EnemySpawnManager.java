@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 public final class EnemySpawnManager {
@@ -24,9 +25,9 @@ public final class EnemySpawnManager {
     private final Server server;
     private final Random random = new Random();
 
-    private static long enemyId = 0;
+    private final static AtomicLong enemyId = new AtomicLong(0);
 
-    private static int waveNumber = 1;
+    private static   int waveNumber = 1;
 
     private final EnemySpawner goblinSpawner = new GoblinSpawner();
     private final EnemySpawner zombieSpawner = new ZombieSpawner();
@@ -44,7 +45,7 @@ public final class EnemySpawnManager {
     }
 
     public void startSpawning(long initialDelay, long period, TimeUnit timeUnit) {
-        scheduler.scheduleAtFixedRate(this::spawnRandomEnemy, initialDelay, period, timeUnit);
+        scheduler.scheduleAtFixedRate(() -> runWithErrorLogger(this::spawnRandomEnemy), initialDelay, period, timeUnit);
     }
 
     private void spawnRandomEnemy() {
@@ -64,7 +65,7 @@ public final class EnemySpawnManager {
         final int x = spawnPos.x;
         final int y = spawnPos.y;
 
-        long nextId = enemyId++;
+        long nextId = enemyId.getAndIncrement();
 
         Enemy enemy = switch (size) {
             case SMALL -> spawner.spawnSmall(nextId, x, y);
@@ -76,7 +77,7 @@ public final class EnemySpawnManager {
     }
 
     public void startWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
-        scheduler.scheduleAtFixedRate(this::spawnWave, initialDelay, period, timeUnit);
+        scheduler.scheduleAtFixedRate(() -> runWithErrorLogger(this::spawnWave), initialDelay, period, timeUnit);
     }
 
     private void spawnWave() {
@@ -94,7 +95,7 @@ public final class EnemySpawnManager {
 
             scaleEnemyForWave(enemy, waveNumber);
 
-            enemy.setId(enemyId++);
+            enemy.setId(enemyId.getAndIncrement());
             Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
             int x = spawnPos.x;
             int y = spawnPos.y;
@@ -145,8 +146,8 @@ public final class EnemySpawnManager {
         int x = spawnPos.x;
         int y = spawnPos.y;
 
-        Enemy mainEnemy = spawner.spawnLarge(enemyId,x, y);
-        mainEnemy.setId(enemyId++);
+        Enemy mainEnemy = spawner.spawnLarge(enemyId.get(),x, y);
+        mainEnemy.setId(enemyId.incrementAndGet());
         ServerActions.spawnEnemy(server, mainEnemy, x, y);
 
         int[][] offsets = {
@@ -171,7 +172,7 @@ public final class EnemySpawnManager {
             Enemy shallowCopy = (Enemy) mainEnemy.createShallowCopy();
             shallowCopy.setGlobalX(copyX);
             shallowCopy.setGlobalY(copyY);
-            shallowCopy.setId(enemyId++);
+            shallowCopy.setId(enemyId.incrementAndGet());
 
             ServerActions.spawnEnemy(server, shallowCopy, copyX, copyY);
         }
@@ -204,5 +205,13 @@ public final class EnemySpawnManager {
             case ZOMBIE -> zombiePrototype;
             case SKELETON -> skeletonPrototype;
         };
+    }
+
+    private void runWithErrorLogger(Runnable r) {
+        try {
+            r.run();
+        } catch (Throwable t) {
+            log.error("Spawn loop error", t); // keep the task alive
+        }
     }
 }

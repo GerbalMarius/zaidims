@@ -147,7 +147,7 @@ public final class EnemySpawnManager {
         int y = spawnPos.y;
 
         Enemy mainEnemy = spawner.spawnLarge(enemyId.get(),x, y);
-        mainEnemy.setId(enemyId.incrementAndGet());
+        mainEnemy.setId(enemyId.getAndIncrement());
         ServerActions.spawnEnemy(server, mainEnemy, x, y);
 
         int[][] offsets = {

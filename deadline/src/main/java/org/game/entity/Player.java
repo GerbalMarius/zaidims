@@ -29,7 +29,9 @@ public non-sealed class Player extends Entity {
 
     private long lastRegenTimestamp;
 
+    @Setter
     private AttackBehavior attackBehavior;
+
     private long lastAttackTimestamp;
 
     public Player(ClassType type, String name, int x, int y) {
@@ -50,19 +52,6 @@ public non-sealed class Player extends Entity {
         setClassRegenDefaults();
 
         this.lastAttackTimestamp = 0L;
-    }
-
-    public Projectile tryAttack(long nowMillis){
-        if (attackBehavior == null) return null;
-        long cooldown = attackBehavior.getCooldownMs();
-        if (nowMillis - lastAttackTimestamp < cooldown) return null;
-        Projectile p = attackBehavior.createProjectile(this);
-        lastAttackTimestamp = nowMillis;
-        return p;
-    }
-
-    public void setAttackBehavior(AttackBehavior behavior){
-        this.attackBehavior = behavior;
     }
 
     public static PlayerBuilder builder() {

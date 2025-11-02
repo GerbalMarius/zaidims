@@ -9,6 +9,7 @@ import org.game.client.input.MouseHandler;
 import org.game.client.shoot.ClientShootImpl;
 import org.game.client.shoot.ShootImplementation;
 import org.game.entity.*;
+import org.game.entity.command.MoveCommand;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
 import org.game.entity.decorator.AttackDecorator;
@@ -40,6 +41,8 @@ public final class GamePanel extends JPanel implements Runnable {
     private final MouseHandler mouseHandler;
     private final ControllerAdapter controllerAdapter;
 
+    ArrayDeque<MoveCommand> history = new ArrayDeque<>();
+
     @Getter
     private final UUID clientId;
 
@@ -64,6 +67,9 @@ public final class GamePanel extends JPanel implements Runnable {
     private long lastSendTime = 0;
     private Thread gameThread;
 
+    private int serverKnownX = 0;
+    private int serverKnownY = 0;
+
     @Getter
     private final TileManager tileManager;
     public CollisionChecker cChecker;
@@ -84,7 +90,13 @@ public final class GamePanel extends JPanel implements Runnable {
         addKeyListener(this.keyboardHandler);
         addMouseListener(this.mouseHandler);
 
-        initialSnap(state.getPlayer(clientId));
+        Player p = state.getPlayer(clientId);
+        if (p != null) {
+            serverKnownX = p.getGlobalX();
+            serverKnownY = p.getGlobalY();
+        }
+
+        initialSnap(p);
     }
 
 
@@ -212,11 +224,38 @@ public final class GamePanel extends JPanel implements Runnable {
     }
 
     private void optimisticMove(Player player) {
-        if (player == null ||  (!keyboardHandler.anyKeyPressed()
-                               && !controllerAdapter.anyKeyPressed()
-                               && !mouseHandler.anyKeyPressed())
-                   || !player.isAlive() || !this.isFocusOwner()) {
+        if (player == null || !player.isAlive() || !this.isFocusOwner()) {
             return;
+        }
+
+        if ((mouseHandler.isSecondaryClicked() || controllerAdapter.isSecondaryClicked()) && !history.isEmpty()) {
+            int undoCount = 3;
+
+            for (int i = 0; i < undoCount && !history.isEmpty(); i++) {
+                MoveCommand last = history.pop();
+                last.undo();
+            }
+
+            int currentX = player.getGlobalX();
+            int currentY = player.getGlobalY();
+
+
+            int deltaFromServerX = currentX - serverKnownX;
+            int deltaFromServerY = currentY - serverKnownY;
+
+            if (moveCallback != null && (deltaFromServerX != 0 || deltaFromServerY != 0)) {
+                moveCallback.accept(deltaFromServerX, deltaFromServerY);
+                serverKnownX = currentX;
+                serverKnownY = currentY;
+
+                lastSendTime = System.currentTimeMillis();
+            }
+
+            pendingDx = 0;
+            pendingDy = 0;
+
+            return;
+
         }
 
         int dx = 0, dy = 0;
@@ -245,7 +284,9 @@ public final class GamePanel extends JPanel implements Runnable {
             player.setDirection(dx > 0 ? FramePosition.RIGHT : FramePosition.LEFT);
             cChecker.checkTile(player);
             if (!player.isCollisionOn()) {
-                player.moveBy(dx, 0);
+                MoveCommand moveCmd = new MoveCommand(player, player.getGlobalX() + dx, player.getGlobalY());
+                moveCmd.execute();
+                history.push(moveCmd);
                 pendingDx += dx;
             }
         }
@@ -255,7 +296,9 @@ public final class GamePanel extends JPanel implements Runnable {
             player.setDirection(dy > 0 ? FramePosition.DOWN : FramePosition.UP);
             cChecker.checkTile(player);
             if (!player.isCollisionOn()) {
-                player.moveBy(0, dy);
+                MoveCommand moveCmd = new MoveCommand(player, player.getGlobalX(), player.getGlobalY() + dy);
+                moveCmd.execute();
+                history.push(moveCmd);
                 pendingDy += dy;
             }
         }
@@ -365,6 +408,9 @@ public final class GamePanel extends JPanel implements Runnable {
                         if (player != null) {
                             player.updateFromServer(x, y);
                         }
+                    } else {
+                        serverKnownX = x;
+                        serverKnownY = y;
                     }
                 }
                 case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) ->
@@ -396,6 +442,8 @@ public final class GamePanel extends JPanel implements Runnable {
                         player.setHitPoints(player.getMaxHitPoints());
 
                         if (playerId.equals(clientId)) {
+                            serverKnownX = respawnX;
+                            serverKnownY = respawnY;
                             JOptionPane.showMessageDialog(this, "lmao you dead!", "Respawn", JOptionPane.INFORMATION_MESSAGE);
                         }
                     }

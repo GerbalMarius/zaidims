@@ -1,6 +1,7 @@
 package org.game.server;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
@@ -46,7 +47,11 @@ public final class Server {
 
     private static boolean firstPlayer = true;
 
+    @Getter
     private final GameWorldFacade gameWorld = new GameWorldFacade(this);
+
+    @Setter
+    private boolean adminMode = false;
 
     @Getter
     private final CollisionChecker entityChecker = new CollisionChecker(new TileManager());
@@ -105,11 +110,10 @@ public final class Server {
         clients.put(sc, cs);
         log.info("Accepted  from : {}", sc.getRemoteAddress());
 
-        if (firstPlayer) {
+        if (firstPlayer && !adminMode) {
+
             gameWorld.startSpawningIndividualEnemies(0, 5, TimeUnit.SECONDS);
-
             gameWorld.startSpawningWaves(10, 30, TimeUnit.SECONDS);
-
             gameWorld.startUpdatingEnemyPos(0, 50, TimeUnit.MILLISECONDS);
 
             gameWorld.startDispensingPowerUps(10, 15, TimeUnit.SECONDS);

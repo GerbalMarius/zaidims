@@ -112,7 +112,7 @@ public final class Server {
 
         if (firstPlayer && !adminMode) {
 
-            gameWorld.startSpawningIndividualEnemies(0, 5, TimeUnit.SECONDS);
+            gameWorld.startSpawningIndividualEnemies(0, 10, TimeUnit.SECONDS);
             gameWorld.startSpawningWaves(10, 30, TimeUnit.SECONDS);
             gameWorld.startUpdatingEnemyPos(0, 50, TimeUnit.MILLISECONDS);
 

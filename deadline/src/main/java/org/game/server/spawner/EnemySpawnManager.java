@@ -5,12 +5,14 @@ import org.game.entity.Enemy;
 import org.game.entity.EnemySize;
 import org.game.entity.EnemyType;
 import org.game.entity.enemy.creator.EnemyCreator;
+import org.game.entity.enemy.wave.*;
 import org.game.server.Server;
 import org.game.server.Server.ServerActions;
-import org.game.server.WorldSettings;
 import org.game.tiles.TileManager;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,7 +29,7 @@ public final class EnemySpawnManager {
 
     private final static AtomicLong enemyId = new AtomicLong(0);
 
-    private static   int waveNumber = 1;
+    private static int waveNumber = 1;
 
     private final EnemySpawner goblinSpawner = new GoblinSpawner();
     private final EnemySpawner zombieSpawner = new ZombieSpawner();
@@ -36,6 +38,8 @@ public final class EnemySpawnManager {
     private final Enemy goblinPrototype = EnemyCreator.createDefaultGoblin();
     private final Enemy zombiePrototype = EnemyCreator.createDefaultZombie();
     private final Enemy skeletonPrototype = EnemyCreator.createDefaultSkeleton();
+
+    private final List<WaveDefinition> waves = initWaves();
 
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(ENEMY_SPAWN_POOL_SIZE);
@@ -81,122 +85,17 @@ public final class EnemySpawnManager {
     }
 
     private void spawnWave() {
-        final int baseWaveSize = 5;
-        final int maxWaveSize = 30;
-
         TileManager tileManager = server.getEntityChecker().getTileManager();
 
-        int waveSize = scaleWaveSize(baseWaveSize, waveNumber, maxWaveSize);
-        log.debug("Spawning wave #{} with {} enemies", waveNumber, waveSize);
+        int index = Math.min(waveNumber - 1, waves.size() - 1);
+        WaveDefinition definition = waves.get(index);
 
-        for (int i = 0; i < waveSize; i++) {
-            Enemy prototype = chooseRandomPrototype();
-            Enemy enemy = (Enemy) prototype.createDeepCopy();
+        log.debug("Spawning wave #{} with {} enemies",
+                waveNumber, definition.size());
 
-            scaleEnemyForWave(enemy, waveNumber);
+        definition.spawn(server, tileManager, enemyId, random);
 
-            enemy.setId(enemyId.getAndIncrement());
-            Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
-            int x = spawnPos.x;
-            int y = spawnPos.y;
-
-            enemy.setGlobalX(x);
-            enemy.setGlobalY(y);
-
-            ServerActions.spawnEnemy(server, enemy, x, y);
-        }
         waveNumber++;
-    }
-
-    private void scaleEnemyForWave(Enemy enemy, int waveNumber) {
-        double hpMul = Math.pow(1.18, waveNumber - 1);
-        double damageMul = Math.pow(1.15, waveNumber - 1);
-
-        int hp = (int) Math.round(enemy.getMaxHitPoints() * hpMul);
-        int attack = (int) Math.round(enemy.getAttack() * damageMul);
-
-        enemy.setMaxHitPoints(hp);
-        enemy.setHitPoints(hp);
-
-        enemy.setAttack(attack);
-    }
-
-    private int scaleWaveSize(int base, int waveNumber, int cap) {
-        double linear = base * (1.0 + 0.15 * (waveNumber - 1));
-        int stepBonus = ((waveNumber - 1) / 5) * 2;
-        int size = (int)Math.round(linear) + stepBonus;
-        return Math.min(size, cap);
-    }
-
-    public void startShallowWaveSpawning(long initialDelay, long period, TimeUnit timeUnit) {
-        scheduler.scheduleAtFixedRate(this::spawnShallowWave, initialDelay, period, timeUnit);
-        comparePrototypeCopies();
-    }
-
-    public void spawnShallowWave() {
-        TileManager tileManager = server.getEntityChecker().getTileManager();
-
-        EnemySpawner spawner = switch (EnemyType.values()[random.nextInt(EnemyType.values().length)]) {
-            case GOBLIN -> goblinSpawner;
-            case ZOMBIE -> zombieSpawner;
-            case SKELETON -> skeletonSpawner;
-        };
-
-        Point spawnPos = tileManager.findRandomSpawnPosition(random, 50);
-        int x = spawnPos.x;
-        int y = spawnPos.y;
-
-        Enemy mainEnemy = spawner.spawnLarge(enemyId.get(),x, y);
-        mainEnemy.setId(enemyId.getAndIncrement());
-        ServerActions.spawnEnemy(server, mainEnemy, x, y);
-
-        int[][] offsets = {
-                {100, 0},
-                {-100, 0},
-                {0, 100}
-        };
-
-        for (int[] offset : offsets) {
-            int copyX = x + offset[0];
-            int copyY = y + offset[1];
-
-            int tileSize = WorldSettings.TILE_SIZE;
-            int tileCol = copyX / tileSize;
-            int tileRow = copyY / tileSize;
-
-            if (!tileManager.IsWalkable(tileRow, tileCol)) {
-                System.out.println("Kopijos vieta buvo neleistina");
-                continue;
-            }
-
-            Enemy shallowCopy = (Enemy) mainEnemy.createShallowCopy();
-            shallowCopy.setGlobalX(copyX);
-            shallowCopy.setGlobalY(copyY);
-            shallowCopy.setId(enemyId.incrementAndGet());
-
-            ServerActions.spawnEnemy(server, shallowCopy, copyX, copyY);
-        }
-
-        System.out.println("Spawned shallow wave: main + 3 copies (" + mainEnemy.getType() + ")");
-    }
-
-    public void comparePrototypeCopies() {
-        System.out.println("--- Prototype Copy Comparison --");
-
-        Enemy prototype = skeletonPrototype;
-        System.out.println("Original Enemy: " + prototype + " @ " + System.identityHashCode(prototype));
-
-        Enemy shallowCopy = (Enemy) prototype.createShallowCopy();
-        Enemy deepCopy = (Enemy) prototype.createDeepCopy();
-
-        System.out.println("Shallow Copy:   " + shallowCopy + " @ " + System.identityHashCode(shallowCopy));
-        System.out.println("Deep Copy:      " + deepCopy + " @ " + System.identityHashCode(deepCopy));
-
-        System.out.println("--- Laukai (adresai) ---");
-        System.out.println("Hitbox:");
-        System.out.println("  original: " + System.identityHashCode(prototype.getHitbox()));
-        System.out.println("  shallow:  " + System.identityHashCode(shallowCopy.getHitbox()));
-        System.out.println("  deep:     " + System.identityHashCode(deepCopy.getHitbox()));
     }
 
     private Enemy chooseRandomPrototype() {
@@ -214,4 +113,131 @@ public final class EnemySpawnManager {
             log.error("Spawn loop error", ex); // keep the task alive
         }
     }
+
+    private List<WaveDefinition> initWaves() {
+        int max = 20;
+        List<WaveDefinition> waves = new ArrayList<>(max);
+
+        final int baseWaveSize = 2;
+        final int maxWaveSize = 30;
+
+        for (int wave = 1; wave <= max; wave++) {
+
+            int waveSize = scaleWaveSize(baseWaveSize, wave, maxWaveSize);
+
+            double hpMul = Math.pow(1.18, wave - 1);
+            double damageMul = Math.pow(1.15, wave - 1);
+
+            int hpGrowthPercent = (int) Math.round(hpMul * 100.0);
+            int damageGrowthPercent = (int) Math.round(damageMul * 100.0);
+
+            WaveEntry root = buildWaveGroupForWave(
+                    wave,
+                    waveSize,
+                    hpGrowthPercent,
+                    damageGrowthPercent
+            );
+
+            waves.add(new WaveDefinition(wave, root));
+        }
+
+        return waves;
+    }
+
+    private WaveEntry buildWaveGroupForWave(int wave, int waveSize, int hpGrowthPercent, int damageGrowthPercent) {
+
+        EnemyGroup root = new EnemyGroup();
+
+        // 1–3: very simple waves, just random singles
+        if (wave <= 3) {
+            for (int i = 0; i < waveSize; i++) {
+                Enemy prototype = chooseRandomPrototype();
+                root.addChildEntry(
+                        new SingleEnemySpawn(prototype, hpGrowthPercent, damageGrowthPercent)
+                );
+            }
+            return root;
+        }
+
+        if (wave % 5 == 0) {
+            Enemy boss = skeletonPrototype;
+            root.addChildEntry(
+                    new SquadGroup(
+                            boss,     // leader
+                            goblinPrototype,       // followers
+                            5, 60,                 // count, spacing
+                            hpGrowthPercent,
+                            damageGrowthPercent
+                    )
+            );
+
+            return root;
+        }
+
+        // 4–7: some lines, rest singles
+        if (wave <= 7) {
+            int lineCount = 2;
+            int perLine = Math.max(3, waveSize / (lineCount + 1));
+
+            for (int i = 0; i < lineCount; i++) {
+                Enemy proto = (i % 2 == 0) ? zombiePrototype : goblinPrototype;
+                root.addChildEntry(
+                        new LineFormation(proto, perLine, 60,
+                                hpGrowthPercent, damageGrowthPercent)
+                );
+            }
+
+            int alreadyUsed = lineCount * perLine;
+            int remaining = Math.max(0, waveSize - alreadyUsed);
+
+            for (int i = 0; i < remaining; i++) {
+                Enemy prototype = chooseRandomPrototype();
+                root.addChildEntry(
+                        new SingleEnemySpawn(prototype, hpGrowthPercent, damageGrowthPercent)
+                );
+            }
+
+        }
+        else {
+            // Front line of zombies
+            root.addChildEntry(
+                    new LineFormation(zombiePrototype,
+                            Math.max(4, waveSize / 3),
+                            50,
+                            hpGrowthPercent,
+                            damageGrowthPercent)
+            );
+
+            // Backline circle of skeletons
+            root.addChildEntry(
+                    new CircleFormation(skeletonPrototype,
+                            Math.max(3, waveSize / 4),
+                            90,
+                            hpGrowthPercent,
+                            damageGrowthPercent)
+            );
+
+            // Fill the rest with random singles
+            int used = Math.max(4, waveSize / 3) + Math.max(3, waveSize / 4);
+            int remaining = Math.max(0, waveSize - used);
+
+            for (int i = 0; i < remaining; i++) {
+                Enemy prototype = chooseRandomPrototype();
+                root.addChildEntry(
+                        new SingleEnemySpawn(prototype, hpGrowthPercent, damageGrowthPercent)
+                );
+            }
+
+        }
+        return root;
+    }
+
+    private int scaleWaveSize(int base, int waveNumber, int cap) {
+        double linear = base * (1.0 + 0.10 * (waveNumber - 1));
+        int stepBonus = ((waveNumber - 1) / 5) * 2;
+        int size = (int) Math.round(linear) + stepBonus;
+        return Math.min(size, cap);
+    }
+
 }
+

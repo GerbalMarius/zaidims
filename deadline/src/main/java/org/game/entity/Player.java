@@ -98,7 +98,7 @@ public non-sealed class Player extends Entity {
     }
 
     public boolean regenIfNeeded(long nowMillis) {
-        if (!isAlive()) return false;
+        if (isDead()) return false;
         if (getHitPoints() >= getMaxHitPoints()) {
             lastRegenTimestamp = nowMillis;
             return false;
@@ -115,10 +115,6 @@ public non-sealed class Player extends Entity {
             }
         }
         return false;
-    }
-
-    public boolean isAlive() {
-        return getHitPoints() > 0;
     }
 
     public void takeDamage(int dmg) {

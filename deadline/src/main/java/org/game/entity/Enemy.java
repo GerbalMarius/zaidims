@@ -34,6 +34,12 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     private long attackCooldown = 1000;
     private double attackRange = 50.0;
 
+    private int groupId;
+
+    private boolean groupLeader;
+
+    private Enemy groupLeaderRef;
+
 
     protected Enemy(int x, int y) {
         super(x, y);
@@ -80,7 +86,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     }
 
     private void attack(Player target, Server server) {
-        if (!target.isAlive()) {
+        if (target.isDead()) {
             return;
         }
         int damage = this.attack;

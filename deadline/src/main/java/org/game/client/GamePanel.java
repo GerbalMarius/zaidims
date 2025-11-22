@@ -224,7 +224,7 @@ public final class GamePanel extends JPanel implements Runnable {
     }
 
     private void optimisticMove(Player player) {
-        if (player == null || !player.isAlive() || !this.isFocusOwner()) {
+        if (player == null || player.isDead() || !this.isFocusOwner()) {
             return;
         }
 

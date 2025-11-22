@@ -2,14 +2,16 @@ package org.game.entity.enemy.template;
 
 import org.game.entity.Enemy;
 import org.game.entity.Player;
-import org.game.entity.strategy.RunAwayStrategy;
-import org.game.entity.strategy.WanderStrategy;
-import org.game.entity.strategy.ZigZagChaseStrategy;
+import org.game.entity.strategy.*;
 
 public final class GoblinAI extends EnemyAI {
 
     @Override
     protected void chooseStrategy(Enemy enemy, Player target) {
+        if (enemy.getGroupLeaderRef() != null) {
+            return;
+        }
+
         double lowHpThreshold = enemy.getMaxHitPoints() * 0.3;
 
         if (enemy.getHitPoints() <= lowHpThreshold) {
@@ -26,7 +28,8 @@ public final class GoblinAI extends EnemyAI {
 
     @Override
     protected void handleOutOfRange(Enemy enemy) {
-        if (!(enemy.getStrategy() instanceof WanderStrategy)) {
+        EnemyStrategy strategy = enemy.getStrategy();
+        if (!(strategy instanceof WanderStrategy) && !(strategy instanceof FollowLeaderStrategy)) {
             enemy.setStrategy(new WanderStrategy());
         }
     }

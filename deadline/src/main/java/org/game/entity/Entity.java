@@ -205,4 +205,8 @@ public sealed abstract class Entity permits Enemy, Player, Projectile {
         g2.setStroke(new BasicStroke(1));
         g2.drawRect(x, y + offsetY, width, barHeight);
     }
+
+    public boolean isDead() {
+        return getHitPoints() <= 0;
+    }
 }

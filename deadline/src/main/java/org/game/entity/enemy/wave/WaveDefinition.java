@@ -11,10 +11,10 @@ public final class WaveDefinition {
 
     @Getter
     private final int waveNumber;
-    private final WaveGroup rootComponent;
+    private final WaveEntry rootComponent;
 
     public WaveDefinition(int waveNumber,
-                          WaveGroup rootComponent) {
+                          WaveEntry rootComponent) {
         this.waveNumber = waveNumber;
         this.rootComponent = rootComponent;
     }

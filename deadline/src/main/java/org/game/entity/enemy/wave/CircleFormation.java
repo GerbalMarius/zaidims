@@ -8,7 +8,7 @@ import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class CircleFormation implements WaveGroup {
+public final class CircleFormation implements WaveEntry {
 
     private final Enemy prototype;
     private final int count;

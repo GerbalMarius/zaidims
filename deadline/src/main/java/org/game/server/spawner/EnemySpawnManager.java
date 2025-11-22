@@ -131,7 +131,7 @@ public final class EnemySpawnManager {
             int hpGrowthPercent = (int) Math.round(hpMul * 100.0);
             int damageGrowthPercent = (int) Math.round(damageMul * 100.0);
 
-            WaveGroup root = buildWaveGroupForWave(
+            WaveEntry root = buildWaveGroupForWave(
                     wave,
                     waveSize,
                     hpGrowthPercent,
@@ -144,7 +144,7 @@ public final class EnemySpawnManager {
         return waves;
     }
 
-    private WaveGroup buildWaveGroupForWave(int wave, int waveSize, int hpGrowthPercent, int damageGrowthPercent) {
+    private WaveEntry buildWaveGroupForWave(int wave, int waveSize, int hpGrowthPercent, int damageGrowthPercent) {
 
         EnemyGroup root = new EnemyGroup();
 
@@ -152,7 +152,7 @@ public final class EnemySpawnManager {
         if (wave <= 3) {
             for (int i = 0; i < waveSize; i++) {
                 Enemy prototype = chooseRandomPrototype();
-                root.addChildGroup(
+                root.addChildEntry(
                         new SingleEnemySpawn(prototype, hpGrowthPercent, damageGrowthPercent)
                 );
             }
@@ -161,7 +161,7 @@ public final class EnemySpawnManager {
 
         if (wave % 5 == 0) {
             Enemy boss = skeletonPrototype;
-            root.addChildGroup(
+            root.addChildEntry(
                     new SquadGroup(
                             boss,     // leader
                             goblinPrototype,       // followers
@@ -181,7 +181,7 @@ public final class EnemySpawnManager {
 
             for (int i = 0; i < lineCount; i++) {
                 Enemy proto = (i % 2 == 0) ? zombiePrototype : goblinPrototype;
-                root.addChildGroup(
+                root.addChildEntry(
                         new LineFormation(proto, perLine, 60,
                                 hpGrowthPercent, damageGrowthPercent)
                 );
@@ -192,7 +192,7 @@ public final class EnemySpawnManager {
 
             for (int i = 0; i < remaining; i++) {
                 Enemy prototype = chooseRandomPrototype();
-                root.addChildGroup(
+                root.addChildEntry(
                         new SingleEnemySpawn(prototype, hpGrowthPercent, damageGrowthPercent)
                 );
             }
@@ -200,7 +200,7 @@ public final class EnemySpawnManager {
         }
         else {
             // Front line of zombies
-            root.addChildGroup(
+            root.addChildEntry(
                     new LineFormation(zombiePrototype,
                             Math.max(4, waveSize / 3),
                             50,
@@ -209,7 +209,7 @@ public final class EnemySpawnManager {
             );
 
             // Backline circle of skeletons
-            root.addChildGroup(
+            root.addChildEntry(
                     new CircleFormation(skeletonPrototype,
                             Math.max(3, waveSize / 4),
                             90,
@@ -223,7 +223,7 @@ public final class EnemySpawnManager {
 
             for (int i = 0; i < remaining; i++) {
                 Enemy prototype = chooseRandomPrototype();
-                root.addChildGroup(
+                root.addChildEntry(
                         new SingleEnemySpawn(prototype, hpGrowthPercent, damageGrowthPercent)
                 );
             }

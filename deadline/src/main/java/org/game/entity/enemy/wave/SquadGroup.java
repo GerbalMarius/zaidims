@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class SquadGroup implements WaveGroup {
+public final class SquadGroup implements WaveEntry {
 
     private final Enemy leaderPrototype;
     private final Enemy followerPrototype;

@@ -9,7 +9,7 @@ import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class SingleEnemySpawn implements WaveGroup {
+public final class SingleEnemySpawn implements WaveEntry {
     private final Enemy prototype;
     private final int hpGrowth;
     private final int damageGrowth;

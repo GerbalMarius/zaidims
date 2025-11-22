@@ -5,6 +5,7 @@ import org.game.entity.Enemy;
 import org.game.entity.EnemyType;
 import org.game.entity.enemy.builder.AbstractEnemyBuilder;
 import org.game.entity.enemy.builder.EnemyBuilder;
+import org.game.entity.enemy.template.ZombieAI;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -17,6 +18,8 @@ public abstract class Zombie extends Enemy {
 
         loadSprite("zom", "enemy");
         this.type = EnemyType.ZOMBIE;
+
+        this.ai = new ZombieAI();
     }
 
     public static EnemyBuilder<Zombie> builder() {

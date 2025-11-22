@@ -10,14 +10,11 @@ import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class SquadGroup implements WaveEntry {
+public final class SquadGroup extends SingleEnemySpawn implements WaveEntry {
 
-    private final Enemy leaderPrototype;
     private final Enemy followerPrototype;
     private final int count;
     private final int spacing;
-    private final int hpGrowth;
-    private final int damageGrowth;
     private static int nextGroupId = 1;
 
     public SquadGroup(Enemy leaderPrototype,
@@ -26,12 +23,10 @@ public final class SquadGroup implements WaveEntry {
                           int spacing,
                           int hpGrowth,
                           int damageGrowth) {
-        this.leaderPrototype = leaderPrototype;
+        super(leaderPrototype, hpGrowth, damageGrowth);
         this.followerPrototype = followerPrototype;
         this.count = count;
         this.spacing = spacing;
-        this.hpGrowth = hpGrowth;
-        this.damageGrowth = damageGrowth;
     }
 
     @Override
@@ -47,7 +42,7 @@ public final class SquadGroup implements WaveEntry {
         int centerY = base.y;
 
         // 1) spawn leader in center
-        Enemy leader = (Enemy) leaderPrototype.createDeepCopy();
+        Enemy leader = (Enemy) prototype.createDeepCopy();
         applyGrowth(leader);
 
         leader.setId(enemyId.getAndIncrement());

@@ -9,10 +9,10 @@ import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class SingleEnemySpawn implements WaveEntry {
-    private final Enemy prototype;
-    private final int hpGrowth;
-    private final int damageGrowth;
+public class SingleEnemySpawn implements WaveEntry {
+    protected final Enemy prototype;
+    protected final int hpGrowth;
+    protected final int damageGrowth;
 
     public SingleEnemySpawn(Enemy prototype, int hpGrowth, int damageGrowth) {
         this.prototype = prototype;

@@ -8,24 +8,19 @@ import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class LineFormation implements WaveEntry {
+public final class LineFormation extends SingleEnemySpawn implements WaveEntry {
 
-    private final Enemy prototype;
     private final int count;
     private final int spacing;       // distance between enemies
-    private final int hpGrowth;
-    private final int damageGrowth;
 
     public LineFormation(Enemy prototype,
                          int count,
                          int spacing,
                          int hpGrowth,
                          int damageGrowth) {
-        this.prototype = prototype;
+        super(prototype, hpGrowth, damageGrowth);
         this.count = count;
         this.spacing = spacing;
-        this.hpGrowth = hpGrowth;
-        this.damageGrowth = damageGrowth;
     }
 
     @Override

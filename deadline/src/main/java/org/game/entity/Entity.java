@@ -2,6 +2,7 @@ package org.game.entity;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.game.entity.flyweight.SpriteCache;
 import org.game.utils.ByteFiles;
 
 import java.awt.*;
@@ -101,19 +102,20 @@ public sealed abstract class Entity permits Enemy, Player, Projectile {
     protected void loadSprite(String prefix, String source) {
 
         ImageSprite[] movementFrames = {
-
                 upSprite(loadImage(source, prefix, "up", 1), loadImage(source, prefix, "up", 2)),
-
                 leftSprite(loadImage(source, prefix, "left", 1), loadImage(source, prefix, "left", 2)),
-
                 downSprite(loadImage(source, prefix, "down", 1), loadImage(source, prefix, "down", 2)),
-
                 rightSprite(loadImage(source, prefix, "right", 1), loadImage(source, prefix, "right", 2))
         };
 
         copyFrames4d(movementFrames);
-
     }
+
+//    protected void loadSprite(String prefix, String source) {
+//        // using shared sprite cache
+//        ImageSprite[] cachedFrames = SpriteCache.getOrLoad(source, prefix);
+//        copyFrames4d(cachedFrames);
+//    }
 
     private BufferedImage loadImage(String source, String prefix, String direction, int frame) {
         return ByteFiles.loadImage(MessageFormat.format("assets/{0}/{1}_{2}_{3}.png", source, prefix, direction, frame));

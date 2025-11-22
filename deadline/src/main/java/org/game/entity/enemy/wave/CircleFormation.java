@@ -8,20 +8,15 @@ import java.awt.*;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class CircleFormation implements WaveEntry {
+public final class CircleFormation extends SingleEnemySpawn implements WaveEntry {
 
-    private final Enemy prototype;
     private final int count;
     private final int radius;
-    private final int hpGrowth;
-    private final int damageGrowth;
 
     public CircleFormation(Enemy prototype, int count, int radius, int hpGrowth, int damageGrowth) {
-        this.prototype = prototype;
-        this.count = count;
-        this.radius = radius;
-        this.hpGrowth = hpGrowth;
-        this.damageGrowth = damageGrowth;
+       super(prototype, hpGrowth, damageGrowth);
+       this.count = count;
+       this.radius = radius;
     }
 
     @Override

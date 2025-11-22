@@ -3,6 +3,7 @@ package org.game.entity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.game.entity.enemy.template.EnemyAI;
 import org.game.entity.strategy.*;
 import org.game.message.Message;
 import org.game.message.PlayerHealthUpdateMessage;
@@ -27,6 +28,8 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
 
     protected EnemyStrategy strategy;
 
+    protected EnemyAI ai;
+
     private long lastAttackTime = 0;
     private long attackCooldown = 1000;
     private double attackRange = 50.0;
@@ -35,44 +38,17 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     protected Enemy(int x, int y) {
         super(x, y);
 
-        this.strategy = (type == EnemyType.GOBLIN) ? enablePatrolStrategy() : new WanderStrategy();
+        this.strategy = (type == EnemyType.SKELETON) ? enablePatrolStrategy() : new WanderStrategy();
     }
     protected void createHitbox() {
         this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
     }
 
     public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker, Server server) {
-        Player target = getClosestPlayer(players);
-        if (target == null) return;
-
-        double distance = calculateDistanceTo(target);
-
-        double visionRange = 500.0;
-        double lowHpThreshold = maxHitPoints * 0.3;
-
-
-        if (visionRange >= distance) {
-            switchStrategyBasedOnHp(lowHpThreshold, target);
-            tryAttack(target, server);
-
-        } else if ((!(strategy instanceof WanderStrategy) && visionRange < distance && type != EnemyType.GOBLIN) || !target.isAlive()) {
-            strategy = new WanderStrategy();
-        } else if (!(strategy instanceof PatrolStrategy) && visionRange < distance && type == EnemyType.GOBLIN) {
-            strategy = enablePatrolStrategy();
-        }
-
-        strategy.execute(this, players, allEnemies, checker);
+        ai.updateAI(this, players, allEnemies, checker, server);
     }
 
-    private void switchStrategyBasedOnHp(double lowHpThreshold, Player target) {
-        if(hitPoints <= lowHpThreshold && !(strategy instanceof RunAwayStrategy)) {
-            strategy = new RunAwayStrategy();
-        } else if ((hitPoints > lowHpThreshold && !(strategy instanceof ChaseStrategy)) && target.isAlive()) {
-            strategy = new ChaseStrategy();
-        }
-    }
-
-    private EnemyStrategy enablePatrolStrategy() {
+    public EnemyStrategy enablePatrolStrategy() {
         int x = getGlobalX();
         int y = getGlobalY();
 
@@ -85,7 +61,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         return new PatrolStrategy(patrolRoute);
     }
 
-    private void tryAttack(Player target, Server server) {
+    public void tryAttack(Player target, Server server) {
         double distance = calculateDistanceTo(target);
 
         if (distance <= attackRange) {
@@ -97,7 +73,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         }
     }
 
-    private double calculateDistanceTo(Player target) {
+    public double calculateDistanceTo(Player target) {
         double dx = target.getGlobalX() - this.getGlobalX();
         double dy = target.getGlobalY() - this.getGlobalY();
         return Math.hypot(dx, dy);

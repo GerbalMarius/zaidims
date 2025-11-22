@@ -5,6 +5,7 @@ import org.game.entity.Enemy;
 import org.game.entity.EnemyType;
 import org.game.entity.enemy.builder.AbstractEnemyBuilder;
 import org.game.entity.enemy.builder.EnemyBuilder;
+import org.game.entity.enemy.template.GoblinAI;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -18,6 +19,7 @@ public abstract class Goblin extends Enemy {
         loadSprite("gob", "enemy");
         this.type = EnemyType.GOBLIN;
 
+        this.ai = new GoblinAI();
     }
 
     public static EnemyBuilder<Goblin> builder() {

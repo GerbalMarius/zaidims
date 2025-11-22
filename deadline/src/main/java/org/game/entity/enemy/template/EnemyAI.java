@@ -48,7 +48,7 @@ public abstract class EnemyAI {
         }
     }
 
-    // override konkreciuose ai
+    // override in specific ai
     protected abstract void chooseStrategy(Enemy enemy, Player target);
 
     protected abstract void handleOutOfRange(Enemy enemy);

@@ -5,6 +5,7 @@ import org.game.entity.Enemy;
 import org.game.entity.EnemyType;
 import org.game.entity.enemy.builder.AbstractEnemyBuilder;
 import org.game.entity.enemy.builder.EnemyBuilder;
+import org.game.entity.enemy.template.SkeletonAI;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -17,6 +18,8 @@ public abstract class Skeleton extends Enemy {
 
         loadSprite("ske", "enemy");
         this.type = EnemyType.SKELETON;
+
+        this.ai = new SkeletonAI();
     }
 
     public static EnemyBuilder<Skeleton> builder() {

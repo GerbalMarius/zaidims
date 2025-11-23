@@ -12,6 +12,10 @@ import org.game.entity.Projectile;
 
 import org.game.entity.enemy.creator.EnemyMessageCreator;
 
+import org.game.entity.iterator.EnemyIterator;
+import org.game.entity.iterator.EntityIterator;
+import org.game.entity.iterator.PlayerIterator;
+import org.game.entity.iterator.ProjectileIterator;
 import org.game.entity.powerup.AttackPowerUp;
 import org.game.entity.powerup.CorePowerUp;
 import org.game.entity.powerup.MaxHpPowerUp;
@@ -141,4 +145,15 @@ public final class GameState {
         powerUps.remove(id);
     }
 
+    public EntityIterator<Player> getPlayerIterator() {
+        return new PlayerIterator(players);
+    }
+
+    public EntityIterator<Enemy> getEnemyIterator() {
+        return new EnemyIterator(enemies);
+    }
+
+    public EntityIterator<Projectile> getProjectileIterator() {
+        return new ProjectileIterator(projectiles);
+    }
 }

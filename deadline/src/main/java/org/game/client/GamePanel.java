@@ -10,6 +10,7 @@ import org.game.client.shoot.ClientShootImpl;
 import org.game.client.shoot.ShootImplementation;
 import org.game.entity.*;
 import org.game.entity.command.MoveCommand;
+import org.game.entity.iterator.EntityIterator;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
 import org.game.entity.decorator.AttackDecorator;
@@ -339,6 +340,7 @@ public final class GamePanel extends JPanel implements Runnable {
 
         Graphics2D uiGraphics = (Graphics2D) g.create();
         GlobalUI.getInstance().drawCounter(uiGraphics, getWidth());
+        drawPlayerList(uiGraphics);
         uiGraphics.dispose();
     }
 
@@ -476,4 +478,37 @@ public final class GamePanel extends JPanel implements Runnable {
         }
         this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getHeight(), getWidth(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
     }
+    private void drawPlayerList(Graphics2D g) {
+        int startX = 10;
+        int startY = 20;
+        int lineHeight = 20;
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font("Arial", Font.BOLD, 14));
+        g.drawString("Players:", startX, startY);
+
+        EntityIterator<Player> iterator = state.getPlayerIterator();
+        int index = 1;
+
+        while (iterator.hasNext()) {
+            Player player = iterator.next();
+            int yPos = startY + (index * lineHeight);
+
+            String playerInfo = String.format("%s - HP: %d/%d",
+                    player.getName(),
+                    player.getHitPoints(),
+                    player.getMaxHitPoints());
+
+            if (player.getName().equals(state.getPlayer(clientId).getName())) {
+                g.setColor(Color.GREEN);
+            } else {
+                g.setColor(Color.BLACK);
+            }
+
+            g.drawString(playerInfo, startX, yPos);
+            index++;
+        }
+    }
+
+
 }

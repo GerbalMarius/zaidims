@@ -31,6 +31,10 @@ public class CommandParser {
 
         String[] tokens = input.trim().split(" ");
 
+        if (tokens[0].equalsIgnoreCase("/killall")) {
+            return new KillAllEnemiesExpression();
+        }
+
         if (tokens.length < 2) {
             return new UnknownExpression(input);
         }

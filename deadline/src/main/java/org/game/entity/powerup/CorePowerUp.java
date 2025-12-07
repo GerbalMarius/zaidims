@@ -33,7 +33,7 @@ public abstract class CorePowerUp implements PowerUp {
     }
 
     protected void loadSprite(String powerUpName){
-        this.sprite = ByteFiles.loadImage("assets/potions/" + powerUpName + ".png");
+        this.sprite = ByteFiles.loadImage("assets/powerups/" + powerUpName + ".png");
     }
 
     @Override

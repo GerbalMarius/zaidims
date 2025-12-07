@@ -5,7 +5,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.entity.enemy.template.EnemyAI;
 import org.game.entity.strategy.*;
+import org.game.json.Json;
 import org.game.message.Message;
+import org.game.message.PlayerDefenseUpdateMessage;
 import org.game.message.PlayerHealthUpdateMessage;
 import org.game.server.*;
 
@@ -34,11 +36,15 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     private long attackCooldown = 1000;
     private double attackRange = 50.0;
 
+    //----------------------
     private int groupId;
 
     private boolean groupLeader;
 
     private Enemy groupLeaderRef;
+    //-------------------------
+
+    private double piercingFactor = 0.0;
 
 
     protected Enemy(int x, int y) {
@@ -90,7 +96,9 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
             return;
         }
         int damage = this.attack;
-        target.takeDamage(damage);
+        target.receiveHit(damage, this);
+
+
         log.debug("{} hit {} with {} damage", this.type, target.getName(), damage);
 
         UUID targetId = server.getClients().values().stream()
@@ -101,7 +109,11 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
 
         if (targetId != null) {
             var healthMsg = new PlayerHealthUpdateMessage(targetId, target.getHitPoints());
-            server.sendToAll(server.getJson().toJson(healthMsg,
+            var defMsg = new PlayerDefenseUpdateMessage(targetId, target.getArmorCount(), target.isShieldActive());
+            Json json = server.getJson();
+
+            server.sendToAll(json.toJson(defMsg, labelPair(Message.JSON_LABEL, "playerDefense")));
+            server.sendToAll(json.toJson(healthMsg,
                     labelPair(Message.JSON_LABEL, "playerHealth")));
 
             if (target.getHitPoints() <= 0) {
@@ -170,6 +182,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         e.maxHitPoints = this.maxHitPoints;
         e.size = this.size;
         e.type = this.type;
+        e.piercingFactor = this.piercingFactor;
     }
 
     @Override

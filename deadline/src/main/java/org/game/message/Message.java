@@ -3,7 +3,7 @@ package org.game.message;
 public sealed interface Message
         permits EnemyBulkCopyMessage, EnemyHealthUpdateMessage, EnemyMoveMessage, EnemyRemoveMessage, EnemySpawnMessage,
         JoinMessage, LeaveMessage, MoveMessage,
-        PlayerHealthUpdateMessage, PlayerRespawnMessage, PlayerStatsUpdateMessage,
+        PlayerHealthUpdateMessage, PlayerRespawnMessage, PlayerDefenseUpdateMessage, PlayerStatsUpdateMessage,
         PowerUpRemoveMessage, PowerUpSpawnMessage, ProjectileSpawnMessage {
 
 

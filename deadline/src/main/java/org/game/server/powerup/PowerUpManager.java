@@ -1,13 +1,12 @@
 package org.game.server.powerup;
 
 import org.game.entity.powerup.*;
-import org.game.entity.powerup.dispenser.AttackDispenser;
-import org.game.entity.powerup.dispenser.MaxHpDispenser;
-import org.game.entity.powerup.dispenser.SpeedDispenser;
+import org.game.entity.powerup.dispenser.*;
 import org.game.server.Server;
 import org.game.tiles.TileManager;
 
 import java.awt.*;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,9 +20,22 @@ public final class PowerUpManager {
 
     private final Random random = new Random();
 
-    private final SpeedDispenser speedDispenser = new SpeedDispenser();
-    private final  AttackDispenser attackDispenser = new AttackDispenser();
-    private final  MaxHpDispenser maxHpDispenser = new MaxHpDispenser();
+    private final Map<PowerUpType, PowerUpDispenser> dispensers = Map.of(
+            PowerUpType.SPEED,   new SpeedDispenser(),
+            PowerUpType.ATTACK,  new AttackDispenser(),
+            PowerUpType.MAX_HP,  new MaxHpDispenser(),
+            PowerUpType.ARMOR,   new ArmorDispenser(),
+            PowerUpType.SHIELD,  new ShieldDispenser()
+    );
+
+    // Spawn chances in one neat map (weights, not necessarily summing to 1.0)
+    private final Map<PowerUpType, Double> spawnWeights = Map.of(
+            PowerUpType.SPEED, 0.10,
+            PowerUpType.ATTACK, 0.35,
+            PowerUpType.MAX_HP, 0.30,
+            PowerUpType.ARMOR, 0.15,
+            PowerUpType.SHIELD, 0.20
+    );
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -32,37 +44,42 @@ public final class PowerUpManager {
     }
 
     public void startDispensing(long initialDelay, long period, TimeUnit timeUnit) {
-
         scheduler.scheduleAtFixedRate(this::dispenseRandomPowerUp, initialDelay, period, timeUnit);
     }
 
-    private  void dispenseRandomPowerUp() {
-
+    private void dispenseRandomPowerUp() {
         TileManager tileManager = server.getEntityChecker().getTileManager();
-
         Point pos = tileManager.findRandomSpawnPosition(random, 50);
         final int x = pos.x;
         final int y = pos.y;
 
-        double rand = random.nextDouble();
-        PowerUpType powerUpType;
+        PowerUpType powerUpType = randomPowerUpType();
+        PowerUpDispenser dispenser = dispensers.get(powerUpType);
 
-        if (rand < 0.10) {
-            powerUpType = PowerUpType.SPEED; // 10%
-        } else if (rand < 0.55) {
-            powerUpType = PowerUpType.ATTACK; // 45%
-        } else {
-            powerUpType = PowerUpType.MAX_HP; // 45%
+        PowerUp selectedPowerUp = dispenser.dispensePowerUp(x, y);
+        selectedPowerUp.setId(powerUpId++);
+
+        Server.ServerActions.spawnPowerUp(server, selectedPowerUp, powerUpType, x, y);
+    }
+
+    private PowerUpType randomPowerUpType() {
+        // sum weights
+        double totalWeight = 0.0;
+        for (double w : spawnWeights.values()) {
+            totalWeight += w;
         }
 
-        PowerUp selectedPowerUp = switch (powerUpType) {
-            case SPEED -> speedDispenser.dispensePowerUp(x, y);
-            case ATTACK -> attackDispenser.dispensePowerUp(x, y);
-            case MAX_HP -> maxHpDispenser.dispensePowerUp(x, y);
-        };
+        double r = random.nextDouble() * totalWeight;
+        double cumulative = 0.0;
 
-        selectedPowerUp.setId(powerUpId++);
-        Server.ServerActions.spawnPowerUp(server, selectedPowerUp, powerUpType, x, y);
+        for (Map.Entry<PowerUpType, Double> entry : spawnWeights.entrySet()) {
+            cumulative += entry.getValue();
+            if (r <= cumulative) {
+                return entry.getKey();
+            }
+        }
+
+        return PowerUpType.ATTACK;
     }
 
 }

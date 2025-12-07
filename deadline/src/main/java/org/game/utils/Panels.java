@@ -45,7 +45,7 @@ public final class Panels {
 
 
         int bx = x + (tileSize - boxW) / 2;
-        int by = y - boxH - 10;
+        int by = y - boxH - 16;
 
 
         g2d.setColor(new Color(0, 0, 0, 200));

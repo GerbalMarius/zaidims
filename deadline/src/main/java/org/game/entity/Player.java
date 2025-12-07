@@ -5,12 +5,11 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.Camera;
 import org.game.entity.attack.AttackBehavior;
-import org.game.entity.decorator.AttackDecorator;
-import org.game.entity.decorator.MaxHpDecorator;
-import org.game.entity.decorator.SpeedDecorator;
-import org.game.server.WorldSettings;
+import org.game.entity.damage_handler.*;
+import org.game.utils.ByteFiles;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.Objects;
 
 
@@ -28,6 +27,28 @@ public non-sealed class Player extends Entity {
     private long hpRegenIntervalMs;
 
     private long lastRegenTimestamp;
+
+    private DamageHandler damageHandler;
+
+    @Setter
+    private boolean isShieldActive = false;
+
+    @Setter
+    private int armorCount = 0;
+
+    private int maxArmorCount;
+
+    private static final BufferedImage ARMOR_ICON;
+
+    static {
+        BufferedImage icon = null;
+        try {
+            icon = ByteFiles.loadImage("assets/powerups/armor.png");
+        } catch (Exception e) {
+            log.error("Failed to load armor icon", e);
+        }
+        ARMOR_ICON = icon;
+    }
 
     @Setter
     private AttackBehavior attackBehavior;
@@ -52,10 +73,10 @@ public non-sealed class Player extends Entity {
         setClassRegenDefaults();
 
         this.lastAttackTimestamp = 0L;
-    }
 
-    public static PlayerBuilder builder() {
-        return new PlayerBuilder();
+        //def damage appliers + piercing respect
+        this.damageHandler = new RawDamageHandler();
+        this.addHandler(new PiercingDamageHandler());
     }
 
 
@@ -72,16 +93,19 @@ public non-sealed class Player extends Entity {
         switch (this.playerClass) {
             case WARRIOR -> {
                 speed = 3;
+                maxArmorCount = 10;
                 maxHitPoints = hitPoints = 100;
                 attack = 25;
             }
             case WIZARD -> {
                 speed = 4;
+                maxArmorCount = 5;
                 maxHitPoints = hitPoints = 50;
                 attack = 30;
             }
             case ROGUE -> {
                 speed = 5;
+                maxArmorCount = 3;
                 maxHitPoints = hitPoints = 70;
                 attack = 15;
             }
@@ -117,109 +141,105 @@ public non-sealed class Player extends Entity {
         return false;
     }
 
+    public void addHandler(DamageHandler handler) {
+
+        // Empty chain: just set head
+        if (this.damageHandler == null) {
+            this.damageHandler = handler;
+            return;
+        }
+
+        DamageHandler head = this.damageHandler;
+
+        if (handler.priority() < head.priority()) {
+            handler.linkNext(this.damageHandler);
+            this.damageHandler = handler;
+            return;
+        }
+
+        DamageHandler current = this.damageHandler;
+        while (current.getNext() != null &&
+                current.getNext().priority() <= handler.priority()) {
+
+            current = current.getNext();
+        }
+
+        handler.linkNext(current.getNext());
+        current.linkNext(handler);
+    }
+
+    public ArmorDamageHandler findArmorHandler() {
+        for (DamageHandler handler = this.damageHandler; handler != null; handler = handler.getNext()) {
+            if (handler instanceof ArmorDamageHandler armorHandler) {
+                return armorHandler;
+            }
+        }
+        return null;
+    }
+
+    public ShieldDamageHandler findShieldHandler() {
+        for (DamageHandler handler = this.damageHandler; handler != null; handler = handler.getNext()) {
+            if (handler instanceof ShieldDamageHandler shieldHandler) {
+                return shieldHandler;
+            }
+        }
+        return null;
+    }
+
+    public void receiveHit(int rawDamage, Enemy source) {
+        if (isDead()) return;
+
+        DamageContext ctx = new DamageContext(rawDamage, this, source);
+        damageHandler.handle(ctx);
+
+    }
+
     public void takeDamage(int dmg) {
         if (getHitPoints() <= 0) return;
         this.setHitPoints(this.getHitPoints() - dmg);
         if (this.getHitPoints() < 0) this.setHitPoints(0);
-        log.debug("{} received {} dmg pts. HP left: {}", name, dmg, getHitPoints());
+        //log.debug("{} received {} dmg pts. HP left: {}", name, dmg, getHitPoints());
     }
 
-    public static class PlayerBuilder {
-        private ClassType classType;
-        private String name = "Player";
-        private int x = WorldSettings.CENTER_X;
-        private int y = WorldSettings.CENTER_Y;
-        private Integer customHitPoints;
-        private Integer customAttack;
-        private Integer customSpeed;
-        private boolean withAttackBonus = false;
-        private boolean withSpeedBonus = false;
-        private boolean withMaxHpBonus = false;
-        private int attackBonusAmount = 0;
-        private int speedBonusAmount = 0;
-        private int maxHpBonusAmount = 0;
+    public void drawHealthAndArmorBar(Graphics2D g2, int x, int y, int width, Color hpColor) {
+        super.drawHealthBar(g2, x, y, width, hpColor);
 
-        private PlayerBuilder() {}
-
-        public PlayerBuilder ofClass(ClassType classType) {
-            this.classType = classType;
-            return this;
+        if (armorCount <= 0 || ARMOR_ICON == null) {
+            return;
         }
 
-        public PlayerBuilder withName(String name) {
-            this.name = name;
-            return this;
+        int barHeight = 6;
+        int offsetY = -10;
+
+        int usesToShow = Math.min(armorCount, maxArmorCount);
+        if (usesToShow <= 0) {
+            return;
         }
 
-        public PlayerBuilder at(int x, int y) {
-            this.x = x;
-            this.y = y;
-            return this;
-        }
+        int iconSize = 16;
+        double scaleFactor = (double) iconSize / ARMOR_ICON.getWidth();
 
-        public PlayerBuilder withHitPoints(int hitPoints) {
-            this.customHitPoints = hitPoints;
-            return this;
-        }
+        int iconWidth  = (int) (ARMOR_ICON.getWidth()  * scaleFactor);
+        int iconHeight = (int) (ARMOR_ICON.getHeight() * scaleFactor);
 
-        public PlayerBuilder withAttack(int attack) {
-            this.customAttack = attack;
-            return this;
-        }
+        int barTopY    = y + offsetY;
+        int barCenterY = barTopY + barHeight / 2;
+        int iconY      = barCenterY - iconHeight / 2;
 
-        public PlayerBuilder withSpeed(int speed) {
-            this.customSpeed = speed;
-            return this;
-        }
+        int gap = 2;
+        int startX = x + width + 6;
 
-        public PlayerBuilder withAttackBonus(int amount) {
-            this.withAttackBonus = true;
-            this.attackBonusAmount = amount;
-            return this;
-        }
+        for (int i = 0; i < usesToShow; i++) {
+            int iconX = startX + i * (iconWidth + gap);
 
-        public PlayerBuilder withSpeedBonus(int amount) {
-            this.withSpeedBonus = true;
-            this.speedBonusAmount = amount;
-            return this;
-        }
-
-        public PlayerBuilder withMaxHpBonus(int amount) {
-            this.withMaxHpBonus = true;
-            this.maxHpBonusAmount = amount;
-            return this;
-        }
-
-        public Player build() {
-
-            Player player = new Player(classType, name, x, y);
-
-            if (customHitPoints != null) {
-                player.setHitPoints(customHitPoints);
-                player.setMaxHitPoints(customHitPoints);
+            if (isShieldActive) {
+                Color oldColor = g2.getColor();
+                g2.setColor(new Color(135, 206, 250, 120));
+                g2.fillRoundRect(iconX - 1, iconY - 1, iconWidth + 2, iconHeight + 2, 4, 4);
+                g2.setColor(oldColor);
             }
 
-            if (customAttack != null) {
-                player.setAttack(customAttack);
-            }
-
-            if (customSpeed != null) {
-                player.setSpeed(customSpeed);
-            }
-
-            if (withAttackBonus) {
-                player = new AttackDecorator(player, attackBonusAmount);
-            }
-
-            if (withSpeedBonus) {
-                player = new SpeedDecorator(player, speedBonusAmount);
-            }
-
-            if (withMaxHpBonus) {
-                player = new MaxHpDecorator(player, maxHpBonusAmount);
-            }
-
-            return player;
+            g2.drawImage(ARMOR_ICON, iconX, iconY, iconWidth, iconHeight, null);
         }
     }
 }

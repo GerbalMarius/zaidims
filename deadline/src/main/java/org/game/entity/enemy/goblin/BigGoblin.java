@@ -14,6 +14,7 @@ public class BigGoblin extends Goblin {
         this.size = EnemySize.BIG;
         scale = 5;
         createHitbox();
+        setPiercingFactor(0.3);
     }
 
     @Override

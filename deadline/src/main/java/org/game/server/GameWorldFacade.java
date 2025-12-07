@@ -12,6 +12,15 @@ public class GameWorldFacade {
     private final EnemyUpdateManager enemyUpdateManager;
     private final PowerUpManager powerUpManager;
 
+    private boolean enemyUpdateRunning = false;
+
+    public void ensureEnemyUpdating() {
+        if (!enemyUpdateRunning) {
+            startUpdatingEnemyPos(0, 50, TimeUnit.MILLISECONDS);
+            enemyUpdateRunning = true;
+        }
+    }
+
     public GameWorldFacade(Server server) {
         this.enemySpawnManager = new EnemySpawnManager(server);
         this.enemyUpdateManager = new EnemyUpdateManager(server);
@@ -32,4 +41,9 @@ public class GameWorldFacade {
     public void startDispensingPowerUps(long initialDelay, long period, TimeUnit timeUnit) {
         powerUpManager.startDispensing(initialDelay, period, timeUnit);
     }
+
+    public void spawnSpecificEnemy(String size, String type) {
+        enemySpawnManager.spawnSpecificEnemy(size, type);
+    }
+
 }

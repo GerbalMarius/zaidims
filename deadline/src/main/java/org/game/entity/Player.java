@@ -198,7 +198,7 @@ public non-sealed class Player extends Entity {
         if (getHitPoints() <= 0) return;
         this.setHitPoints(this.getHitPoints() - dmg);
         if (this.getHitPoints() < 0) this.setHitPoints(0);
-        log.debug("{} received {} dmg pts. HP left: {}", name, dmg, getHitPoints());
+        //log.debug("{} received {} dmg pts. HP left: {}", name, dmg, getHitPoints());
     }
 
     public void drawHealthAndArmorBar(Graphics2D g2, int x, int y, int width, Color hpColor) {

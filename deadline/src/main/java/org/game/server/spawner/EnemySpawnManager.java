@@ -239,5 +239,49 @@ public final class EnemySpawnManager {
         return Math.min(size, cap);
     }
 
+    public void spawnSpecificEnemy(String sizeStr, String typeStr) {
+
+        EnemySize size;
+        EnemyType type;
+
+        try {
+            size = EnemySize.valueOf(sizeStr.toUpperCase());
+        } catch (Exception ex) {
+            log.error("Unknown enemy size: {}", sizeStr);
+            return;
+        }
+
+        try {
+            type = EnemyType.valueOf(typeStr.toUpperCase());
+        } catch (Exception ex) {
+            log.error("Unknown enemy type: {}", typeStr);
+            return;
+        }
+
+        EnemySpawner spawner = switch (type) {
+            case GOBLIN -> goblinSpawner;
+            case ZOMBIE -> zombieSpawner;
+            case SKELETON -> skeletonSpawner;
+        };
+
+        TileManager tileManager = server.getEntityChecker().getTileManager();
+        Point spawnPos = tileManager.findRandomSpawnPosition(new Random(), 50);
+
+        int x = spawnPos.x;
+        int y = spawnPos.y;
+
+        long id = enemyId.getAndIncrement();
+
+        Enemy enemy = switch (size) {
+            case SMALL -> spawner.spawnSmall(id, x, y);
+            case MEDIUM -> spawner.spawnMedium(id, x, y);
+            case BIG -> spawner.spawnLarge(id, x, y);
+        };
+
+        ServerActions.spawnEnemy(server, enemy, x, y);
+        log.info("Spawned specific enemy {} {}", size, type);
+    }
+
+
 }
 

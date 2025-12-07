@@ -25,6 +25,8 @@ public class AdminConsole {
             log.info("  /spawn enemy random");
             log.info("  /spawn enemy wave");
             log.info("  /spawn enemy <size> <type>");
+            log.info("  /spawn powerups");
+            log.info("  /killall");
             log.info("  exit");
 
             while (true) {

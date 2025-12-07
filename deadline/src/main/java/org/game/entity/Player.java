@@ -142,8 +142,30 @@ public non-sealed class Player extends Entity {
     }
 
     public void addHandler(DamageHandler handler) {
-        handler.linkNext(this.damageHandler);
-        this.damageHandler = handler;
+
+        // Empty chain: just set head
+        if (this.damageHandler == null) {
+            this.damageHandler = handler;
+            return;
+        }
+
+        DamageHandler head = this.damageHandler;
+
+        if (handler.priority() < head.priority()) {
+            handler.linkNext(this.damageHandler);
+            this.damageHandler = handler;
+            return;
+        }
+
+        DamageHandler current = this.damageHandler;
+        while (current.getNext() != null &&
+                current.getNext().priority() <= handler.priority()) {
+
+            current = current.getNext();
+        }
+
+        handler.linkNext(current.getNext());
+        current.linkNext(handler);
     }
 
     public ArmorDamageHandler findArmorHandler() {

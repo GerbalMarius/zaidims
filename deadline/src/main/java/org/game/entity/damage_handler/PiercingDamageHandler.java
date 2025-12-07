@@ -9,4 +9,9 @@ public final class PiercingDamageHandler extends CoreDamageHandler {
         ctx.setPiercingFactor(source.getPiercingFactor());
         return true;
     }
+
+    @Override
+    public int priority() {
+        return 1;
+    }
 }

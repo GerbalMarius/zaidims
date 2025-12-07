@@ -40,4 +40,9 @@ public final class ArmorDamageHandler extends CoreDamageHandler {
 
         return true;
     }
+
+    @Override
+    public int priority() {
+        return 3;
+    }
 }

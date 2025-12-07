@@ -1,39 +1,35 @@
 package org.game.client;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.input.ControllerAdapter;
 import org.game.client.input.KeyboardHandler;
 import org.game.client.input.MouseHandler;
+import org.game.client.mediator.GameView;
+import org.game.client.mediator.Mediator;
 import org.game.client.shoot.ClientShootImpl;
 import org.game.client.shoot.ShootImplementation;
 import org.game.entity.*;
-import org.game.entity.command.MoveCommand;
-import org.game.entity.powerup.ArmorPowerUp;
-import org.game.entity.powerup.PowerUp;
-import org.game.entity.powerup.PowerUpType;
 import org.game.entity.decorator.AttackDecorator;
 import org.game.entity.decorator.SpeedDecorator;
+import org.game.entity.powerup.ArmorPowerUp;
+import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.ShieldPowerUp;
 import org.game.entity.weapon.Weapon;
 import org.game.entity.weapon.WeaponFactory;
 import org.game.server.CollisionChecker;
-import org.game.tiles.TileManager;
-import org.game.message.*;
 import org.game.server.WorldSettings;
+import org.game.tiles.TileManager;
 import org.game.utils.Panels;
+
 import javax.swing.*;
 import java.awt.*;
 
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 @Slf4j
-public final class GamePanel extends JPanel implements Runnable {
+public final class GamePanel extends JPanel implements Runnable, GameView {
     private static final int FPS = 60;
 
     @Getter
@@ -43,71 +39,47 @@ public final class GamePanel extends JPanel implements Runnable {
     private final MouseHandler mouseHandler;
     private final ControllerAdapter controllerAdapter;
 
-    ArrayDeque<MoveCommand> history = new ArrayDeque<>();
+    private  Mediator mediator;
+
+    private MovementCoordinator movementCoordinator;
 
     @Getter
     private final UUID clientId;
 
     private final Camera camera;
 
-    @Setter
-    private BiConsumer<Integer, Integer> moveCallback;
-
-    @Setter
-    private Consumer<UUID> shootCallback;
     private Weapon weapon;
-    @Setter
-    private Consumer<? super Enemy> healthCallback;
 
-    @Setter
-    private Consumer<? super PowerUp> powerUpCallback;
-
-    private final Queue<Message> incomingMessages = new ConcurrentLinkedQueue<>();
-
-    private int pendingDx = 0;
-    private int pendingDy = 0;
-    private long lastSendTime = 0;
     private Thread gameThread;
-
-    private int serverKnownX = 0;
-    private int serverKnownY = 0;
 
     @Getter
     private final TileManager tileManager;
     public CollisionChecker cChecker;
 
-
-    public GamePanel(UUID clientId, GameState state, KeyboardHandler keyboardHandler, MouseHandler mouseHandler, ControllerAdapter adapter) {
+    public GamePanel(UUID clientId,
+                     GameState state,
+                     KeyboardHandler keyboardHandler,
+                     MouseHandler mouseHandler,
+                     ControllerAdapter adapter) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
         this.mouseHandler = mouseHandler;
+        this.controllerAdapter = adapter;
         this.camera = new Camera(0.12, 80, 50);
         this.tileManager = new TileManager();
-        cChecker = new CollisionChecker(tileManager);
-        this.controllerAdapter = adapter;
+        this.cChecker = new CollisionChecker(tileManager);
 
         setBackground(Color.WHITE);
         setFocusable(true);
         addKeyListener(this.keyboardHandler);
         addMouseListener(this.mouseHandler);
-
-        Player p = state.getPlayer(clientId);
-        if (p != null) {
-            serverKnownX = p.getGlobalX();
-            serverKnownY = p.getGlobalY();
-        }
-
-        initialSnap(p);
     }
-
-
 
     public void startGameLoop() {
         gameThread = Thread.ofPlatform()
                 .name("Game Window")
                 .start(this);
-
     }
 
     @Override
@@ -129,29 +101,26 @@ public final class GamePanel extends JPanel implements Runnable {
         }
         controllerAdapter.shutdown();
     }
-    public void initializeWeapon(ClassType classType) {
-        ShootImplementation clientImpl = new ClientShootImpl(state);
-        this.weapon = WeaponFactory.createFor(classType, clientImpl);
-    }
-    private void updateGame() {
 
-        Player currentPlayer = state.getPlayer(clientId);
-        optimisticMove(currentPlayer);
-        checkPlayerPowerUpCollision(currentPlayer);
+    private void updateGame() {
+        mediator.processServerMessagesForFrame();
 
         long nowMillis = System.currentTimeMillis();
-        if (nowMillis - lastSendTime > 50) {
-            if (pendingDx != 0 || pendingDy != 0) {
-                sendBatchedMove();
-                pendingDx = 0;
-                pendingDy = 0;
-            }
-            lastSendTime = nowMillis;
+
+        if (movementCoordinator != null) {
+            movementCoordinator.update(nowMillis, this.isFocusOwner());
         }
-        processNetworkMessages();
+
+        Player currentPlayer = state.getPlayer(clientId);
+
+        checkPlayerPowerUpCollision(currentPlayer);
 
         if (currentPlayer != null) {
-            currentPlayer.updateCameraPos(this.camera, this.getWidth(), this.getHeight(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
+            currentPlayer.updateCameraPos(
+                    this.camera,
+                    this.getWidth(), this.getHeight(),
+                    WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT
+            );
         }
 
         if ((mouseHandler.isPrimaryClicked() || controllerAdapter.isPrimaryClicked())
@@ -164,23 +133,26 @@ public final class GamePanel extends JPanel implements Runnable {
                     weapon.fire(currentPlayer, baseProjectileId, now);
 
             for (var data : immediateShots) {
-                if (shootCallback != null) {
-                    shootCallback.accept(data.id());
-                }
+                mediator.onPlayerShoot(data.id());
             }
         }
+
         if (weapon != null) {
             long now = System.currentTimeMillis();
             List<ShootImplementation.ProjectileData> delayedShots = weapon.update(now);
 
             for (var data : delayedShots) {
-                if (shootCallback != null) {
-                    shootCallback.accept(data.id());
-                }
+                mediator.onPlayerShoot(data.id());
             }
         }
+
         controllerAdapter.update();
         updateProjectiles(state.getEnemies().values());
+    }
+
+    public void initializeWeapon(ClassType classType) {
+        ShootImplementation clientImpl = new ClientShootImpl(state);
+        this.weapon = WeaponFactory.createFor(classType, clientImpl);
     }
 
     private void checkPlayerPowerUpCollision(Player player) {
@@ -199,16 +171,15 @@ public final class GamePanel extends JPanel implements Runnable {
                 continue;
             }
 
-
             Player decoratedPlayer = switch (powerUp.getClass().getSimpleName().toLowerCase()) {
                 case String s when s.contains("attack") -> new AttackDecorator(player, 5);
                 case String s when s.contains("speed") -> new SpeedDecorator(player, 1);
-                case String s when  s.contains("armor") -> {
-                    ((ArmorPowerUp)powerUp).applyTo(player);
+                case String s when s.contains("armor") -> {
+                    ((ArmorPowerUp) powerUp).applyTo(player);
                     yield player;
                 }
-                case String s when  s.contains("shield") -> {
-                    ((ShieldPowerUp)powerUp).applyTo(player);
+                case String s when s.contains("shield") -> {
+                    ((ShieldPowerUp) powerUp).applyTo(player);
                     yield player;
                 }
                 default -> player;
@@ -216,109 +187,19 @@ public final class GamePanel extends JPanel implements Runnable {
 
             state.setPlayer(clientId, decoratedPlayer);
 
-            if (powerUpCallback != null) {
-                powerUpCallback.accept(powerUp);
-            }
+            mediator.onPowerUpPicked(powerUp);
 
             state.removePowerUp(id);
-
         }
     }
 
     public void updateProjectiles(Collection<? extends Enemy> enemies) {
         for (Projectile p : state.getProjectiles().values()) {
-            p.update(enemies, cChecker, healthCallback);
+
+            p.update(enemies, cChecker, mediator::onEnemyHealthChanged);
         }
 
         state.getProjectiles().entrySet().removeIf(e -> !e.getValue().isActive());
-    }
-
-    private void optimisticMove(Player player) {
-        if (player == null || player.isDead() || !this.isFocusOwner()) {
-            return;
-        }
-
-        if ((mouseHandler.isSecondaryClicked() || controllerAdapter.isSecondaryClicked()) && !history.isEmpty()) {
-            int undoCount = 3;
-
-            for (int i = 0; i < undoCount && !history.isEmpty(); i++) {
-                MoveCommand last = history.pop();
-                last.undo();
-            }
-
-            int currentX = player.getGlobalX();
-            int currentY = player.getGlobalY();
-
-
-            int deltaFromServerX = currentX - serverKnownX;
-            int deltaFromServerY = currentY - serverKnownY;
-
-            if (moveCallback != null && (deltaFromServerX != 0 || deltaFromServerY != 0)) {
-                moveCallback.accept(deltaFromServerX, deltaFromServerY);
-                serverKnownX = currentX;
-                serverKnownY = currentY;
-
-                lastSendTime = System.currentTimeMillis();
-            }
-
-            pendingDx = 0;
-            pendingDy = 0;
-
-            return;
-
-        }
-
-        int dx = 0, dy = 0;
-
-        int speed = player.getSpeed();
-
-        if (keyboardHandler.isLeftPressed() || controllerAdapter.isLeftPressed()) {
-            dx -= speed;
-        }
-
-        if (keyboardHandler.isRightPressed() || controllerAdapter.isRightPressed()) {
-            dx += speed;
-        }
-
-        if (keyboardHandler.isUpPressed() || controllerAdapter.isUpPressed()) {
-            dy -= speed;
-        }
-
-        if (keyboardHandler.isDownPressed() || controllerAdapter.isDownPressed()) {
-            dy += speed;
-        }
-
-
-        if (dx != 0) {
-            player.setCollisionOn(false);
-            player.setDirection(dx > 0 ? FramePosition.RIGHT : FramePosition.LEFT);
-            cChecker.checkTile(player);
-            if (!player.isCollisionOn()) {
-                MoveCommand moveCmd = new MoveCommand(player, player.getGlobalX() + dx, player.getGlobalY());
-                moveCmd.execute();
-                history.push(moveCmd);
-                pendingDx += dx;
-            }
-        }
-
-        if (dy != 0) {
-            player.setCollisionOn(false);
-            player.setDirection(dy > 0 ? FramePosition.DOWN : FramePosition.UP);
-            cChecker.checkTile(player);
-            if (!player.isCollisionOn()) {
-                MoveCommand moveCmd = new MoveCommand(player, player.getGlobalX(), player.getGlobalY() + dy);
-                moveCmd.execute();
-                history.push(moveCmd);
-                pendingDy += dy;
-            }
-        }
-    }
-
-
-    private void sendBatchedMove() {
-        if (moveCallback != null) {
-            moveCallback.accept(pendingDx, pendingDy);
-        }
     }
 
     @Override
@@ -336,7 +217,6 @@ public final class GamePanel extends JPanel implements Runnable {
         Map<UUID, Player> players = state.getPlayers();
 
         redrawPowerUps(g2d, powerUps);
-
         redrawPlayers(players, g2d);
         redrawEnemies(g2d);
 
@@ -345,8 +225,6 @@ public final class GamePanel extends JPanel implements Runnable {
         }
 
         g2d.dispose();
-        GlobalUI.getInstance().drawCounter(g2d, getWidth());
-
         Graphics2D uiGraphics = (Graphics2D) g.create();
         GlobalUI.getInstance().drawCounter(uiGraphics, getWidth());
         uiGraphics.dispose();
@@ -390,16 +268,13 @@ public final class GamePanel extends JPanel implements Runnable {
             String name = playerData.getName();
             int size = tileSize * playerData.getScale();
 
-
             playerData.draw(g2d, x, y, size);
 
             if (playerData.isShieldActive()) {
-                // save old state
                 Color oldColor = g2d.getColor();
                 Stroke oldStroke = g2d.getStroke();
 
-                // light blue with slight transparency
-                g2d.setColor(new Color(135, 206, 250, 180)); // light sky blue
+                g2d.setColor(new Color(135, 206, 250, 180));
                 g2d.setStroke(new BasicStroke(3f));
 
                 int padding = 3;
@@ -411,105 +286,60 @@ public final class GamePanel extends JPanel implements Runnable {
                         10, 10
                 );
 
-                // restore old state
                 g2d.setColor(oldColor);
                 g2d.setStroke(oldStroke);
             }
             Panels.drawNameBox(g2d, name, x, y, tileSize * playerData.getScale());
-            playerData.drawHealthAndArmorBar(g2d, x, y, tileSize * playerData.getScale(), Color.GREEN);
+            playerData.drawHealthAndArmorBar(g2d, x, y,
+                    tileSize * playerData.getScale(), Color.GREEN);
         }
     }
 
-    public void processMessage(final Message message) {
-        incomingMessages.offer(message);
-    }
+    // ---------------- GameView callbacks (called by mediator) ----------------
 
-    private void processNetworkMessages() {
-        Message msg;
-        int processed = 0;
-        int maxMsgPerTick = 100;
-        while (processed < maxMsgPerTick && (msg = incomingMessages.poll()) != null) {
-            switch (msg) {
-                case JoinMessage(UUID playerId, ClassType playerClass, String name, int x, int y) -> {
-                    state.addPlayer(playerId, playerClass, name, x, y);
-                    if (playerId.equals(clientId)) {
-                        initializeWeapon(playerClass);
-                    }
-                }
-                case LeaveMessage(UUID playerId) -> state.removePlayer(playerId);
-                case MoveMessage(UUID playerId, int x, int y) -> {
-                    if (!playerId.equals(clientId)) {
-                        Player player = state.getPlayer(playerId);
-                        if (player != null) {
-                            player.updateFromServer(x, y);
-                        }
-                    } else {
-                        serverKnownX = x;
-                        serverKnownY = y;
-                    }
-                }
-                case EnemySpawnMessage(var enemyId, EnemyType type, EnemySize size, int newX, int newY) ->
-                        state.spawnEnemyFromServer(enemyId, type, size, newX, newY);
-                case EnemyRemoveMessage(var enemyId) -> state.removeEnemy(enemyId);
-                case EnemyMoveMessage(var enemyId, int newX, int newY) ->
-                        state.updateEnemyPosition(enemyId, newX, newY);
-                case ProjectileSpawnMessage(int startX, int startY, FramePosition dir, UUID projId, UUID playerId, int speed, int damage, double maxDistance) ->
-                        state.spawnProjectile(projId, playerId, startX, startY, dir, speed, damage, maxDistance);
+    @Override
+    public void onLocalPlayerJoined(ClassType playerClass, int x, int y) {
+        initializeWeapon(playerClass);
 
-                case EnemyBulkCopyMessage(Map<Long, EnemyCopy> enemies) -> state.copyAllEnemies(enemies);
-                case EnemyHealthUpdateMessage(long enemyId, int newHealth) -> {
-                    Enemy enemy = state.getEnemies().get(enemyId);
-                    if (enemy != null) {
-                        enemy.setHitPoints(newHealth);
-                    }
-                }
-                case PlayerHealthUpdateMessage(UUID playerId, int newHealth) -> {
-                    Player player = state.getPlayer(playerId);
-                    if (player != null) {
-                        player.setHitPoints(newHealth);
-                    }
-                }
-                case PlayerRespawnMessage(UUID playerId, int respawnX, int respawnY) -> {
-                    Player player = state.getPlayer(playerId);
-                    if (player != null) {
-                        player.setGlobalX(respawnX);
-                        player.setGlobalY(respawnY);
-                        player.setHitPoints(player.getMaxHitPoints());
-
-                        if (playerId.equals(clientId)) {
-                            serverKnownX = respawnX;
-                            serverKnownY = respawnY;
-                            JOptionPane.showMessageDialog(this, "lmao you dead!", "Respawn", JOptionPane.INFORMATION_MESSAGE);
-                        }
-                    }
-                }
-
-                case PowerUpRemoveMessage(long powerUpId) -> state.removePowerUp(powerUpId);
-                case PowerUpSpawnMessage(long powerUpId, PowerUpType powerUp, int x, int y) ->
-                        state.spawnPowerUp(powerUpId, powerUp, x, y);
-                case PlayerStatsUpdateMessage(
-                        UUID playerId, int hitPoints, int maxHitPoints, int attack, int speed
-                ) -> {
-                    Player player = state.getPlayer(playerId);
-                    if (player != null) {
-                        player.setHitPoints(hitPoints);
-                        player.setMaxHitPoints(maxHitPoints);
-                        player.setAttack(attack);
-                        player.setSpeed(speed);
-                    }
-                }
-
-
-                case PlayerDefenseUpdateMessage(UUID playerId, int armorCount, boolean isShieldActive) -> state.updatePlayerShields(playerId, armorCount, isShieldActive);
-            }
-            processed++;
+        Player player = state.getPlayer(clientId);
+        if (player != null) {
+            camera.snapTo(
+                    player.getGlobalX(),
+                    player.getGlobalY(),
+                    getHeight(),
+                    getWidth(),
+                    WorldSettings.WORLD_WIDTH,
+                    WorldSettings.WORLD_HEIGHT
+            );
         }
     }
 
-    private void initialSnap(Player player) {
-        if (player == null) {
-            return;
-        }
-        this.camera.snapTo(player.getGlobalX(), player.getGlobalY(), getHeight(), getWidth(), WorldSettings.WORLD_WIDTH, WorldSettings.WORLD_HEIGHT);
+    @Override
+    public void onLocalPlayerMoveFromServer(int x, int y) {
+        movementCoordinator.updateServerKnownPosition(x, y);
     }
+
+    @Override
+    public void onLocalPlayerRespawn(int respawnX, int respawnY) {
+       movementCoordinator.updateServerKnownPosition(respawnX, respawnY);
+
+        JOptionPane.showMessageDialog(this,
+                "lmao you dead!",
+                "Respawn",
+                JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void setMediator(Mediator mediator) {
+        this.mediator = mediator;
+        this.movementCoordinator = new MovementCoordinator(
+                clientId,
+                state,
+                keyboardHandler,
+                mouseHandler,
+                controllerAdapter,
+                cChecker,
+                mediator
+        );
+    }
+
 }

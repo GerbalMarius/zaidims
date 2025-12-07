@@ -1,5 +1,8 @@
 package org.game.entity.damage_handler;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public final class ShieldDamageHandler extends CoreDamageHandler {
     private int remainingBlocks;
     public ShieldDamageHandler(int blocks) {
@@ -34,8 +37,14 @@ public final class ShieldDamageHandler extends CoreDamageHandler {
         remainingBlocks--;
         ctx.setDamage(0);
         ctx.markShieldApplied();
-
+        if (remainingBlocks == 0){
+            ctx.getTarget().setShieldActive(false);
+        }
         return true;
     }
 
+    @Override
+    public int priority() {
+        return 2;
+    }
 }

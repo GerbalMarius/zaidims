@@ -91,7 +91,7 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
         }
         int damage = this.attack;
         target.takeDamage(damage);
-        log.debug("{} hit {} with {} damage", this.type, target.getName(), damage);
+        //log.debug("{} hit {} with {} damage", this.type, target.getName(), damage);
 
         UUID targetId = server.getClients().values().stream()
                 .filter(cs -> cs.getName().equals(target.getName()))

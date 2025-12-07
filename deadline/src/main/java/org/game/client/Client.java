@@ -1,5 +1,6 @@
 package org.game.client;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.input.Controller;
 import org.game.client.input.ControllerAdapter;
@@ -15,6 +16,7 @@ import java.awt.*;
 import java.util.UUID;
 
 @Slf4j
+@Getter
 public final class Client {
 
     private final UUID clientId = UUID.randomUUID();
@@ -24,6 +26,8 @@ public final class Client {
     private final GameState gameState = new GameState();
     private final KeyboardHandler keyboardHandler = new KeyboardHandler();
     private final MouseHandler mouseHandler = new MouseHandler();
+
+    private Mediator mediator;
 
     static void main() {
         new Client().createClientGui();
@@ -43,8 +47,7 @@ public final class Client {
                 mouseHandler,
                 adapter);
 
-        Mediator mediator =
-                new ClientMediator(clientId, playerName, chosenClass, gameState, gamePanel);
+         this.mediator = new ClientMediator(this, gameState, gamePanel);
 
         gamePanel.setMediator(mediator);
 

@@ -1,6 +1,7 @@
 package org.game.client.mediator;
 
 import lombok.extern.slf4j.Slf4j;
+import org.game.client.Client;
 import org.game.client.GameState;
 import org.game.entity.*;
 import org.game.entity.powerup.PowerUp;
@@ -25,9 +26,7 @@ public final class ClientMediator implements Mediator {
 
     private static final int PORT = 9000;
 
-    private final UUID clientId;
-    private final String playerName;
-    private final ClassType chosenClass;
+    private final Client client;
     private final GameState gameState;
     private final GameView view;
 
@@ -44,14 +43,10 @@ public final class ClientMediator implements Mediator {
 
     private volatile boolean running = false;
 
-    public ClientMediator(UUID clientId,
-                          String playerName,
-                          ClassType chosenClass,
+    public ClientMediator( Client client,
                           GameState gameState,
                           GameView view) {
-        this.clientId = clientId;
-        this.playerName = playerName;
-        this.chosenClass = chosenClass;
+        this.client = client;
         this.gameState = gameState;
         this.view = view;
     }
@@ -60,13 +55,13 @@ public final class ClientMediator implements Mediator {
 
     @Override
     public void onPlayerMove(int dx, int dy) {
-        MoveMessage moveMessage = new MoveMessage(clientId, dx, dy);
+        MoveMessage moveMessage = new MoveMessage(client.getClientId(), dx, dy);
         sendLocalInput(json.toJson(moveMessage, labelPair(Message.JSON_LABEL, "move")));
     }
 
     @Override
     public void onPlayerShoot(UUID projectileId) {
-        var player = gameState.getPlayer(clientId);
+        var player = gameState.getPlayer(client.getClientId());
         if (player == null) return;
 
         var localProj = gameState.getProjectiles().get(projectileId);
@@ -77,7 +72,7 @@ public final class ClientMediator implements Mediator {
                 localProj.getGlobalY(),
                 localProj.getDirection(),
                 projectileId,
-                clientId,
+                client.getClientId(),
                 localProj.getSpeed(),
                 localProj.getDamage(),
                 localProj.getMaxDistance()
@@ -115,13 +110,13 @@ public final class ClientMediator implements Mediator {
             switch (msg) {
                 case JoinMessage(UUID playerId, ClassType playerClass, String name, int x, int y) -> {
                     gameState.addPlayer(playerId, playerClass, name, x, y);
-                    if (playerId.equals(clientId)) {
+                    if (playerId.equals(client.getClientId())) {
                         view.onLocalPlayerJoined(playerClass, x, y);
                     }
                 }
                 case LeaveMessage(UUID playerId) -> gameState.removePlayer(playerId);
                 case MoveMessage(UUID playerId, int x, int y) -> {
-                    if (!playerId.equals(clientId)) {
+                    if (!playerId.equals(client.getClientId())) {
                         Player player = gameState.getPlayer(playerId);
                         if (player != null) {
                             player.updateFromServer(x, y);
@@ -159,7 +154,7 @@ public final class ClientMediator implements Mediator {
                         player.setGlobalY(respawnY);
                         player.setHitPoints(player.getMaxHitPoints());
                     }
-                    if (playerId.equals(clientId)) {
+                    if (playerId.equals(client.getClientId())) {
                         view.onLocalPlayerRespawn(respawnX, respawnY);
                     }
                 }
@@ -191,7 +186,7 @@ public final class ClientMediator implements Mediator {
         running = true;
 
         Thread.ofVirtual()
-                .name("ClientNetworkThread : " + playerName)
+                .name("ClientNetworkThread : " + client.getPlayerName())
                 .start(() -> {
                     try {
                         connectToServer();
@@ -345,7 +340,7 @@ public final class ClientMediator implements Mediator {
             }
             key.interestOps(ops);
 
-            Message message = new JoinMessage(clientId, chosenClass, playerName);
+            Message message = new JoinMessage(client.getClientId(), client.getChosenClass(), client.getPlayerName());
             sendLocalInput(json.toJson(message, labelPair(Message.JSON_LABEL, "join")));
         } else {
             key.cancel();

@@ -156,8 +156,6 @@ public non-sealed class Player extends Entity {
             this.damageHandler = handler;
             return;
         }
-        return null;
-    }
 
         DamageHandler current = this.damageHandler;
         while (current.getNext() != null &&

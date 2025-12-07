@@ -56,6 +56,10 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
     private final TileManager tileManager;
     public CollisionChecker cChecker;
 
+    private PlayerMemento quickSaveState = null;
+    private boolean lastF5State = false;
+    private boolean lastF9State = false;
+
     public GamePanel(UUID clientId,
                      GameState state,
                      KeyboardHandler keyboardHandler,
@@ -115,6 +119,8 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
 
         checkPlayerPowerUpCollision(currentPlayer);
 
+        handleMementoInput(currentPlayer);
+
         if (currentPlayer != null) {
             currentPlayer.updateCameraPos(
                     this.camera,
@@ -148,6 +154,48 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
 
         controllerAdapter.update();
         updateProjectiles(state.getEnemies().values());
+    }
+
+    private void handleMementoInput(Player player) {
+        if (player == null) return;
+
+        boolean f5 = keyboardHandler.isSavePressed();
+        boolean f9 = keyboardHandler.isLoadPressed();
+
+        if (f5 && !lastF5State) {
+            this.quickSaveState = player.createMemento();
+            log.info("Checkpoint saved! HP: {}", player.getHitPoints());
+        }
+
+        if (f9 && !lastF9State) {
+            if (this.quickSaveState != null) {
+
+                player.restoreMemento(this.quickSaveState);
+                log.info("Checkpoint loaded!");
+
+                this.camera.snapTo(
+                        player.getGlobalX(),
+                        player.getGlobalY(),
+                        getHeight(),
+                        getWidth(),
+                        WorldSettings.WORLD_WIDTH,
+                        WorldSettings.WORLD_HEIGHT
+                );
+
+                if (movementCoordinator != null) {
+                    movementCoordinator.teleportTo(player.getGlobalX(), player.getGlobalY());
+                }
+
+                if (mediator != null) {
+                    mediator.onPlayerStateRestored(player);
+                }
+            } else {
+                log.warn("No checkpoint to load!");
+            }
+        }
+
+        lastF5State = f5;
+        lastF9State = f9;
     }
 
     public void initializeWeapon(ClassType classType) {

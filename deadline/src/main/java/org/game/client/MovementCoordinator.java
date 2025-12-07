@@ -64,6 +64,8 @@ public final class MovementCoordinator {
         sendBatchIfDue(nowMillis);
     }
 
+
+
     /**
      * Called by GameView callbacks when server authoritative position changes.
      */
@@ -72,6 +74,20 @@ public final class MovementCoordinator {
         this.serverKnownY = y;
     }
 
+    public void teleportTo(int targetX, int targetY) {
+        int dx = targetX - serverKnownX;
+        int dy = targetY - serverKnownY;
+
+        if (dx != 0 || dy != 0) {
+            mediator.onPlayerMove(dx, dy);
+            serverKnownX = targetX;
+            serverKnownY = targetY;
+        }
+
+        pendingDx = 0;
+        pendingDy = 0;
+        history.clear();
+    }
     // --------------------------------------------------------------------
     // internal helpers
     // --------------------------------------------------------------------

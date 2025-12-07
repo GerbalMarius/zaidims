@@ -101,6 +101,20 @@ public final class ClientMediator implements Mediator {
     }
 
     @Override
+    public void onPlayerStateRestored(Player p) {
+        log.info("Sending restored stats to server (Health/Armor)");
+        UUID clientId = client.getClientId();
+
+        //Sync Health
+        PlayerHealthUpdateMessage hpMsg = new PlayerHealthUpdateMessage(clientId, p.getHitPoints());
+        sendLocalInput(json.toJson(hpMsg, labelPair(Message.JSON_LABEL, "playerHealth")));
+
+        //Sync Defense
+        PlayerDefenseUpdateMessage defMsg = new PlayerDefenseUpdateMessage(clientId, p.getArmorCount(), p.isShieldActive());
+        sendLocalInput(json.toJson(defMsg, labelPair(Message.JSON_LABEL, "playerDefense")));
+    }
+
+    @Override
     public void processServerMessagesForFrame() {
         int processed = 0;
         int maxMsgPerTick = 100;

@@ -4,11 +4,13 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.entity.*;
+import org.game.entity.powerup.ArmorPowerUp;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
 import org.game.entity.decorator.AttackDecorator;
 import org.game.entity.decorator.MaxHpDecorator;
 import org.game.entity.decorator.SpeedDecorator;
+import org.game.entity.powerup.ShieldPowerUp;
 import org.game.json.Json;
 import org.game.message.*;
 import org.game.tiles.TileManager;
@@ -237,7 +239,7 @@ public final class Server {
                     broadcast(json.toJson(message, labelPair(Message.JSON_LABEL, "enemyHealth")));
                 }
             }
-            case PlayerRespawnMessage _, PowerUpSpawnMessage _, PlayerStatsUpdateMessage _ -> {
+            case PlayerRespawnMessage _, PowerUpSpawnMessage _, PlayerStatsUpdateMessage _-> {
             }
 
             case PowerUpRemoveMessage(long powerUpId) -> applyPowerUp(from, message, powerUpId);
@@ -267,6 +269,7 @@ public final class Server {
                 }
             }
 
+            case PlayerDefenseUpdateMessage defMsg -> broadcast(json.toJson(defMsg, labelPair(Message.JSON_LABEL, "playerDefense")));
         }
     }
 
@@ -283,6 +286,8 @@ public final class Server {
             case ATTACK -> cs.setPlayer(new AttackDecorator(player, 5));
             case SPEED -> cs.setPlayer(new SpeedDecorator(player, 1));
             case MAX_HP -> cs.setPlayer(new MaxHpDecorator(player, 10));
+            case SHIELD -> ((ShieldPowerUp)powerUp).applyTo(player);
+            case ARMOR -> ((ArmorPowerUp)powerUp).applyTo(player);
         }
 
         powerUps.remove(powerUpId);
@@ -300,6 +305,8 @@ public final class Server {
         );
 
         broadcast(json.toJson(statsMsg, labelPair(Message.JSON_LABEL, "playerStats")));
+
+        broadcastDefense(decorated, cs.getId());
     }
 
     private void write(SelectionKey key) throws IOException {
@@ -398,6 +405,15 @@ public final class Server {
 
     }
 
+    private void broadcastDefense(Player player, UUID playerId) {
+        var defMsg = new PlayerDefenseUpdateMessage(
+                playerId,
+                player.getArmorCount(),
+                player.isShieldActive()
+        );
+        broadcast(json.toJson(defMsg, labelPair(Message.JSON_LABEL, "playerDefense")));
+    }
+
     public void sendToAll(String msg) {
         broadcast(msg);
     }
@@ -440,11 +456,8 @@ public final class Server {
             state.setPlayerClass(playerClass);
             state.setName(playerName);
 
-            Player newPlayer =  Player.builder()
-                    .ofClass(playerClass)
-                    .withName(playerName)
-                    .at(state.getX(), state.getY())
-                    .build();
+
+            Player newPlayer = new Player(playerClass, playerName, state.getX(), state.getY());
 
             state.setPlayer(newPlayer);
 

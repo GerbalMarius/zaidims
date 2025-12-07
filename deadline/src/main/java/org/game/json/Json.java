@@ -43,7 +43,8 @@ public final class Json {
         return playerMessages
                 .registerSubtype(PowerUpSpawnMessage.class, "powerUpSpawn")
                 .registerSubtype(PowerUpRemoveMessage.class, "powerUpRemove")
-                .registerSubtype(PlayerStatsUpdateMessage.class, "playerStats");
+                .registerSubtype(PlayerStatsUpdateMessage.class, "playerStats")
+                .registerSubtype(PlayerDefenseUpdateMessage.class, "playerDefense");
     }
 
 

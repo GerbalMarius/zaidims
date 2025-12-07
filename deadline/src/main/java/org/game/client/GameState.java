@@ -12,12 +12,7 @@ import org.game.entity.Projectile;
 
 import org.game.entity.enemy.creator.EnemyMessageCreator;
 
-import org.game.entity.powerup.AttackPowerUp;
-import org.game.entity.powerup.CorePowerUp;
-import org.game.entity.powerup.MaxHpPowerUp;
-import org.game.entity.powerup.PowerUp;
-import org.game.entity.powerup.PowerUpType;
-import org.game.entity.powerup.SpeedPowerUp;
+import org.game.entity.powerup.*;
 import org.game.message.EnemyCopy;
 
 import java.awt.*;
@@ -131,6 +126,8 @@ public final class GameState {
             case MAX_HP -> new MaxHpPowerUp(x, y);
             case ATTACK -> new AttackPowerUp(x, y);
             case SPEED -> new SpeedPowerUp(x, y);
+            case SHIELD -> new ShieldPowerUp(x, y);
+            case ARMOR -> new ArmorPowerUp(x, y);
         };
         powerUp.setId(id);
 
@@ -139,6 +136,14 @@ public final class GameState {
 
     public void removePowerUp(long id) {
         powerUps.remove(id);
+    }
+
+    public void updatePlayerShields(UUID playerId, int armorCount, boolean isShieldActive) {
+        Player player = players.get(playerId);
+
+        player.setArmorCount(armorCount);
+
+        player.setShieldActive(isShieldActive);
     }
 
 }

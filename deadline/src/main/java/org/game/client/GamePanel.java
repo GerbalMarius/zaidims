@@ -10,10 +10,12 @@ import org.game.client.shoot.ClientShootImpl;
 import org.game.client.shoot.ShootImplementation;
 import org.game.entity.*;
 import org.game.entity.command.MoveCommand;
+import org.game.entity.powerup.ArmorPowerUp;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
 import org.game.entity.decorator.AttackDecorator;
 import org.game.entity.decorator.SpeedDecorator;
+import org.game.entity.powerup.ShieldPowerUp;
 import org.game.entity.weapon.Weapon;
 import org.game.entity.weapon.WeaponFactory;
 import org.game.server.CollisionChecker;
@@ -201,6 +203,14 @@ public final class GamePanel extends JPanel implements Runnable {
             Player decoratedPlayer = switch (powerUp.getClass().getSimpleName().toLowerCase()) {
                 case String s when s.contains("attack") -> new AttackDecorator(player, 5);
                 case String s when s.contains("speed") -> new SpeedDecorator(player, 1);
+                case String s when  s.contains("armor") -> {
+                    ((ArmorPowerUp)powerUp).applyTo(player);
+                    yield player;
+                }
+                case String s when  s.contains("shield") -> {
+                    ((ShieldPowerUp)powerUp).applyTo(player);
+                    yield player;
+                }
                 default -> player;
             };
 
@@ -378,10 +388,35 @@ public final class GamePanel extends JPanel implements Runnable {
             }
 
             String name = playerData.getName();
+            int size = tileSize * playerData.getScale();
 
-            playerData.draw(g2d, x, y, tileSize * playerData.getScale());
+
+            playerData.draw(g2d, x, y, size);
+
+            if (playerData.isShieldActive()) {
+                // save old state
+                Color oldColor = g2d.getColor();
+                Stroke oldStroke = g2d.getStroke();
+
+                // light blue with slight transparency
+                g2d.setColor(new Color(135, 206, 250, 180)); // light sky blue
+                g2d.setStroke(new BasicStroke(3f));
+
+                int padding = 3;
+                g2d.drawRoundRect(
+                        x - padding,
+                        y - padding,
+                        size + padding * 2,
+                        size + padding * 2,
+                        10, 10
+                );
+
+                // restore old state
+                g2d.setColor(oldColor);
+                g2d.setStroke(oldStroke);
+            }
             Panels.drawNameBox(g2d, name, x, y, tileSize * playerData.getScale());
-            playerData.drawHealthBar(g2d, x, y, tileSize * playerData.getScale(), Color.GREEN);
+            playerData.drawHealthAndArmorBar(g2d, x, y, tileSize * playerData.getScale(), Color.GREEN);
         }
     }
 
@@ -465,6 +500,7 @@ public final class GamePanel extends JPanel implements Runnable {
                 }
 
 
+                case PlayerDefenseUpdateMessage(UUID playerId, int armorCount, boolean isShieldActive) -> state.updatePlayerShields(playerId, armorCount, isShieldActive);
             }
             processed++;
         }

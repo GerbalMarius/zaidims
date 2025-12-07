@@ -12,6 +12,7 @@ public class BigZombie extends Zombie {
         this.size = EnemySize.BIG;
         scale = 5;
         createHitbox();
+        setPiercingFactor(0.5);
     }
 
     @Override

@@ -10,6 +10,8 @@ public final class MaxHpDecorator extends PlayerDecorator {
         super(wrappedPlayer);
         this.bonusHp = bonusHp;
     }
+    @Override
+    public void setMaxHitPoints(int hp) {super.setMaxHitPoints(hp - bonusHp);}
 
     @Override
     public int getMaxHitPoints() { return super.getMaxHitPoints() +  bonusHp; }

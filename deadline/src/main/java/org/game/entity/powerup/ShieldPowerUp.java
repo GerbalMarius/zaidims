@@ -2,6 +2,7 @@ package org.game.entity.powerup;
 
 import org.game.entity.Player;
 import org.game.entity.damage_handler.ShieldDamageHandler;
+import org.game.entity.powerup.visitor.PowerUpVisitor;
 
 public final class ShieldPowerUp extends CorePowerUp {
     private final int blocks;
@@ -32,4 +33,6 @@ public final class ShieldPowerUp extends CorePowerUp {
 
         player.setShieldActive(true);
     }
+    @Override
+    public void accept(PowerUpVisitor visitor) {visitor.visit(this);}
 }

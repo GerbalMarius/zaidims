@@ -10,11 +10,8 @@ import org.game.client.mediator.Mediator;
 import org.game.client.shoot.ClientShootImpl;
 import org.game.client.shoot.ShootImplementation;
 import org.game.entity.*;
-import org.game.entity.decorator.AttackDecorator;
-import org.game.entity.decorator.SpeedDecorator;
-import org.game.entity.powerup.ArmorPowerUp;
 import org.game.entity.powerup.PowerUp;
-import org.game.entity.powerup.ShieldPowerUp;
+import org.game.entity.powerup.visitor.PowerUpApplicator;
 import org.game.entity.weapon.Weapon;
 import org.game.entity.weapon.WeaponFactory;
 import org.game.server.CollisionChecker;
@@ -55,6 +52,10 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
     @Getter
     private final TileManager tileManager;
     public CollisionChecker cChecker;
+
+    private PlayerMemento quickSaveState = null;
+    private boolean lastF5State = false;
+    private boolean lastF9State = false;
 
     public GamePanel(UUID clientId,
                      GameState state,
@@ -115,6 +116,8 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
 
         checkPlayerPowerUpCollision(currentPlayer);
 
+        handleMementoInput(currentPlayer);
+
         if (currentPlayer != null) {
             currentPlayer.updateCameraPos(
                     this.camera,
@@ -150,6 +153,48 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
         updateProjectiles(state.getEnemies().values());
     }
 
+    private void handleMementoInput(Player player) {
+        if (player == null) return;
+
+        boolean f5 = keyboardHandler.isSavePressed();
+        boolean f9 = keyboardHandler.isLoadPressed();
+
+        if (f5 && !lastF5State) {
+            this.quickSaveState = player.createMemento();
+            log.info("Checkpoint saved! HP: {}", player.getHitPoints());
+        }
+
+        if (f9 && !lastF9State) {
+            if (this.quickSaveState != null) {
+
+                player.restoreMemento(this.quickSaveState);
+                log.info("Checkpoint loaded!");
+
+                this.camera.snapTo(
+                        player.getGlobalX(),
+                        player.getGlobalY(),
+                        getHeight(),
+                        getWidth(),
+                        WorldSettings.WORLD_WIDTH,
+                        WorldSettings.WORLD_HEIGHT
+                );
+
+                if (movementCoordinator != null) {
+                    movementCoordinator.teleportTo(player.getGlobalX(), player.getGlobalY());
+                }
+
+                if (mediator != null) {
+                    mediator.onPlayerStateRestored(player);
+                }
+            } else {
+                log.warn("No checkpoint to load!");
+            }
+        }
+
+        lastF5State = f5;
+        lastF9State = f9;
+    }
+
     public void initializeWeapon(ClassType classType) {
         ShootImplementation clientImpl = new ClientShootImpl(state);
         this.weapon = WeaponFactory.createFor(classType, clientImpl);
@@ -171,19 +216,10 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
                 continue;
             }
 
-            Player decoratedPlayer = switch (powerUp.getClass().getSimpleName().toLowerCase()) {
-                case String s when s.contains("attack") -> new AttackDecorator(player, 5);
-                case String s when s.contains("speed") -> new SpeedDecorator(player, 1);
-                case String s when s.contains("armor") -> {
-                    ((ArmorPowerUp) powerUp).applyTo(player);
-                    yield player;
-                }
-                case String s when s.contains("shield") -> {
-                    ((ShieldPowerUp) powerUp).applyTo(player);
-                    yield player;
-                }
-                default -> player;
-            };
+            PowerUpApplicator applicator = new PowerUpApplicator(player);
+            powerUp.accept(applicator);
+
+            Player decoratedPlayer = applicator.getResultingPlayer();
 
             state.setPlayer(clientId, decoratedPlayer);
 

@@ -12,6 +12,9 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
     private boolean leftPressed;
 
     private boolean rightPressed;
+    private boolean savePressed; // F5
+    private boolean loadPressed; // F9
+
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -20,6 +23,9 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
             case KeyEvent.VK_LEFT, KeyEvent.VK_A -> leftPressed = true;
             case KeyEvent.VK_DOWN, KeyEvent.VK_S -> downPressed = true;
             case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> rightPressed = true;
+            case KeyEvent.VK_F5 -> savePressed = true;
+            case KeyEvent.VK_F9 -> loadPressed = true;
+
         }
 
     }
@@ -31,6 +37,8 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
             case KeyEvent.VK_LEFT, KeyEvent.VK_A -> leftPressed = false;
             case KeyEvent.VK_DOWN, KeyEvent.VK_S -> downPressed = false;
             case KeyEvent.VK_RIGHT, KeyEvent.VK_D -> rightPressed = false;
+            case KeyEvent.VK_F5 -> savePressed = false;
+            case KeyEvent.VK_F9 -> loadPressed = false;
 
         }
     }
@@ -54,4 +62,9 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
     public boolean isRightPressed() {
         return rightPressed;
     }
+    @Override
+    public boolean isSavePressed() { return savePressed; }
+
+    @Override
+    public boolean isLoadPressed() { return loadPressed; }
 }

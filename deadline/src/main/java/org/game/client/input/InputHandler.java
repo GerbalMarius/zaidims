@@ -65,6 +65,17 @@ public interface InputHandler {
         return false;
     }
 
+
+    /**
+     * @return true, if pressed save (F5).
+     */
+    default boolean isSavePressed() { return false; }
+
+    /**
+     * @return true, if pressed load (F9).
+     */
+    default boolean isLoadPressed() { return false; }
+
     /**
      * Updates the internal state of input detection.
      * <p>
@@ -84,6 +95,6 @@ public interface InputHandler {
      */
     default boolean anyKeyPressed() {
         return isLeftPressed() || isUpPressed() || isRightPressed() || isDownPressed()
-                || isPrimaryClicked() || isSecondaryClicked();
+                || isPrimaryClicked() || isSecondaryClicked() || isSavePressed() || isLoadPressed();
     }
 }

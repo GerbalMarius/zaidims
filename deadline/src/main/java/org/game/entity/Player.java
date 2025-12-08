@@ -242,4 +242,45 @@ public non-sealed class Player extends Entity {
             g2.drawImage(ARMOR_ICON, iconX, iconY, iconWidth, iconHeight, null);
         }
     }
+
+    public PlayerMemento createMemento() {
+        return new PlayerSnapshot(
+                this.globalX,
+                this.globalY,
+                this.hitPoints,
+                this.armorCount,
+                this.isShieldActive
+        );
+    }
+
+
+    public void restoreMemento(PlayerMemento memento) {
+        if (memento instanceof PlayerSnapshot snapshot) {
+
+            this.setGlobalX(snapshot.x);
+            this.setGlobalY(snapshot.y);
+            this.setHitPoints(snapshot.hp);
+            this.setArmorCount(snapshot.armor);
+            this.setShieldActive(snapshot.shield);
+
+
+            this.setPrevX(snapshot.x);
+            this.setPrevY(snapshot.y);
+            this.setTargetX(snapshot.x);
+            this.setTargetY(snapshot.y);
+            this.setLastUpdateTime(System.currentTimeMillis());
+        } else {
+            throw new IllegalArgumentException("Invalid memento type provided to Player!");
+        }
+    }
+
+
+    // Invisible to GamePanel, Mediator, etc. Enforces encapsulation.
+    private record PlayerSnapshot(
+            int x,
+            int y,
+            int hp,
+            int armor,
+            boolean shield
+    ) implements PlayerMemento {}
 }

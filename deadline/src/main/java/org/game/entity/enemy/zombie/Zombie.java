@@ -45,4 +45,3 @@ public abstract class Zombie extends Enemy {
         }
     }
 }
-

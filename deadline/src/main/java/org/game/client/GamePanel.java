@@ -10,11 +10,8 @@ import org.game.client.mediator.Mediator;
 import org.game.client.shoot.ClientShootImpl;
 import org.game.client.shoot.ShootImplementation;
 import org.game.entity.*;
-import org.game.entity.decorator.AttackDecorator;
-import org.game.entity.decorator.SpeedDecorator;
-import org.game.entity.powerup.ArmorPowerUp;
 import org.game.entity.powerup.PowerUp;
-import org.game.entity.powerup.ShieldPowerUp;
+import org.game.entity.powerup.visitor.PowerUpApplicator;
 import org.game.entity.weapon.Weapon;
 import org.game.entity.weapon.WeaponFactory;
 import org.game.server.CollisionChecker;
@@ -219,19 +216,10 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
                 continue;
             }
 
-            Player decoratedPlayer = switch (powerUp.getClass().getSimpleName().toLowerCase()) {
-                case String s when s.contains("attack") -> new AttackDecorator(player, 5);
-                case String s when s.contains("speed") -> new SpeedDecorator(player, 1);
-                case String s when s.contains("armor") -> {
-                    ((ArmorPowerUp) powerUp).applyTo(player);
-                    yield player;
-                }
-                case String s when s.contains("shield") -> {
-                    ((ShieldPowerUp) powerUp).applyTo(player);
-                    yield player;
-                }
-                default -> player;
-            };
+            PowerUpApplicator applicator = new PowerUpApplicator(player);
+            powerUp.accept(applicator);
+
+            Player decoratedPlayer = applicator.getResultingPlayer();
 
             state.setPlayer(clientId, decoratedPlayer);
 

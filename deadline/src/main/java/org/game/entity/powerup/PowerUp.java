@@ -1,5 +1,7 @@
 package org.game.entity.powerup;
 
+import org.game.entity.powerup.visitor.PowerUpVisitor;
+
 import java.awt.*;
 
 public interface PowerUp {
@@ -10,4 +12,6 @@ public interface PowerUp {
     Rectangle getHitbox();
 
     PowerUpType getType();
+
+    void accept(PowerUpVisitor visitor);
 }

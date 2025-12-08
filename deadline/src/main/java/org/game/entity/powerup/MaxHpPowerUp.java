@@ -1,6 +1,7 @@
 package org.game.entity.powerup;
 
 import lombok.Getter;
+import org.game.entity.powerup.visitor.PowerUpVisitor;
 
 @Getter
 public final class MaxHpPowerUp extends CorePowerUp {
@@ -16,4 +17,7 @@ public final class MaxHpPowerUp extends CorePowerUp {
     public PowerUpType getType() {
         return PowerUpType.MAX_HP;
     }
+
+    @Override
+    public void accept(PowerUpVisitor visitor) {visitor.visit(this);}
 }

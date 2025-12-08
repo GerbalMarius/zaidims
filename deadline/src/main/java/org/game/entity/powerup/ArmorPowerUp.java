@@ -2,6 +2,7 @@ package org.game.entity.powerup;
 
 import org.game.entity.Player;
 import org.game.entity.damage_handler.ArmorDamageHandler;
+import org.game.entity.powerup.visitor.PowerUpVisitor;
 
 public final class ArmorPowerUp extends CorePowerUp {
     private final int flatReduction;
@@ -30,4 +31,6 @@ public final class ArmorPowerUp extends CorePowerUp {
             player.setArmorCount(numUsages);
         }
     }
+    @Override
+    public void accept(PowerUpVisitor visitor) {visitor.visit(this);}
 }

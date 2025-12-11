@@ -30,11 +30,11 @@ public final class PowerUpManager {
 
     // Spawn chances in one neat map (weights, not necessarily summing to 1.0)
     private final Map<PowerUpType, Double> spawnWeights = Map.of(
-            PowerUpType.SPEED, 0.10,
-            PowerUpType.ATTACK, 0.35,
-            PowerUpType.MAX_HP, 0.30,
-            PowerUpType.ARMOR, 0.15,
-            PowerUpType.SHIELD, 0.20
+            PowerUpType.SPEED, 0.0,
+            PowerUpType.ATTACK, 0.0,
+            PowerUpType.MAX_HP, 0.0,
+            PowerUpType.ARMOR, 0.5,
+            PowerUpType.SHIELD, 0.5
     );
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();

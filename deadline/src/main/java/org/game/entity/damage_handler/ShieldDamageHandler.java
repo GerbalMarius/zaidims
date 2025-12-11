@@ -3,7 +3,7 @@ package org.game.entity.damage_handler;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class ShieldDamageHandler extends CoreDamageHandler {
+public final class ShieldDamageHandler implements DamageHandler {
     private int remainingBlocks;
     public ShieldDamageHandler(int blocks) {
         this.remainingBlocks = blocks;
@@ -16,7 +16,7 @@ public final class ShieldDamageHandler extends CoreDamageHandler {
     }
 
     @Override
-    public boolean doContinue(DamageContext ctx) {
+    public boolean handle(DamageContext ctx) {
         if (ctx.getDamage() <= 0) {
             return true;
         }

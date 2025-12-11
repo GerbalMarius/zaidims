@@ -1,5 +1,6 @@
 package org.game.entity.powerup;
 
+import org.game.entity.DamageApplier;
 import org.game.entity.Player;
 import org.game.entity.damage_handler.ArmorDamageHandler;
 import org.game.entity.powerup.visitor.PowerUpVisitor;
@@ -20,14 +21,15 @@ public final class ArmorPowerUp extends CorePowerUp {
     }
     public void applyTo(Player player) {
 
-        ArmorDamageHandler existing = player.findArmorHandler();
+        DamageApplier damageApplier = player.getDamageApplier();
+        ArmorDamageHandler existing =  damageApplier.findHandler(ArmorDamageHandler.class);
         if (existing != null) {
             existing.addHits(numUsages, player.getMaxArmorCount());
             player.setArmorCount(Math.min(player.getArmorCount() + numUsages, player.getMaxArmorCount()));
         } else {
             ArmorDamageHandler handler = new ArmorDamageHandler(flatReduction);
             handler.addHits(numUsages, player.getMaxArmorCount());
-            player.addHandler(handler);
+            damageApplier.addHandler(handler);
             player.setArmorCount(numUsages);
         }
     }

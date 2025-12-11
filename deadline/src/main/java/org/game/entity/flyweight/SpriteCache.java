@@ -19,7 +19,7 @@ public final class SpriteCache {
      **/
     public static ImageSprite[] getOrLoad(String source, String prefix) {
         String key = source + "::" + prefix;
-        return CACHE.computeIfAbsent(key, k -> loadSprites(source, prefix));
+        return CACHE.computeIfAbsent(key, _ -> loadSprites(source, prefix));
     }
 
     private static ImageSprite[] loadSprites(String source, String prefix) {

@@ -2,7 +2,7 @@ package org.game.entity.damage_handler;
 
 import org.game.entity.Player;
 
-public final class ArmorDamageHandler extends CoreDamageHandler {
+public final class ArmorDamageHandler implements DamageHandler {
     private final int flatReduction;
 
     private static final int DEFAULT_HIT_LIMIT = 3;
@@ -16,7 +16,7 @@ public final class ArmorDamageHandler extends CoreDamageHandler {
         this.remainingHits = Math.min(remainingHits + hits, limit);
     }
     @Override
-    public boolean doContinue(DamageContext ctx) {
+    public boolean handle(DamageContext ctx) {
         Player target = ctx.getTarget();
 
         if (ctx.isArmorApplied()) {

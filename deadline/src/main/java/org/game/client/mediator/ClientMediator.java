@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.game.client.Client;
 import org.game.client.GameState;
 import org.game.entity.*;
+import org.game.entity.ClassType;
+import org.game.entity.Player;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
 import org.game.json.Json;

@@ -24,12 +24,6 @@ public final class FleeState implements EnemyState {
     public void update(EnemyStateContext context, Enemy enemy, Collection<Player> players,
                        Map<Long, Enemy> allEnemies, CollisionChecker checker, Server server) {
 
-        double hpRatio = (double) enemy.getHitPoints() / enemy.getMaxHitPoints();
-        if (hpRatio >= RECOVERY_HP_THRESHOLD) {
-            context.setState(IdleState.getInstance());
-            return;
-        }
-
         Player threat = enemy.getClosestPlayer(players);
         if (threat == null) {
             // No players, just wander away randomly

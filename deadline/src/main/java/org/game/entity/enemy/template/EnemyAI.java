@@ -44,8 +44,7 @@ public abstract class EnemyAI {
     }
 
     protected void executeState(Enemy enemy, Collection<Player> players, Map<Long, Enemy> enemies, CollisionChecker checker, Server server) {
-        EnemyState state = enemy.getState();
-        if (state != null) {
+        if (enemy.getState() != null) {
             enemy.getStateContext().update(enemy, players, enemies, checker, server);
         }
     }

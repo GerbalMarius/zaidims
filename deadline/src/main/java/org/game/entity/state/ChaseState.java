@@ -22,12 +22,6 @@ public final class ChaseState implements EnemyState {
     public void update(EnemyStateContext context, Enemy enemy, Collection<Player> players,
                        Map<Long, Enemy> allEnemies, CollisionChecker checker, Server server) {
 
-        double hpRatio = (double) enemy.getHitPoints() / enemy.getMaxHitPoints();
-        if (hpRatio <= context.getFleeHpThreshold()) {
-            context.setState(FleeState.getInstance());
-            return;
-        }
-
         Player target = enemy.getClosestPlayer(players);
         if (target == null || target.isDead()) {
             context.setState(IdleState.getInstance());

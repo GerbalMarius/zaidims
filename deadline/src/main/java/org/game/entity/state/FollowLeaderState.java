@@ -29,13 +29,6 @@ public final class FollowLeaderState implements EnemyState {
             return;
         }
 
-        // Check for low HP -> Flee
-        double hpRatio = (double) enemy.getHitPoints() / enemy.getMaxHitPoints();
-        if (hpRatio <= context.getFleeHpThreshold()) {
-            context.setState(FleeState.getInstance());
-            return;
-        }
-
         // Check for nearby players -> Chase
         Player nearest = enemy.getClosestPlayer(players);
         if (nearest != null) {

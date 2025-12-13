@@ -3,6 +3,7 @@ package org.game.entity.enemy.template;
 import lombok.extern.slf4j.Slf4j;
 import org.game.entity.Enemy;
 import org.game.entity.Player;
+import org.game.entity.state.EnemyState;
 import org.game.server.CollisionChecker;
 import org.game.server.Server;
 
@@ -12,7 +13,7 @@ import java.util.Map;
 @Slf4j
 public abstract class EnemyAI {
 
-    public final void updateAI( Enemy enemy,
+    public void updateAI( Enemy enemy,
                             Collection<Player> players,
                             Map<Long, Enemy> enemies,
                             CollisionChecker checker,
@@ -24,13 +25,13 @@ public abstract class EnemyAI {
         double distance = enemy.calculateDistanceTo(target);
 
         if (isInVisionRange(enemy, distance)) {
-            chooseStrategy(enemy, target);
+            chooseState(enemy, target);
             tryAttack(enemy, target, server);
         } else {
             handleOutOfRange(enemy);
         }
 
-        executeStrategy(enemy, players, enemies, checker);
+        executeState(enemy, players, enemies, checker, server);
     }
 
     // Hooks – overridable
@@ -42,14 +43,15 @@ public abstract class EnemyAI {
         enemy.tryAttack(target, server);
     }
 
-    protected void executeStrategy(Enemy enemy, Collection<Player> players, Map<Long, Enemy> enemies, CollisionChecker checker) {
-        if(enemy.getStrategy() != null) {
-            enemy.getStrategy().execute(enemy, players, enemies, checker);
+    protected void executeState(Enemy enemy, Collection<Player> players, Map<Long, Enemy> enemies, CollisionChecker checker, Server server) {
+        EnemyState state = enemy.getState();
+        if (state != null) {
+            enemy.getStateContext().update(enemy, players, enemies, checker, server);
         }
     }
 
     // override in specific ai
-    protected abstract void chooseStrategy(Enemy enemy, Player target);
+    protected abstract void chooseState(Enemy enemy, Player target);
 
     protected abstract void handleOutOfRange(Enemy enemy);
 

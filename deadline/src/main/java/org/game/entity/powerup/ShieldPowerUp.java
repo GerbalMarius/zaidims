@@ -1,5 +1,6 @@
 package org.game.entity.powerup;
 
+import org.game.entity.DamageApplier;
 import org.game.entity.Player;
 import org.game.entity.damage_handler.ShieldDamageHandler;
 import org.game.entity.powerup.visitor.PowerUpVisitor;
@@ -21,7 +22,8 @@ public final class ShieldPowerUp extends CorePowerUp {
             return;
         }
 
-        ShieldDamageHandler existing = player.findShieldHandler();
+        DamageApplier damageApplier = player.getDamageApplier();
+        ShieldDamageHandler existing = damageApplier.findHandler(ShieldDamageHandler.class);
         if (existing != null) {
             player.setShieldActive(true);
             existing.incBlockCount();
@@ -29,7 +31,7 @@ public final class ShieldPowerUp extends CorePowerUp {
         }
 
         ShieldDamageHandler handler = new ShieldDamageHandler(blocks);
-        player.addHandler(handler);
+        damageApplier.addHandler(handler);
 
         player.setShieldActive(true);
     }

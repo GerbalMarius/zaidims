@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.entity.*;
+import org.game.entity.ClassType;
+import org.game.entity.Player;
 import org.game.entity.powerup.ArmorPowerUp;
 import org.game.entity.powerup.PowerUp;
 import org.game.entity.powerup.PowerUpType;
@@ -94,7 +96,7 @@ public final class Server {
                     else if (key.isWritable()) write(key);
                 } catch (IOException e) {
                     closeKey(key);
-                    log.error("Error handling key", e);
+                    log.error("Error handling key : {}", e.getMessage());
                 }
             }
         }

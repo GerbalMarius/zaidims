@@ -1,7 +1,7 @@
 package org.game.entity.enemy.wave;
 
 import org.game.entity.Enemy;
-import org.game.entity.strategy.FollowLeaderStrategy;
+import org.game.entity.state.FollowLeaderState;
 import org.game.server.Server;
 import org.game.server.Server.ServerActions;
 import org.game.tiles.TileManager;
@@ -70,7 +70,7 @@ public final class SquadGroup extends SingleEnemySpawn implements WaveEntry {
             follower.setGroupLeader(false);
             follower.setGroupLeaderRef(leader);
 
-            follower.setStrategy(new FollowLeaderStrategy(leader, i * spacing, 0));
+            follower.getStateContext().setState(new FollowLeaderState(leader, i * spacing, 0));
 
             ServerActions.spawnEnemy(server, follower, x, centerY);
         }

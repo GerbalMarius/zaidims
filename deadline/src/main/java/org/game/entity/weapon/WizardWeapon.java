@@ -2,7 +2,6 @@ package org.game.entity.weapon;
 
 import org.game.client.shoot.ShootImplementation;
 import org.game.entity.Player;
-import org.game.entity.Projectile;
 import org.game.entity.attack.ProjectileAttack;
 
 import java.util.Collections;

@@ -4,7 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.entity.enemy.template.EnemyAI;
-import org.game.entity.strategy.*;
+import org.game.entity.state.EnemyState;
+import org.game.entity.state.EnemyStateContext;
+import org.game.entity.state.PatrolState;
 import org.game.json.Json;
 import org.game.message.Message;
 import org.game.message.PlayerDefenseUpdateMessage;
@@ -28,8 +30,6 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
     protected EnemyType  type;
     protected EnemySize  size;
 
-    protected EnemyStrategy strategy;
-
     protected EnemyAI ai;
 
     private long lastAttackTime = 0;
@@ -46,21 +46,17 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
 
     private double piercingFactor = 0.0;
 
+    private EnemyStateContext stateContext = new EnemyStateContext();
 
     protected Enemy(int x, int y) {
         super(x, y);
-
-        this.strategy = (type == EnemyType.SKELETON) ? enablePatrolStrategy() : new WanderStrategy();
-    }
-    protected void createHitbox() {
-        this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
     }
 
-    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker, Server server) {
-        ai.updateAI(this, players, allEnemies, checker, server);
+    public EnemyState getState() {
+        return stateContext.getCurrentState();
     }
 
-    public EnemyStrategy enablePatrolStrategy() {
+    public PatrolState createPatrolState() {
         int x = getGlobalX();
         int y = getGlobalY();
 
@@ -70,7 +66,15 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
                 {x + 150, y + 150},
                 {x, y + 150}
         };
-        return new PatrolStrategy(patrolRoute);
+        return new PatrolState(patrolRoute);
+    }
+
+    protected void createHitbox() {
+        this.hitbox = new Rectangle(8, 16, 11*scale, 11*scale);
+    }
+
+    public void updateAI(Collection<Player> players, Map<Long, Enemy> allEnemies, CollisionChecker checker, Server server) {
+        ai.updateAI(this, players, allEnemies, checker, server);
     }
 
     public void tryAttack(Player target, Server server) {
@@ -193,6 +197,5 @@ public abstract non-sealed class Enemy extends Entity implements Prototype {
             throw new RuntimeException("Unable to clone entity : " + this.getClass().getSimpleName(), e);
         }
     }
-
 
 }

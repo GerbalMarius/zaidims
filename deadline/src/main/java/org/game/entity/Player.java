@@ -28,7 +28,8 @@ public non-sealed class Player extends Entity {
 
     private long lastRegenTimestamp;
 
-    private DamageHandler damageHandler;
+    private final DamageApplier damageApplier = new DamageApplier();
+
 
     @Setter
     private boolean isShieldActive = false;
@@ -75,8 +76,8 @@ public non-sealed class Player extends Entity {
         this.lastAttackTimestamp = 0L;
 
         //def damage appliers + piercing respect
-        this.damageHandler = new RawDamageHandler();
-        this.addHandler(new PiercingDamageHandler());
+        this.damageApplier.addHandler(new RawDamageHandler());
+        this.damageApplier.addHandler(new PiercingDamageHandler());
     }
 
 
@@ -93,19 +94,19 @@ public non-sealed class Player extends Entity {
         switch (this.playerClass) {
             case WARRIOR -> {
                 speed = 3;
-                maxArmorCount = 10;
+                maxArmorCount = 8;
                 maxHitPoints = hitPoints = 100;
                 attack = 25;
             }
             case WIZARD -> {
                 speed = 4;
-                maxArmorCount = 5;
+                maxArmorCount = 6;
                 maxHitPoints = hitPoints = 50;
                 attack = 30;
             }
             case ROGUE -> {
                 speed = 5;
-                maxArmorCount = 3;
+                maxArmorCount = 4;
                 maxHitPoints = hitPoints = 70;
                 attack = 15;
             }
@@ -141,56 +142,11 @@ public non-sealed class Player extends Entity {
         return false;
     }
 
-    public void addHandler(DamageHandler handler) {
-
-        // Empty chain: just set head
-        if (this.damageHandler == null) {
-            this.damageHandler = handler;
-            return;
-        }
-
-        DamageHandler head = this.damageHandler;
-
-        if (handler.priority() < head.priority()) {
-            handler.linkNext(this.damageHandler);
-            this.damageHandler = handler;
-            return;
-        }
-
-        DamageHandler current = this.damageHandler;
-        while (current.getNext() != null &&
-                current.getNext().priority() <= handler.priority()) {
-
-            current = current.getNext();
-        }
-
-        handler.linkNext(current.getNext());
-        current.linkNext(handler);
-    }
-
-    public ArmorDamageHandler findArmorHandler() {
-        for (DamageHandler handler = this.damageHandler; handler != null; handler = handler.getNext()) {
-            if (handler instanceof ArmorDamageHandler armorHandler) {
-                return armorHandler;
-            }
-        }
-        return null;
-    }
-
-    public ShieldDamageHandler findShieldHandler() {
-        for (DamageHandler handler = this.damageHandler; handler != null; handler = handler.getNext()) {
-            if (handler instanceof ShieldDamageHandler shieldHandler) {
-                return shieldHandler;
-            }
-        }
-        return null;
-    }
-
     public void receiveHit(int rawDamage, Enemy source) {
         if (isDead()) return;
 
         DamageContext ctx = new DamageContext(rawDamage, this, source);
-        damageHandler.handle(ctx);
+        damageApplier.applyDamage(ctx);
 
     }
 
@@ -255,19 +211,19 @@ public non-sealed class Player extends Entity {
 
 
     public void restoreMemento(PlayerMemento memento) {
-        if (memento instanceof PlayerSnapshot snapshot) {
+        if (memento instanceof PlayerSnapshot(int x, int y, int hp, int armor, boolean shield)) {
 
-            this.setGlobalX(snapshot.x);
-            this.setGlobalY(snapshot.y);
-            this.setHitPoints(snapshot.hp);
-            this.setArmorCount(snapshot.armor);
-            this.setShieldActive(snapshot.shield);
+            this.setGlobalX(x);
+            this.setGlobalY(y);
+            this.setHitPoints(hp);
+            this.setArmorCount(armor);
+            this.setShieldActive(shield);
 
 
-            this.setPrevX(snapshot.x);
-            this.setPrevY(snapshot.y);
-            this.setTargetX(snapshot.x);
-            this.setTargetY(snapshot.y);
+            this.setPrevX(x);
+            this.setPrevY(y);
+            this.setTargetX(x);
+            this.setTargetY(y);
             this.setLastUpdateTime(System.currentTimeMillis());
         } else {
             throw new IllegalArgumentException("Invalid memento type provided to Player!");

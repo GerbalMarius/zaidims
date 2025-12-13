@@ -22,6 +22,8 @@ public interface Mediator {
 
     void processServerMessagesForFrame();
 
+    void sendChatMessage(String message);
+
     void start();
     void shutdown();
 }

@@ -141,6 +141,8 @@ public final class ClientMediator implements Mediator {
                         view.onLocalPlayerMoveFromServer(x, y);
                     }
                 }
+                case ChatMessage(String playerName, String chatMessage, long timestamp) ->
+                        client.getChatUI().addMessage(playerName, chatMessage);
                 case EnemySpawnMessage(long enemyId, EnemyType type, EnemySize size, int newX, int newY) ->
                         gameState.spawnEnemyFromServer(enemyId, type, size, newX, newY);
                 case EnemyRemoveMessage(long enemyId) -> gameState.removeEnemy(enemyId);
@@ -361,5 +363,9 @@ public final class ClientMediator implements Mediator {
         } else {
             key.cancel();
         }
+    }
+    public void sendChatMessage(String message) {
+        ChatMessage chatMessage = new ChatMessage(client.getPlayerName(), message, System.currentTimeMillis());
+        sendLocalInput(json.toJson(chatMessage, labelPair(Message.JSON_LABEL, "chat")));
     }
 }

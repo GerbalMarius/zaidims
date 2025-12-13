@@ -2,6 +2,7 @@ package org.game.client;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.game.client.components.ChatUI;
 import org.game.client.input.ControllerAdapter;
 import org.game.client.input.KeyboardHandler;
 import org.game.client.input.MouseHandler;
@@ -52,6 +53,8 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
 
     private Thread gameThread;
 
+    private final ChatUI chatUI;
+
     @Getter
     private final TileManager tileManager;
     public CollisionChecker cChecker;
@@ -64,7 +67,8 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
                      GameState state,
                      KeyboardHandler keyboardHandler,
                      MouseHandler mouseHandler,
-                     ControllerAdapter adapter) {
+                     ControllerAdapter adapter,
+                     ChatUI chatUI) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
@@ -73,6 +77,7 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
         this.camera = new Camera(0.12, 80, 50);
         this.tileManager = new TileManager();
         this.cChecker = new CollisionChecker(tileManager);
+        this.chatUI = chatUI;
 
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -245,6 +250,7 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
+        Graphics2D g2 = (Graphics2D) g;
 
         double targetX = getWidth() / 2.0 - camera.getX();
         double targetY = getHeight() / 2.0 - camera.getY();
@@ -262,6 +268,8 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
         for (Projectile p : state.getProjectiles().values()) {
             p.draw(g2d);
         }
+
+        chatUI.render(g2, getWidth(), getHeight());
 
         g2d.dispose();
         Graphics2D uiGraphics = (Graphics2D) g.create();
@@ -380,5 +388,4 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
                 mediator
         );
     }
-
 }

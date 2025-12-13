@@ -20,7 +20,6 @@ public final class SkeletonAI extends EnemyAI {
             }
             return;
         }
-
         // Otherwise chase
         if (!(enemy.getState() instanceof ChaseState)) {
             enemy.getStateContext().setState(ChaseState.getInstance());

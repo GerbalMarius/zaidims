@@ -26,7 +26,8 @@ public final class Json {
         RuntimeTypeAdapterFactory<Message> coreMessages = parent
                 .registerSubtype(JoinMessage.class, "join")
                 .registerSubtype(LeaveMessage.class, "leave")
-                .registerSubtype(MoveMessage.class, "move");
+                .registerSubtype(MoveMessage.class, "move")
+                .registerSubtype(ChatMessage.class, "chat");
 
         RuntimeTypeAdapterFactory<Message> enemyMessages = coreMessages
                 .registerSubtype(EnemyMoveMessage.class, "enemyMove")

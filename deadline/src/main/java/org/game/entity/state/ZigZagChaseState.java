@@ -9,6 +9,7 @@ import org.game.server.Server;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ZigZagChaseState implements EnemyState {
@@ -99,4 +100,8 @@ public final class ZigZagChaseState implements EnemyState {
 
     @Override
     public String getStateName() { return "ZIGZAG_CHASE"; }
+    @Override
+    public Set<Class<? extends EnemyState>> getAllowedTransitions() {
+        return Set.of(IdleState.class, FleeState.class);
+    }
 }

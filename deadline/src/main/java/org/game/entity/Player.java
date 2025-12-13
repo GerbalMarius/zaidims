@@ -10,6 +10,7 @@ import org.game.utils.ByteFiles;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -28,7 +29,7 @@ public non-sealed class Player extends Entity {
 
     private long lastRegenTimestamp;
 
-    private final DamageApplier damageApplier = new DamageApplier();
+    private DamageApplier damageApplier;
 
 
     @Setter
@@ -54,7 +55,7 @@ public non-sealed class Player extends Entity {
     @Setter
     private AttackBehavior attackBehavior;
 
-    private long lastAttackTimestamp;
+    private final long lastAttackTimestamp;
 
     public Player(ClassType type, String name, int x, int y) {
         Objects.requireNonNull(name);
@@ -75,9 +76,15 @@ public non-sealed class Player extends Entity {
 
         this.lastAttackTimestamp = 0L;
 
-        //def damage appliers + piercing respect
-        this.damageApplier.addHandler(new RawDamageHandler());
-        this.damageApplier.addHandler(new PiercingDamageHandler());
+        this.damageApplier = new DamageApplier(List.of(
+                new RawDamageHandler(),
+                new PiercingDamageHandler()
+        ));
+    }
+
+    public Player(ClassType type, String name, int x, int y, DamageApplier damageApplier) {
+        this(type, name, x, y);
+        this.damageApplier = new DamageApplier(damageApplier);
     }
 
 

@@ -265,6 +265,10 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
 
         g2d.dispose();
         Graphics2D uiGraphics = (Graphics2D) g.create();
+
+        Player localPlayer = state.getPlayer(clientId);
+        PlayerStatsUI.draw(uiGraphics, localPlayer);
+
         GlobalUI.getInstance().drawCounter(uiGraphics, getWidth());
         uiGraphics.dispose();
     }

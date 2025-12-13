@@ -32,15 +32,6 @@ public final class GoblinAI extends EnemyAI {
 
     @Override
     protected void handleOutOfRange(Enemy enemy) {
-        // Still run away if HP is low
-        double hpRatio = (double) enemy.getHitPoints() / enemy.getMaxHitPoints();
-        if (hpRatio <= FLEE_HP_THRESHOLD) {
-            if (!(enemy.getState() instanceof FleeState)) {
-                enemy.getStateContext().setState(FleeState.getInstance());
-            }
-            return;
-        }
-
         EnemyState state = enemy.getState();
         if (!(state instanceof IdleState) && !(state instanceof FollowLeaderState)) {
             enemy.getStateContext().setState(IdleState.getInstance());

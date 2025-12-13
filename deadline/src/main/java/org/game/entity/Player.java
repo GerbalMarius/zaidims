@@ -10,6 +10,7 @@ import org.game.utils.ByteFiles;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -75,7 +76,10 @@ public non-sealed class Player extends Entity {
 
         this.lastAttackTimestamp = 0L;
 
-        this.damageApplier = new DamageApplier(new RawDamageHandler(), new PiercingDamageHandler());
+        this.damageApplier = new DamageApplier(List.of(
+                new RawDamageHandler(),
+                new PiercingDamageHandler()
+        ));
     }
 
     public Player(ClassType type, String name, int x, int y, DamageApplier damageApplier) {

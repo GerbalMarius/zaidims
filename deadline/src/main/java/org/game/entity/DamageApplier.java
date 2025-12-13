@@ -3,10 +3,7 @@ package org.game.entity;
 import org.game.entity.damage_handler.DamageContext;
 import org.game.entity.damage_handler.DamageHandler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 public final class DamageApplier {
     private final SortedMap<Integer, List<DamageHandler>> damageHandlers;
@@ -15,7 +12,7 @@ public final class DamageApplier {
         damageHandlers = new TreeMap<>();
     }
 
-    public DamageApplier(DamageHandler... handlers) {
+    public DamageApplier(Collection<? extends DamageHandler> handlers) {
         this();
         for (DamageHandler handler : handlers) {
             addHandler(handler);

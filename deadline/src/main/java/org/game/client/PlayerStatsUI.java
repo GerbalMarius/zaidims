@@ -7,8 +7,8 @@ import java.awt.*;
 public final class PlayerStatsUI {
 
     private static final int PADDING = 12;
-    private static final int WIDTH = 220;
-    private static final int HEIGHT = 120;
+    private static final int WIDTH = 260;
+    private static final int HEIGHT = 140;
 
     private PlayerStatsUI() {}
 
@@ -25,44 +25,62 @@ public final class PlayerStatsUI {
         g2.setColor(Color.WHITE);
         g2.drawRoundRect(x, y, WIDTH, HEIGHT, 16, 16);
 
-        int textX = x + 12;
-        int textY = y + 20;
+        int textX = x + 14;
+        int textY = y + 26;
 
-        // ---- Name & class ----
-        g2.setFont(g2.getFont().deriveFont(Font.BOLD, 14f));
+        // ---- Name ----
+        g2.setFont(g2.getFont().deriveFont(Font.BOLD, 16f));
         g2.drawString(player.getName(), textX, textY);
 
-        g2.setFont(g2.getFont().deriveFont(Font.PLAIN, 12f));
+        // ---- Class ----
+        g2.setFont(g2.getFont().deriveFont(Font.PLAIN, 13f));
         g2.drawString(
                 player.getPlayerClass().name(),
                 textX,
-                textY + 14
+                textY + 16
         );
 
-        // ---- HP bar ----
+        // ---- HP BAR ----
+        int barX = textX;
+        int barY = textY + 36;
+        int barWidth = 210;
+        int barHeight = 14;
+
         drawBar(
                 g2,
-                textX,
-                textY + 26,
-                180,
-                10,
+                barX,
+                barY,
+                barWidth,
+                barHeight,
                 player.getHitPoints(),
                 player.getMaxHitPoints(),
-                Color.GREEN
+                new Color(200, 40, 40)
         );
 
-        // ---- Stats ----
-        int statsY = textY + 52;
+        // ---- HP TEXT CENTERED ----
+        String hpText = player.getHitPoints() + " / " + player.getMaxHitPoints();
+        g2.setFont(g2.getFont().deriveFont(Font.BOLD, 12f));
+        FontMetrics fm = g2.getFontMetrics();
+
+        int hpTextX = barX + (barWidth - fm.stringWidth(hpText)) / 2;
+        int hpTextY = barY + barHeight - 3;
+
+        g2.setColor(Color.WHITE);
+        g2.drawString(hpText, hpTextX, hpTextY);
+
+        // ---- STATS ----
+        int statsY = barY + 30;
+
+        g2.setFont(g2.getFont().deriveFont(Font.BOLD, 13f));
         g2.drawString("ATK: " + player.getAttack(), textX, statsY);
-        g2.drawString("SPD: " + player.getSpeed(), textX + 90, statsY);
+        g2.drawString("SPD: " + player.getSpeed(), textX + 110, statsY);
 
-        // ---- Armor ----
-        g2.drawString("Armor: " + player.getArmorCount(), textX, statsY + 16);
+        g2.drawString("ARMOR: " + player.getArmorCount(), textX, statsY + 18);
 
-        // ---- Shield ----
+        // ---- SHIELD ----
         if (player.isShieldActive()) {
             g2.setColor(new Color(135, 206, 250));
-            g2.drawString("SHIELD ACTIVE", textX, statsY + 32);
+            g2.drawString("SHIELD ACTIVE", textX, statsY + 36);
             g2.setColor(Color.WHITE);
         }
     }
@@ -82,13 +100,16 @@ public final class PlayerStatsUI {
         double ratio = Math.max(0, Math.min(1, (double) value / max));
         int filled = (int) (width * ratio);
 
+        // Background
         g2.setColor(Color.DARK_GRAY);
-        g2.fillRoundRect(x, y, width, height, 6, 6);
+        g2.fillRoundRect(x, y, width, height, 10, 10);
 
+        // Fill
         g2.setColor(color);
-        g2.fillRoundRect(x, y, filled, height, 6, 6);
+        g2.fillRoundRect(x, y, filled, height, 10, 10);
 
+        // Border
         g2.setColor(Color.WHITE);
-        g2.drawRoundRect(x, y, width, height, 6, 6);
+        g2.drawRoundRect(x, y, width, height, 10, 10);
     }
 }

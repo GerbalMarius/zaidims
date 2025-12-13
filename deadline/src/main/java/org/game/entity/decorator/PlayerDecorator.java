@@ -1,10 +1,8 @@
 package org.game.entity.decorator;
 
+import org.game.entity.FramePosition;
 import org.game.entity.Player;
 import org.game.entity.PlayerMemento;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
 
 public abstract class PlayerDecorator extends Player {
 
@@ -90,13 +88,19 @@ public abstract class PlayerDecorator extends Player {
     }
 
     @Override
-    public void drawHealthAndArmorBar(Graphics2D g2, int x, int y, int width, Color hpColor) {
-        wrappedPlayer.drawHealthAndArmorBar(g2, x, y, width, hpColor);
+    public PlayerMemento createMemento() {
+        return wrappedPlayer.createMemento();
+    }
+
+
+    @Override
+    public FramePosition getDirection() {
+        return wrappedPlayer.getDirection();
     }
 
     @Override
-    public PlayerMemento createMemento() {
-        return wrappedPlayer.createMemento();
+    public void setDirection(FramePosition direction) {
+        wrappedPlayer.setDirection(direction);
     }
 
     @Override

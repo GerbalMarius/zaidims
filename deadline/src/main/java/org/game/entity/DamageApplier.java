@@ -9,7 +9,22 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public final class DamageApplier {
-    private final SortedMap<Integer, List<DamageHandler>>  damageHandlers = new TreeMap<>();
+    private final SortedMap<Integer, List<DamageHandler>> damageHandlers;
+
+    public DamageApplier() {
+        damageHandlers = new TreeMap<>();
+    }
+
+    public DamageApplier(DamageHandler... handlers) {
+        this();
+        for (DamageHandler handler : handlers) {
+            addHandler(handler);
+        }
+    }
+
+    public DamageApplier(DamageApplier other) {
+        damageHandlers = new TreeMap<>(other.damageHandlers);
+    }
 
     public void addHandler(DamageHandler handler){
         damageHandlers

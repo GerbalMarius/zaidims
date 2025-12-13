@@ -272,6 +272,10 @@ public final class Server {
             }
 
             case PlayerDefenseUpdateMessage defMsg -> broadcast(json.toJson(defMsg, labelPair(Message.JSON_LABEL, "playerDefense")));
+            case ChatMessage chatMsg -> {
+                log.info("Chat from {}: {}", chatMsg.playerName(), chatMsg.message());
+                sendToAll(json.toJson(chatMsg, labelPair(Message.JSON_LABEL, "chat")));
+            }
         }
     }
 

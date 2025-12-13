@@ -3,6 +3,9 @@ package org.game.client.mediator;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.Client;
 import org.game.client.GameState;
+import org.game.client.components.CensoringChatProxy;
+import org.game.client.components.ChatService;
+import org.game.client.components.RealChatService;
 import org.game.entity.*;
 import org.game.entity.ClassType;
 import org.game.entity.Player;
@@ -31,6 +34,7 @@ public final class ClientMediator implements Mediator {
     private final Client client;
     private final GameState gameState;
     private final GameView view;
+    private final ChatService chatService;
 
     private final Json json = new Json();
 
@@ -51,6 +55,12 @@ public final class ClientMediator implements Mediator {
         this.client = client;
         this.gameState = gameState;
         this.view = view;
+
+        RealChatService realService = new RealChatService(
+                client.getChatUI(),
+                this::sendChatMessage
+        );
+        this.chatService = new CensoringChatProxy(realService);
     }
 
     // ---------------- Mediator API (UI -> server) ----------------
@@ -140,6 +150,9 @@ public final class ClientMediator implements Mediator {
                     } else {
                         view.onLocalPlayerMoveFromServer(x, y);
                     }
+                }
+                case ChatMessage(String playerName, String chatMessage, long timestamp) -> {
+                    chatService.addMessage(playerName, chatMessage);
                 }
                 case EnemySpawnMessage(long enemyId, EnemyType type, EnemySize size, int newX, int newY) ->
                         gameState.spawnEnemyFromServer(enemyId, type, size, newX, newY);
@@ -361,5 +374,9 @@ public final class ClientMediator implements Mediator {
         } else {
             key.cancel();
         }
+    }
+    public void sendChatMessage(String message) {
+        ChatMessage chatMessage = new ChatMessage(client.getPlayerName(), message, System.currentTimeMillis());
+        sendLocalInput(json.toJson(chatMessage, labelPair(Message.JSON_LABEL, "chat")));
     }
 }

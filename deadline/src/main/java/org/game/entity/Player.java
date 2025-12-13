@@ -161,20 +161,19 @@ public non-sealed class Player extends Entity {
         if (getHitPoints() <= 0) return;
         this.setHitPoints(this.getHitPoints() - dmg);
         if (this.getHitPoints() < 0) this.setHitPoints(0);
-        //log.debug("{} received {} dmg pts. HP left: {}", name, dmg, getHitPoints());
     }
 
     public void drawHealthAndArmorBar(Graphics2D g2, int x, int y, int width, Color hpColor) {
         super.drawHealthBar(g2, x, y, width, hpColor);
 
-        if (armorCount <= 0 || ARMOR_ICON == null) {
+        if (getArmorCount() <= 0 || ARMOR_ICON == null) {
             return;
         }
 
         int barHeight = 6;
         int offsetY = -10;
 
-        int usesToShow = Math.min(armorCount, maxArmorCount);
+        int usesToShow = Math.min(getArmorCount(), getMaxArmorCount());
         if (usesToShow <= 0) {
             return;
         }

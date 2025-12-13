@@ -8,7 +8,6 @@ import org.game.server.Server;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class PatrolState implements EnemyState {
     private int pointIndex = 0;
@@ -75,9 +74,5 @@ public final class PatrolState implements EnemyState {
 
     @Override
     public String getStateName() { return "PATROL"; }
-    @Override
-    public Set<Class<? extends EnemyState>> getAllowedTransitions() {
-        return Set.of(ChaseState.class, IdleState.class);
-    }
 }
 

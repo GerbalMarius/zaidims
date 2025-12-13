@@ -6,7 +6,10 @@ import org.game.entity.Player;
 import org.game.server.CollisionChecker;
 import org.game.server.Server;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public final class IdleState implements EnemyState {
     private static final IdleState INSTANCE = new IdleState();
@@ -61,8 +64,4 @@ public final class IdleState implements EnemyState {
 
     @Override
     public String getStateName() { return "IDLE"; }
-    @Override
-    public Set<Class<? extends EnemyState>> getAllowedTransitions() {
-        return Set.of(ChaseState.class, PatrolState.class);
-    }
 }

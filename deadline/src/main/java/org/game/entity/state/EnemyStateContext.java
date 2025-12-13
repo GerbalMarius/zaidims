@@ -9,7 +9,6 @@ import org.game.server.Server;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -28,31 +27,10 @@ public class EnemyStateContext {
     }
 
     public void setState(EnemyState newState) {
-        if (this.currentState == newState) {
-            return;
+        if (this.currentState != newState) {
+            this.currentState = newState;
+            this.stateEnteredTime = System.currentTimeMillis();
         }
-        Set<Class<? extends EnemyState>> allowed = currentState.getAllowedTransitions();
-        if (!allowed.isEmpty()) {
-            boolean isAllowed = false;
-
-            for (Class<? extends EnemyState> allowedClass : allowed) {
-                if (allowedClass.isInstance(newState)) {
-                    isAllowed = true;
-                    break;
-                }
-            }
-
-            if (!isAllowed) {
-                System.err.println(String.format(
-                        "Invalid state transition from %s to %s - using fallback",
-                        currentState.getStateName(),
-                        newState.getStateName()
-                ));
-                return;
-            }
-        }
-        this.currentState = newState;
-        this.stateEnteredTime = System.currentTimeMillis();
     }
 
     public void update(Enemy enemy, Collection<Player> players,

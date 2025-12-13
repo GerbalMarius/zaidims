@@ -1,15 +1,19 @@
 package org.game.client.input;
 
 import org.game.client.Client;
+import org.game.client.components.CensoringChatProxy;
+import org.game.client.components.ChatService;
 import org.game.client.components.ChatUI;
+import org.game.client.components.RealChatService;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public final class KeyboardHandler extends KeyAdapter implements InputHandler {
 
+    private final ChatService chatService;
     private final ChatUI chatUI;
-    private final Client client;
+    private boolean ignoreNextTypedChar = false;
 
     private boolean upPressed;
 
@@ -23,7 +27,12 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
 
     public KeyboardHandler(ChatUI chatUI, Client client) {
         this.chatUI = chatUI;
-        this.client = client;
+
+        RealChatService realService = new RealChatService(
+                chatUI,
+                client::sendChatMessage
+        );
+        this.chatService = new CensoringChatProxy(realService);  // Wrap with proxy
     }
 
     private void resetMovementKeys() {
@@ -38,6 +47,7 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
         if (e.getKeyCode() == KeyEvent.VK_T && !chatUI.isChatOpen()) {
             chatUI.toggleChat();
             resetMovementKeys();
+            ignoreNextTypedChar = true;
             return;
         }
         if (chatUI.isChatOpen()) {
@@ -45,7 +55,7 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
                 case KeyEvent.VK_ENTER -> {
                     String message = chatUI.getCurrentMessage();
                     if (!message.trim().isEmpty()) {
-                        client.sendChatMessage(message);
+                        chatService.sendMessage(message);
                     }
                     chatUI.clearCurrentMessage();
                     chatUI.toggleChat();
@@ -84,6 +94,10 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
     }
     @Override
     public void keyTyped(KeyEvent e) {
+        if (ignoreNextTypedChar) {
+            ignoreNextTypedChar = false;
+            return;
+        }
         if (chatUI.isChatOpen()) {
             char c = e.getKeyChar();
             if (Character.isLetterOrDigit(c) || Character.isWhitespace(c) ||

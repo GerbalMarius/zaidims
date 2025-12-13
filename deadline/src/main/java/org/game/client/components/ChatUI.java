@@ -72,9 +72,9 @@ public class ChatUI {
 
         if (chatOpen) {
             g2.setColor(new Color(0, 0, 0, 200));
-            g2.fillRect(10, screenHeight - 50, 400, 30);
+            g2.fillRect(10, screenHeight - 50, 900, 30);
             g2.setColor(Color.WHITE);
-            g2.drawRect(10, screenHeight - 50, 400, 30);
+            g2.drawRect(10, screenHeight - 50, 900, 30);
             g2.drawString("Chat: " + currentMessage.toString() + "_", 15, screenHeight - 30);
         }
     }

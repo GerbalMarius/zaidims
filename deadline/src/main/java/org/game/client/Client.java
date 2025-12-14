@@ -3,10 +3,7 @@ package org.game.client;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.components.ChatUI;
-import org.game.client.input.Controller;
-import org.game.client.input.ControllerAdapter;
-import org.game.client.input.KeyboardHandler;
-import org.game.client.input.MouseHandler;
+import org.game.client.input.*;
 import org.game.client.mediator.ClientMediator;
 import org.game.client.mediator.Mediator;
 import org.game.entity.ClassType;
@@ -64,13 +61,15 @@ public final class Client {
         gamePanel.startGameLoop();
         mediator.start();
     }
+    public void setPlayerName(String name) {
+        this.playerName = name;
+    }
 
     private boolean showCharacterWindow() {
         JPanel classPanelWrapper = new JPanel(new BorderLayout());
         classPanelWrapper.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         final ClassType[] selectedClass = {null};
-
         JPanel panel = Panels.drawClassPanel(ct -> selectedClass[0] = ct);
         classPanelWrapper.add(panel, BorderLayout.CENTER);
 
@@ -79,26 +78,51 @@ public final class Client {
 
         Object[] message = {
                 "Enter player name:", nameField,
-                "Select class (click or press Enter/Space):", classPanelWrapper
+                "Select class:", classPanelWrapper
         };
 
-        int option = JOptionPane.showConfirmDialog(
-                null, message, "Choose name & class",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        // Setup the Proxy Chain
+        NameService realService = new RealNameService(this);
+        NameService nameProxy = new NameProxy(realService);
 
-        if (option == JOptionPane.OK_OPTION) {
-            String name = nameField.getText();
-            if (name != null && !name.isEmpty()) {
-                playerName = name.trim();
-            } else {
-                playerName = "Player " + clientId.toString().substring(0, 10);
+        // --- THE VALIDATION LOOP ---
+        while (true) {
+            int option = JOptionPane.showConfirmDialog(
+                    null, message, "Choose name & class",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (option != JOptionPane.OK_OPTION) {
+                return true; // User clicked Cancel or X
             }
-            chosenClass = selectedClass[0];
-            log.info("Player name: {}, Class: {}", playerName, chosenClass);
-        } else {
-            return true; // canceled
+
+            String inputName = nameField.getText();
+
+            try {
+                // 1. Ask Proxy to submit
+                nameProxy.submitName(inputName);
+
+                // 2. If Class isn't selected, handle that too
+                if (selectedClass[0] == null) {
+                    JOptionPane.showMessageDialog(null, "Please select a class!");
+                    continue; // Restart loop
+                }
+
+                // 3. If we get here, Name is Good AND Class is selected
+                this.chosenClass = selectedClass[0];
+                break; // BREAK THE LOOP -> Start Game
+
+            } catch (IllegalArgumentException e) {
+                // 4. Proxy said NO. Show error and RESTART loop.
+                JOptionPane.showMessageDialog(null,
+                        "Invalid Name: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                // The loop repeats, forcing them to try again.
+            }
         }
-        return false;
+
+        log.info("Player name: {}, Class: {}", playerName, chosenClass);
+        return false; // Proceed to game
     }
     public void sendChatMessage(String message) {
         if (mediator != null) {

@@ -3,6 +3,7 @@ package org.game.client;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.components.ChatUI;
+import org.game.client.components.InfoUI;
 import org.game.client.input.ControllerAdapter;
 import org.game.client.input.KeyboardHandler;
 import org.game.client.input.MouseHandler;
@@ -54,6 +55,7 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
     private Thread gameThread;
 
     private final ChatUI chatUI;
+    private final InfoUI infoUI;
 
     @Getter
     private final TileManager tileManager;
@@ -68,7 +70,8 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
                      KeyboardHandler keyboardHandler,
                      MouseHandler mouseHandler,
                      ControllerAdapter adapter,
-                     ChatUI chatUI) {
+                     ChatUI chatUI,
+                     InfoUI infoUI) {
         this.clientId = clientId;
         this.state = state;
         this.keyboardHandler = keyboardHandler;
@@ -78,6 +81,7 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
         this.tileManager = new TileManager();
         this.cChecker = new CollisionChecker(tileManager);
         this.chatUI = chatUI;
+        this.infoUI = infoUI;
 
         setBackground(Color.WHITE);
         setFocusable(true);
@@ -251,6 +255,7 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
         Graphics2D g2 = (Graphics2D) g;
+        chatUI.render(g2, getWidth(), getHeight());
 
         double targetX = getWidth() / 2.0 - camera.getX();
         double targetY = getHeight() / 2.0 - camera.getY();
@@ -270,7 +275,7 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
         }
 
         chatUI.render(g2, getWidth(), getHeight());
-
+        infoUI.render(g2, getWidth(), getHeight(), state.getPlayers(), state.getEnemies());
         g2d.dispose();
         Graphics2D uiGraphics = (Graphics2D) g.create();
 

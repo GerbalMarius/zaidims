@@ -1,10 +1,7 @@
 package org.game.client.input;
 
 import org.game.client.Client;
-import org.game.client.components.CensoringChatProxy;
-import org.game.client.components.ChatService;
-import org.game.client.components.ChatUI;
-import org.game.client.components.RealChatService;
+import org.game.client.components.*;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -25,8 +22,12 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
     private boolean savePressed; // F5
     private boolean loadPressed; // F9
 
-    public KeyboardHandler(ChatUI chatUI, Client client) {
+    private final InfoUI infoUI;
+    private boolean infoPressed;
+
+    public KeyboardHandler(ChatUI chatUI, Client client, InfoUI infoUI) {
         this.chatUI = chatUI;
+        this.infoUI = infoUI;
 
         RealChatService realService = new RealChatService(
                 chatUI,
@@ -44,6 +45,10 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
 
     @Override
     public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_I && !chatUI.isChatOpen()) {
+            infoUI.toggleInfo();
+            return;
+        }
         if (e.getKeyCode() == KeyEvent.VK_T && !chatUI.isChatOpen()) {
             chatUI.toggleChat();
             resetMovementKeys();

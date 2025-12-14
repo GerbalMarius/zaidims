@@ -32,7 +32,7 @@ public final class KeyboardHandler extends KeyAdapter implements InputHandler {
                 chatUI,
                 client::sendChatMessage
         );
-        this.chatService = new CensoringChatProxy(realService);  // Wrap with proxy
+        this.chatService = new CensoringChatProxy(realService);
     }
 
     private void resetMovementKeys() {

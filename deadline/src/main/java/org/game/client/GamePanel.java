@@ -273,7 +273,7 @@ public final class GamePanel extends JPanel implements Runnable, GameView {
             p.draw(g2d);
         }
 
-        chatUI.render(g2, getWidth(), getHeight());
+        chatUI.render(g2, getHeight(), 300);
         infoUI.render(g2, getWidth(), getHeight(), state.getPlayers(), state.getEnemies());
 
         g2d.dispose();

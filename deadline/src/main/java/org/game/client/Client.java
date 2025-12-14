@@ -81,48 +81,41 @@ public final class Client {
                 "Select class:", classPanelWrapper
         };
 
-        // Setup the Proxy Chain
         NameService realService = new RealNameService(this);
         NameService nameProxy = new NameProxy(realService);
 
-        // --- THE VALIDATION LOOP ---
         while (true) {
             int option = JOptionPane.showConfirmDialog(
                     null, message, "Choose name & class",
                     JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
             if (option != JOptionPane.OK_OPTION) {
-                return true; // User clicked Cancel or X
+                return true;
             }
 
             String inputName = nameField.getText();
 
             try {
-                // 1. Ask Proxy to submit
                 nameProxy.submitName(inputName);
 
-                // 2. If Class isn't selected, handle that too
                 if (selectedClass[0] == null) {
                     JOptionPane.showMessageDialog(null, "Please select a class!");
-                    continue; // Restart loop
+                    continue;
                 }
 
-                // 3. If we get here, Name is Good AND Class is selected
                 this.chosenClass = selectedClass[0];
-                break; // BREAK THE LOOP -> Start Game
+                break;
 
             } catch (IllegalArgumentException e) {
-                // 4. Proxy said NO. Show error and RESTART loop.
                 JOptionPane.showMessageDialog(null,
                         "Invalid Name: " + e.getMessage(),
                         "Error",
                         JOptionPane.ERROR_MESSAGE);
-                // The loop repeats, forcing them to try again.
             }
         }
 
         log.info("Player name: {}, Class: {}", playerName, chosenClass);
-        return false; // Proceed to game
+        return false; 
     }
     public void sendChatMessage(String message) {
         if (mediator != null) {

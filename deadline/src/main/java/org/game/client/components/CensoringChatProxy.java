@@ -12,7 +12,17 @@ public class CensoringChatProxy implements ChatService {
         this.realService = realService;
         this.bannedWords = Set.of(
                 "Nigger", "Mode", "TeemoIsUgly",
-                "LOL", "Marius","Saras"
+                "LOL", "Marius","Saras",
+
+                "fuck", "shit", "bitch", "asshole", "bastard",
+                "dick", "cock", "pussy", "cunt", "whore", "slut",
+
+                "idiot", "moron", "retard", "loser", "trash", "noob",
+                "stupid", "dumb", "bot",
+
+                "nigger", "nigga", "faggot", "kike",
+
+                "kys", "kill yourself", "die"
         );
         this.censorPattern = buildCensorPattern();
     }

@@ -134,8 +134,6 @@ public class InfoUI {
 
         currentY += 10;
         g2.setColor(Color.GRAY);
-        String totalEnemies = "Total Enemies: " + enemies.size();
-        g2.drawString(totalEnemies, startX + PADDING, currentY);
     }
 
     private int calculatePanelHeight(Map<UUID, Player> players, Map<Long, Enemy> enemies) {

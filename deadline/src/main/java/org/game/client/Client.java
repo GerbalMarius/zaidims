@@ -1,6 +1,7 @@
 package org.game.client;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.components.ChatUI;
 import org.game.client.components.InfoUI;
@@ -19,6 +20,8 @@ import java.util.UUID;
 public final class Client {
 
     private final UUID clientId = UUID.randomUUID();
+
+    @Setter
     private String playerName = "";
     private ClassType chosenClass;
 
@@ -64,9 +67,6 @@ public final class Client {
         gamePanel.startGameLoop();
         mediator.start();
     }
-    public void setPlayerName(String name) {
-        this.playerName = name;
-    }
 
     private boolean showCharacterWindow() {
         JPanel classPanelWrapper = new JPanel(new BorderLayout());
@@ -84,7 +84,7 @@ public final class Client {
                 "Select class:", classPanelWrapper
         };
 
-        NameService realService = new RealNameService(this);
+        RealNameService realService = new RealNameService(this);
         NameService nameProxy = new NameProxy(realService);
 
         while (true) {

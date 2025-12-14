@@ -1,4 +1,4 @@
-package org.game.utils;
+package org.game.utils.profanity;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-public class ProfanityLoader {
+final class ProfanityLoader {
     private ProfanityLoader(){}
 
-    public static Set<String> loadAll(Path path) {
+     static Set<String> loadAll(Path path) {
         try (Stream<Path> paths = Files.walk(path)){
             return paths.filter(Files::isRegularFile)
                     .flatMap(ProfanityLoader::lines)

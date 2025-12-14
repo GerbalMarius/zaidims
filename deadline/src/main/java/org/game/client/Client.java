@@ -3,6 +3,7 @@ package org.game.client;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.game.client.components.ChatUI;
+import org.game.client.components.InfoUI;
 import org.game.client.input.*;
 import org.game.client.mediator.ClientMediator;
 import org.game.client.mediator.Mediator;
@@ -23,7 +24,8 @@ public final class Client {
 
     private final GameState gameState = new GameState();
     private final ChatUI chatUI = new ChatUI();
-    private final KeyboardHandler keyboardHandler = new KeyboardHandler(chatUI,this);
+    private final InfoUI infoUI = new InfoUI();
+    private final KeyboardHandler keyboardHandler = new KeyboardHandler(chatUI,this,infoUI);
     private final MouseHandler mouseHandler = new MouseHandler();
 
     private Mediator mediator;
@@ -45,7 +47,8 @@ public final class Client {
                 keyboardHandler,
                 mouseHandler,
                 adapter,
-                chatUI);
+                chatUI,
+                infoUI);
 
          this.mediator = new ClientMediator(this, gameState, gamePanel);
 
